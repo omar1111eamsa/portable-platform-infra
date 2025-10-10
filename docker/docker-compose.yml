@@ -1,0 +1,72 @@
+services:
+  postgres:
+    image: postgres:14
+    container_name: cqos-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cqos
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: cqos-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  user_service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: cqos-user-service
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: cqos
+      DB_USER: appuser
+      DB_PASSWORD: postgres
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_PRIVATE_PATH: /usr/local/bin/keys/private.pem
+      JWT_PUBLIC_PATH: /usr/local/bin/keys/public.pem
+      RATE_LIMIT_TESTMODE: "0"
+      RATE_LIMIT_PRO_PER_MIN: "500"
+      RATE_LIMIT_PRO_PER_DAY: "50000"
+    restart: always
+
+  user_service_tests:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    entrypoint: ["/usr/local/bin/user_management_tests"]
+    environment:
+      UNIT_TESTING: "1"
+      TEST_KEYS_DIR: "/usr/local/bin/keys"
+
+  integration_tests:
+    image: python:3.11-slim
+    depends_on:
+      - user_service
+    working_dir: /workspace
+    entrypoint: ["python"]
+    command: ["tests/integration/test_api.py"]
+    environment:
+      SERVICE_BASE_URL: "http://user_service:8080"
+    volumes:
+      - ..:/workspace:ro
+
+volumes:
+  pg_data:
+  redis_data:

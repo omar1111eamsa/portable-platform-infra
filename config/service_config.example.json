@@ -1,0 +1,24 @@
+{
+  "service_host": "0.0.0.0",
+  "service_port": 8080,
+  "database": {
+    "host": "postgres",
+    "port": 5432,
+    "name": "cqos",
+    "user": "appuser",
+    "password": "postgres"
+  },
+  "redis": {
+    "host": "redis",
+    "port": 6379
+  },
+  "jwt": {
+    "private_key_path": "/usr/local/bin/keys/private.pem",
+    "public_key_path": "/usr/local/bin/keys/public.pem"
+  },
+  "rate_limit": {
+    "testmode": false,
+    "pro_per_min": 500,
+    "pro_per_day": 50000
+  }
+}
