@@ -39,14 +39,17 @@ def http_request(method: str, path: str, payload: dict | None = None) -> tuple[i
         raise RuntimeError(f"Network error calling {url}: {exc}") from exc
 
 
-def wait_for_service():
-    deadline = time.time() + 60
+def wait_for_service(timeout_seconds: float = 120.0):
+    deadline = time.time() + timeout_seconds
     while time.time() < deadline:
-        status, _, _ = http_request("GET", "/health")
-        if status == 200:
-            return
+        try:
+            status, _, _ = http_request("GET", "/health")
+            if status == 200:
+                return
+        except RuntimeError:
+            pass
         time.sleep(1)
-    raise RuntimeError("Service did not become healthy within 60 seconds")
+    raise RuntimeError(f"Service did not become healthy within {timeout_seconds} seconds")
 
 
 def ensure_status(actual: int, expected: int, body: str):

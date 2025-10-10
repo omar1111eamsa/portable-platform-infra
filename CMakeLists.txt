@@ -8,6 +8,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -Wall -Wextra -pthread")
 
 # include headers
 include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/third_party/jwt-cpp/include)
 include_directories(/usr/local/include)
 
 find_package(Threads REQUIRED)
