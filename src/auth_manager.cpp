@@ -38,29 +38,47 @@ std::string AuthManager::generateToken(const std::string& userId,
     return token;
 }
 
+#pragma GCC push_options
+#pragma GCC optimize("O3", "unroll-loops", "omit-frame-pointer", "inline")
 bool AuthManager::validateToken(const std::string& token,
                                 std::string& outUserId,
                                 std::string& outRole,
                                 std::string& outPlan) {
     try {
-        auto decoded = jwt::decode(token);
+        // Use __restrict__ to help compiler optimize memory access
+        const std::string* __restrict__ tokenPtr = &token;
+        std::string* __restrict__ userIdPtr = &outUserId;
+        std::string* __restrict__ rolePtr = &outRole;
+        std::string* __restrict__ planPtr = &outPlan;
+        
+        // Pre-allocate memory to avoid reallocations
+        userIdPtr->reserve(36);  // UUID length
+        rolePtr->reserve(10);    // Typical role length
+        planPtr->reserve(10);    // Typical plan length
+        
+        auto decoded = jwt::decode(*tokenPtr);
 
-        auto verifier = jwt::verify()
+        // Cache the verifier to avoid reconstruction
+        static thread_local auto verifier = jwt::verify()
             .allow_algorithm(jwt::algorithm::rs256(publicKey_, privateKey_, "", ""))
             .with_issuer("cqos");
 
+        // Prefetch the next memory access
+        __builtin_prefetch(&decoded, 0, 3);
+        
         verifier.verify(decoded);
 
-        outUserId = decoded.get_subject();
+        *userIdPtr = decoded.get_subject();
         if (decoded.has_payload_claim("role")) {
-            outRole = decoded.get_payload_claim("role").as_string();
+            *rolePtr = decoded.get_payload_claim("role").as_string();
         } else {
-            outRole.clear();
+            rolePtr->clear();
         }
-        outPlan = decoded.get_payload_claim("plan").as_string();
+        *planPtr = decoded.get_payload_claim("plan").as_string();
         return true;
     } catch (const std::exception& e) {
         std::cerr << "❌ Token validation failed: " << e.what() << std::endl;
         return false;
     }
 }
+#pragma GCC pop_options

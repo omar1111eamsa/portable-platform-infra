@@ -45,6 +45,30 @@ public:
      */
     std::vector<std::tuple<std::string, std::string>> listUsers();
 
+    struct UserSummary {
+        std::string user_id;
+        std::string email;
+        std::string role;
+        bool is_active;
+    };
+
+    /**
+     * @brief Fetch a single user by identifier.
+     */
+    std::optional<UserSummary> getUserById(const std::string& userId);
+
+    /**
+     * @brief Fetch a user by email address.
+     */
+    std::optional<UserSummary> getUserByEmail(const std::string& email);
+
+    /**
+     * @brief Update role and/or active flag for a user.
+     */
+    std::optional<UserSummary> updateUserRoleAndStatus(const std::string& userId,
+                                                       const std::optional<std::string>& newRole,
+                                                       const std::optional<bool>& isActive);
+
 #ifdef UNIT_TESTING
     /// @brief Clear the in-memory fixtures used in UNIT_TESTING mode.
     static void resetTestState();
@@ -60,6 +84,8 @@ public:
     static void setTestUserActive(const std::string& email, bool active);
     /// @brief Access the stored password hash for UNIT_TESTING assertions.
     static std::optional<std::string> debugGetPasswordHash(const std::string& email);
+    /// @brief Fetch user summary by id in UNIT_TESTING mode.
+    static std::optional<UserSummary> debugGetUserSummaryById(const std::string& userId);
 #endif
 
 private:

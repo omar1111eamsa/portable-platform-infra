@@ -6,6 +6,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -Wall -Wextra -pthread")
 
+option(ENABLE_COVERAGE "Enable coverage instrumentation" OFF)
+if(ENABLE_COVERAGE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -O0")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+endif()
+
 # include headers
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/third_party/jwt-cpp/include)
@@ -85,9 +91,13 @@ add_executable(user_management_tests
     tests/test_user_controller_edgecases.cpp
     tests/test_subscription_manager.cpp
     tests/test_logger.cpp
+    tests/test_config_loader.cpp
+    tests/test_metrics.cpp
     src/auth_manager.cpp
     src/bcrypt_utils.cpp
+    src/config_loader.cpp
     src/logger.cpp
+    src/metrics.cpp
     src/user_controller.cpp
     src/subscription_manager.cpp
     src/db.cpp

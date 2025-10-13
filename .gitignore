@@ -17,6 +17,7 @@ __pycache__/
 # Logs and coverage
 *.log
 /coverage/
+coverage-build/
 
 # IDE / Editor settings
 .idea/

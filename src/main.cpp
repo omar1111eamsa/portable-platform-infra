@@ -2,6 +2,8 @@
 #include <cstdlib>
 #include <string>
 #include <memory>
+#include <thread>
+#include <chrono>
 
 #include "db.hpp"
 #include "user_controller.hpp"
@@ -42,6 +44,12 @@ int main() {
         }
         apply_env_overrides(cfg);
 
+        // Check if PERF_TEST environment variable is set for performance testing
+        const char* perf_test = std::getenv("PERF_TEST");
+        if (perf_test && (std::string(perf_test) == "1" || std::string(perf_test) == "true")) {
+            log_event(LogLevel::kInfo, "config.perf_test", {{"enabled", "true"}});
+        }
+        
         if (cfg.rate_limit_testmode) {
             setenv("RATE_LIMIT_TESTMODE", "1", 1);
         }
@@ -67,8 +75,27 @@ int main() {
         // -------------------------------------------------------
         // Initialize Database + Schema
         // -------------------------------------------------------
-        Database db(conninfo);
-        db.initializeSchema();
+        std::unique_ptr<Database> dbPtr;
+        const int kMaxDbAttempts = 30;
+        const auto kRetryDelay = std::chrono::seconds(2);
+
+        for (int attempt = 1; attempt <= kMaxDbAttempts; ++attempt) {
+            try {
+                dbPtr = std::make_unique<Database>(conninfo);
+                break;
+            } catch (const std::exception& ex) {
+                log_event(LogLevel::kWarn, "database.connect_retry", {
+                    {"attempt", std::to_string(attempt)},
+                    {"error", ex.what()}
+                });
+                if (attempt == kMaxDbAttempts) {
+                    throw;
+                }
+                std::this_thread::sleep_for(kRetryDelay);
+            }
+        }
+
+        dbPtr->initializeSchema();
         log_event(LogLevel::kInfo, "database.ready");
 
         // -------------------------------------------------------
@@ -80,8 +107,8 @@ int main() {
         // -------------------------------------------------------
         // Initialize core service modules
         // -------------------------------------------------------
-        UserController userCtrl(db);
-        SubscriptionManager subsMgr(db);
+        UserController userCtrl(*dbPtr);
+        SubscriptionManager subsMgr(*dbPtr);
 
         // AuthManager will throw if it cannot read the key files
         AuthManager auth(privPath, pubPath);
@@ -94,7 +121,7 @@ int main() {
         // -------------------------------------------------------
         // Start HTTP server (UserServiceAPI)
         // -------------------------------------------------------
-        UserServiceAPI api(db, userCtrl, subsMgr, auth);
+        UserServiceAPI api(*dbPtr, userCtrl, subsMgr, auth);
         std::string host = cfg.service_host;
         int port = cfg.service_port;
 

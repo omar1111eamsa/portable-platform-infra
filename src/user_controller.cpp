@@ -228,6 +228,124 @@ std::vector<std::tuple<std::string, std::string>> UserController::listUsers() {
     return out;
 }
 
+std::optional<UserController::UserSummary> UserController::getUserById(const std::string& userId) {
+#ifdef UNIT_TESTING
+    return debugGetUserSummaryById(userId);
+#else
+    try {
+        ScopedConnection dbconn(db_);
+        pqxx::work txn(dbconn.get());
+        pqxx::result r = txn.exec_params(
+            "SELECT user_id, email, role, is_active FROM users WHERE user_id = $1",
+            userId
+        );
+        if (r.empty()) {
+            return std::nullopt;
+        }
+        UserSummary summary;
+        summary.user_id = r[0]["user_id"].as<std::string>();
+        summary.email = r[0]["email"].as<std::string>();
+        summary.role = r[0]["role"].as<std::string>();
+        summary.is_active = r[0]["is_active"].as<bool>();
+        return summary;
+    } catch (const std::exception& e) {
+        std::cerr << "getUserById error: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+#endif
+}
+
+std::optional<UserController::UserSummary> UserController::getUserByEmail(const std::string& email) {
+#ifdef UNIT_TESTING
+    auto it = gTestUsers.find(email);
+    if (it == gTestUsers.end()) {
+        return std::nullopt;
+    }
+    const auto& rec = it->second;
+    return UserSummary{rec.user_id, rec.email, rec.role, rec.is_active};
+#else
+    try {
+        ScopedConnection dbconn(db_);
+        pqxx::work txn(dbconn.get());
+        pqxx::result r = txn.exec_params(
+            "SELECT user_id, email, role, is_active FROM users WHERE email = $1",
+            email
+        );
+        if (r.empty()) {
+            return std::nullopt;
+        }
+        UserSummary summary;
+        summary.user_id = r[0]["user_id"].as<std::string>();
+        summary.email = r[0]["email"].as<std::string>();
+        summary.role = r[0]["role"].as<std::string>();
+        summary.is_active = r[0]["is_active"].as<bool>();
+        return summary;
+    } catch (const std::exception& e) {
+        std::cerr << "getUserByEmail error: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+#endif
+}
+
+std::optional<UserController::UserSummary> UserController::updateUserRoleAndStatus(const std::string& userId,
+                                                                                   const std::optional<std::string>& newRole,
+                                                                                   const std::optional<bool>& isActive) {
+#ifdef UNIT_TESTING
+    auto summary = debugGetUserSummaryById(userId);
+    if (!summary) {
+        return std::nullopt;
+    }
+    for (auto& [email, rec] : gTestUsers) {
+        if (rec.user_id == userId) {
+            if (newRole) rec.role = *newRole;
+            if (isActive) rec.is_active = *isActive;
+            return UserSummary{rec.user_id, rec.email, rec.role, rec.is_active};
+        }
+    }
+    return std::nullopt;
+#else
+    try {
+        ScopedConnection dbconn(db_);
+        pqxx::work txn(dbconn.get());
+
+        pqxx::result r = txn.exec_params(
+            "SELECT email, role, is_active FROM users WHERE user_id = $1",
+            userId
+        );
+        if (r.empty()) {
+            return std::nullopt;
+        }
+
+        std::string role = r[0]["role"].as<std::string>();
+        bool active = r[0]["is_active"].as<bool>();
+        if (newRole) {
+            role = *newRole;
+        }
+        if (isActive) {
+            active = *isActive;
+        }
+
+        txn.exec_params(
+            "UPDATE users SET role = $2, is_active = $3, updated_at = NOW() WHERE user_id = $1",
+            userId,
+            role,
+            active
+        );
+        txn.commit();
+
+        UserSummary summary;
+        summary.user_id = userId;
+        summary.email = r[0]["email"].as<std::string>();
+        summary.role = role;
+        summary.is_active = active;
+        return summary;
+    } catch (const std::exception& e) {
+        std::cerr << "updateUserRoleAndStatus error: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+#endif
+}
+
 #ifdef UNIT_TESTING
 void UserController::resetTestState() {
     gTestUsers.clear();
@@ -266,9 +384,18 @@ void UserController::setTestUserActive(const std::string& email, bool active) {
 
 std::optional<std::string> UserController::debugGetPasswordHash(const std::string& email) {
     auto it = gTestUsers.find(email);
-    if (it == gTestUsers.end()) {
+   if (it == gTestUsers.end()) {
         return std::nullopt;
     }
     return it->second.password_hash;
+}
+
+std::optional<UserController::UserSummary> UserController::debugGetUserSummaryById(const std::string& userId) {
+    for (auto& [email, rec] : gTestUsers) {
+        if (rec.user_id == userId) {
+            return UserSummary{rec.user_id, rec.email, rec.role, rec.is_active};
+        }
+    }
+    return std::nullopt;
 }
 #endif

@@ -125,6 +125,49 @@ def run_flow():
     assert perms["plan_status"] == "active"
     assert perms["quotas"]["backtests_per_day_limit"] >= 50
 
+    # Admin subscription update (promote to ELITE and reset quotas)
+    status, admin_sub, raw = http_request(
+        "PATCH",
+        f"/internal/users/{user_id}/subscription",
+        {
+            "plan_name": "elite",
+            "status": "active",
+            "reset_backtests": True,
+            "provider_reference": "INT-ADMIN"
+        },
+    )
+    ensure_status(status, 200, raw)
+    assert admin_sub["subscription"]["plan_name"] == "ELITE"
+    assert admin_sub["subscription"]["backtests_used_today"] == 0
+
+    # Role update to support
+    status, role_resp, raw = http_request(
+        "PATCH",
+        f"/internal/users/{user_id}/role",
+        {
+            "role": "support",
+            "is_active": True
+        },
+    )
+    ensure_status(status, 200, raw)
+    assert role_resp["role"] == "support"
+    assert role_resp["is_active"] is True
+
+    # Permissions after updates
+    status, perms_after, raw = http_request(
+        "GET",
+        f"/internal/users/{user_id}/permissions",
+    )
+    ensure_status(status, 200, raw)
+    assert perms_after["plan_name"] == "ELITE"
+    assert perms_after["role"] == "support"
+
+    # Metrics snapshot includes the exercised endpoints
+    status, metrics_body, raw = http_request("GET", "/internal/metrics")
+    ensure_status(status, 200, raw)
+    assert "auth.login" in metrics_body
+    assert metrics_body["auth.login"]["successes"] >= 1
+
 
 def main():
     wait_for_service()

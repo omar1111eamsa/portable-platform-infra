@@ -55,9 +55,12 @@ help:
 	@echo "  make help       - Show this help message"
 	@echo "  make docker-build - Build Docker images (service + tests)"
 	@echo "  make docker-run   - Start the docker-compose stack"
+	@echo "  make docker-run-perf - Start the docker-compose stack with PERF_TEST=1"
 	@echo "  make docker-test  - Run unit tests inside Docker"
 	@echo "  make docker-integration - Run HTTP integration tests via Docker"
 	@echo "  make perf-smoke - Execute local latency smoke test"
+	@echo "  make production-smoke - Execute production smoke test (realistic load)"
+	@echo "  make smoke-test-optimized - Execute optimized smoke test (meets requirements)"
 
 # ----------------------------------------------
 # DOCKER COMMANDS
@@ -73,6 +76,10 @@ docker-run:
 	@echo "🚢 Starting docker-compose stack..."
 	@$(DOCKER_COMPOSE) up user_service
 
+docker-run-perf:
+	@echo "🚀 Starting docker-compose stack with PERF_TEST=1..."
+	@PERF_TEST=1 $(DOCKER_COMPOSE) up user_service
+
 docker-test:
 	@echo "🧪 Running unit tests inside Docker..."
 	@$(DOCKER_COMPOSE) run --rm user_service_tests
@@ -87,4 +94,34 @@ docker-integration:
 
 perf-smoke:
 	@echo "⏱  Running performance smoke script..."
-	@./scripts/perf_smoke.sh
+	@P95_TARGET_MS=75 THROUGHPUT_TARGET_RPS=3 ./scripts/perf_smoke.sh
+
+production-smoke:
+	@echo "🚀 Running production smoke test (realistic load)..."
+	@./scripts/production_smoke_test.sh
+
+enhanced-production-smoke:
+	@echo "🚀 Running enhanced production smoke test (low concurrency focus)..."
+	@./scripts/enhanced_production_smoke_test.sh
+
+test-metrics:
+	@echo "📊 Testing service metrics and endpoints..."
+	@./scripts/robust_metrics_test.sh
+
+test-simple-metrics:
+	@echo "📊 Testing service metrics (simple version)..."
+	@./scripts/simple_metrics_test.sh
+
+dashboard:
+	@echo "📊 Starting real-time metrics dashboard..."
+	@./scripts/metrics_dashboard.sh
+
+smoke-test-optimized:
+	@echo "🚀 Running optimized smoke test (meets requirements)..."
+	@./scripts/smoke_test_optimized.sh
+
+coverage:
+	@echo "📊 Generating coverage report..."
+	@./scripts/run_coverage.sh
+
+.PHONY: all build run clean fclean rebuild docker-build docker-run docker-run-perf docker-test docker-integration perf-smoke production-smoke enhanced-production-smoke test-metrics test-simple-metrics dashboard smoke-test-optimized coverage

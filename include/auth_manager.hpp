@@ -3,6 +3,9 @@
 #include <string>
 #include <jwt-cpp/jwt.h>
 
+// Enable compiler optimizations for this header
+#pragma GCC optimize("O3")
+
 /**
  * @class AuthManager
  * @brief Handles JWT issuance and validation for internal authentication flows.
@@ -38,6 +41,7 @@ public:
      * @param outPlan   Populated with the plan claim when present.
      * @return true when the token is valid, false otherwise.
      */
+    __attribute__((hot)) __attribute__((optimize("O3")))
     bool validateToken(const std::string& token,
                        std::string& outUserId,
                        std::string& outRole,

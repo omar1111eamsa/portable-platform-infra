@@ -20,5 +20,8 @@
     "testmode": false,
     "pro_per_min": 500,
     "pro_per_day": 50000
+  },
+  "performance_test": {
+    "_note": "For performance testing, use PERF_TEST=1 environment variable instead of changing these values"
   }
 }
