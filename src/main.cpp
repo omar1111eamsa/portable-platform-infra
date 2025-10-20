@@ -9,6 +9,7 @@
 #include "user_controller.hpp"
 #include "subscription_manager.hpp"
 #include "auth_manager.hpp"
+#include "external_auth_manager.hpp"
 #include "user_service_api.hpp"
 #include "ratelimiter_global.hpp"
 #include "ratelimiter.hpp"
@@ -112,6 +113,9 @@ int main() {
 
         // AuthManager will throw if it cannot read the key files
         AuthManager auth(privPath, pubPath);
+        
+        // ExternalAuthManager for OAuth providers
+        ExternalAuthManager externalAuth(*dbPtr);
 
         // -------------------------------------------------------
         // Initialize RateLimiter (global pointer)
@@ -121,7 +125,7 @@ int main() {
         // -------------------------------------------------------
         // Start HTTP server (UserServiceAPI)
         // -------------------------------------------------------
-        UserServiceAPI api(*dbPtr, userCtrl, subsMgr, auth);
+        UserServiceAPI api(*dbPtr, userCtrl, subsMgr, auth, externalAuth);
         std::string host = cfg.service_host;
         int port = cfg.service_port;
 

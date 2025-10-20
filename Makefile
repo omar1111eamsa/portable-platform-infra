@@ -61,6 +61,7 @@ help:
 	@echo "  make perf-smoke - Execute local latency smoke test"
 	@echo "  make production-smoke - Execute production smoke test (realistic load)"
 	@echo "  make smoke-test-optimized - Execute optimized smoke test (meets requirements)"
+	@echo "  make test-oauth - Test OAuth external authentication endpoints"
 
 # ----------------------------------------------
 # DOCKER COMMANDS
@@ -124,4 +125,8 @@ coverage:
 	@echo "📊 Generating coverage report..."
 	@./scripts/run_coverage.sh
 
-.PHONY: all build run clean fclean rebuild docker-build docker-run docker-run-perf docker-test docker-integration perf-smoke production-smoke enhanced-production-smoke test-metrics test-simple-metrics dashboard smoke-test-optimized coverage
+test-oauth:
+	@echo "🔐 Testing OAuth external authentication endpoints..."
+	@./scripts/test_oauth.sh
+
+.PHONY: all build run clean fclean rebuild docker-build docker-run docker-run-perf docker-test docker-integration perf-smoke production-smoke enhanced-production-smoke test-metrics test-simple-metrics dashboard smoke-test-optimized coverage test-oauth

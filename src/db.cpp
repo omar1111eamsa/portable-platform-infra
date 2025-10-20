@@ -233,6 +233,104 @@ void Database::initializeSchema() {
         );
     )SQL");
 
+    // Create external authentication table
+    txn.exec(R"SQL(
+        CREATE TABLE IF NOT EXISTS user_external_auths (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+            provider VARCHAR(50) NOT NULL,
+            provider_user_id TEXT NOT NULL,
+            provider_email TEXT,
+            provider_name TEXT,
+            access_token TEXT,
+            refresh_token TEXT,
+            token_expires_at TIMESTAMPTZ,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            UNIQUE (provider, provider_user_id)
+        );
+    )SQL");
+
+    txn.exec(R"SQL(
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.table_constraints 
+                WHERE constraint_name = 'user_external_auths_provider_check'
+                AND table_name = 'user_external_auths'
+            ) THEN
+                ALTER TABLE user_external_auths
+                    ADD CONSTRAINT user_external_auths_provider_check CHECK (
+                        provider IN ('google', 'github', 'linkedin', 'tradingview')
+                    );
+            END IF;
+        END $$;
+    )SQL");
+
+    txn.exec(R"SQL(
+        CREATE INDEX IF NOT EXISTS idx_user_external_auths_user_id ON user_external_auths (user_id);
+        CREATE INDEX IF NOT EXISTS idx_user_external_auths_provider ON user_external_auths (provider);
+        CREATE INDEX IF NOT EXISTS idx_user_external_auths_provider_user_id ON user_external_auths (provider, provider_user_id);
+    )SQL");
+
+    // Create helper functions for external auth
+    txn.exec(R"SQL(
+        CREATE OR REPLACE FUNCTION get_user_by_external_auth(
+            p_provider VARCHAR(50),
+            p_provider_user_id TEXT
+        ) RETURNS TABLE (
+            user_id UUID,
+            email VARCHAR(255),
+            role VARCHAR(20),
+            is_active BOOLEAN
+        ) AS $$
+        BEGIN
+            RETURN QUERY
+            SELECT u.user_id, u.email, u.role, u.is_active
+            FROM users u
+            JOIN user_external_auths e ON u.user_id = e.user_id
+            WHERE e.provider = p_provider 
+            AND e.provider_user_id = p_provider_user_id;
+        END;
+        $$ LANGUAGE plpgsql;
+    )SQL");
+
+    txn.exec(R"SQL(
+        CREATE OR REPLACE FUNCTION link_external_auth(
+            p_user_id UUID,
+            p_provider VARCHAR(50),
+            p_provider_user_id TEXT,
+            p_provider_email TEXT DEFAULT NULL,
+            p_provider_name TEXT DEFAULT NULL,
+            p_access_token TEXT DEFAULT NULL,
+            p_refresh_token TEXT DEFAULT NULL,
+            p_token_expires_at TIMESTAMPTZ DEFAULT NULL
+        ) RETURNS UUID AS $$
+        DECLARE
+            external_auth_id UUID;
+        BEGIN
+            INSERT INTO user_external_auths (
+                user_id, provider, provider_user_id, provider_email, 
+                provider_name, access_token, refresh_token, token_expires_at
+            ) VALUES (
+                p_user_id, p_provider, p_provider_user_id, p_provider_email,
+                p_provider_name, p_access_token, p_refresh_token, p_token_expires_at
+            ) ON CONFLICT (provider, provider_user_id) 
+            DO UPDATE SET
+                user_id = EXCLUDED.user_id,
+                provider_email = EXCLUDED.provider_email,
+                provider_name = EXCLUDED.provider_name,
+                access_token = EXCLUDED.access_token,
+                refresh_token = EXCLUDED.refresh_token,
+                token_expires_at = EXCLUDED.token_expires_at,
+                updated_at = NOW()
+            RETURNING id INTO external_auth_id;
+            
+            RETURN external_auth_id;
+        END;
+        $$ LANGUAGE plpgsql;
+    )SQL");
+
     txn.commit();
     std::cout << "✅ Database schema is ready." << std::endl;
 }

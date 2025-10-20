@@ -75,6 +75,7 @@ target_link_libraries(user_management_service
     sodium
     hiredis
     crypt
+    curl
 )
 
 # Installation (optional)
@@ -93,6 +94,7 @@ add_executable(user_management_tests
     tests/test_logger.cpp
     tests/test_config_loader.cpp
     tests/test_metrics.cpp
+    tests/test_external_auth_manager.cpp
     src/auth_manager.cpp
     src/bcrypt_utils.cpp
     src/config_loader.cpp
@@ -100,6 +102,7 @@ add_executable(user_management_tests
     src/metrics.cpp
     src/user_controller.cpp
     src/subscription_manager.cpp
+    src/external_auth_manager.cpp
     src/db.cpp
 )
 
@@ -123,6 +126,7 @@ target_link_libraries(user_management_tests
     sodium
     hiredis
     crypt
+    curl
 )
 
 add_test(NAME unit_tests COMMAND user_management_tests)

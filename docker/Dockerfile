@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     libsodium-dev \
     libhiredis-dev \
+    libcurl4-openssl-dev \
     pkg-config \
     nlohmann-json3-dev \
     && rm -rf /var/lib/apt/lists/*

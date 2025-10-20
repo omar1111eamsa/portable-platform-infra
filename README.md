@@ -47,12 +47,29 @@ Schema definition lives in `migrations/001_initialize_schema.sql` and mirrors th
 | `provider_subscription_id` | `TEXT` | External provider reference |
 | `updated_at` | `TIMESTAMPTZ` |
 
-### 2.3 `usage_logs`
+### 2.3 `user_external_auths`
+Links user accounts to external OAuth providers (Google, GitHub, LinkedIn, TradingView).
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID PK | Generated via `gen_random_uuid()` |
+| `user_id` | UUID FK | References `users(user_id)` |
+| `provider` | `VARCHAR(50)` | Enum: `google`, `github`, `linkedin`, `tradingview` |
+| `provider_user_id` | `TEXT` | User ID from the external provider |
+| `provider_email` | `TEXT` | Email from the external provider (optional) |
+| `provider_name` | `TEXT` | Name from the external provider (optional) |
+| `access_token` | `TEXT` | OAuth access token (optional) |
+| `refresh_token` | `TEXT` | OAuth refresh token (optional) |
+| `token_expires_at` | `TIMESTAMPTZ` | Token expiration time (optional) |
+| `created_at`, `updated_at` | `TIMESTAMPTZ` | Auto timestamps |
+
+### 2.4 `usage_logs`
 Captures per-request audit metadata (user id, endpoint, structured metadata) for register/login/validate/permissions flows.
 
 ### Migrations
 * `001_initialize_schema.sql` – creates all tables, indexes, deduplicates existing rows.
-* `002_seed_reference_data.sql` – optional seed users (`admin`, `support`) plus matching subscriptions.
+* `002_add_external_auth.sql` – adds external authentication support for OAuth providers.
+* `003_seed_reference_data.sql` – optional seed users (`admin`, `support`) plus matching subscriptions.
 
 ---
 
@@ -78,7 +95,14 @@ Captures per-request audit metadata (user id, endpoint, structured metadata) for
 - API endpoints log 429 responses and propagate reason codes.
 - During local perf testing you can temporarily relax throttling via Docker Compose env vars (e.g., `RATE_LIMIT_PRO_PER_MIN`, `RATE_LIMIT_PRO_PER_DAY`).
 
-### 3.4 Structured Logging
+### 3.4 External Authentication (OAuth)
+- **OAuth Providers**: Support for Google, GitHub, LinkedIn, and TradingView OAuth flows.
+- **ExternalAuthManager**: Handles OAuth token exchange, user info retrieval, and account linking.
+- **Account Linking**: Users can link multiple OAuth providers to their accounts.
+- **Automatic Registration**: New users are automatically created when authenticating via OAuth.
+- **Token Management**: Access and refresh tokens are stored securely for future API calls.
+
+### 3.5 Structured Logging
 - Centralized `log_event(LogLevel, message, fields)` function outputs JSON with ISO timestamps and masked sensitive fields (`password`, `token`, etc.).
 - Instrumented in `main.cpp` (startup events) and `user_service_api.cpp` (register/login/validate/subscription flows).
 - Tests ensure PII masking works (`tests/test_logger.cpp`).
@@ -124,6 +148,35 @@ Operational endpoint used by billing to set plan code (`0`, `89`, `199` → `FRE
 2. Persists the changes, invalidates caches, and emits structured usage logs so promotions/demotions are traceable.
 3. Responds with the new role/active state to confirm the update for orchestrators.
 
+### 4.8 OAuth External Authentication Endpoints
+
+#### `GET /auth/{provider}` - Initiate OAuth Flow
+1. Redirects user to OAuth provider's authorization page.
+2. Generates secure state parameter for CSRF protection.
+3. Supported providers: `google`, `github`, `linkedin`, `tradingview`.
+
+#### `GET /auth/{provider}/callback` - OAuth Callback
+1. Handles OAuth callback with authorization code.
+2. Exchanges code for access token with the provider.
+3. Retrieves user information from the provider.
+4. Creates new user account if not exists, or logs in existing user.
+5. Links external authentication to user account.
+6. Returns JWT token for authenticated session.
+
+#### `POST /auth/link` - Link External Auth
+1. Links external OAuth account to existing user.
+2. Requires `user_id`, `provider`, `provider_user_id`, and optional provider info.
+3. Useful for connecting multiple OAuth providers to one account.
+
+#### `DELETE /auth/unlink` - Unlink External Auth
+1. Removes external OAuth link from user account.
+2. Requires `user_id` and `provider`.
+3. User can still login with other linked providers or email/password.
+
+#### `GET /users/{user_id}/external-auths` - List External Auths
+1. Returns all external authentication links for a user.
+2. Shows provider, linked date, and provider user information.
+
 ---
 
 ## 5. Test Strategy
@@ -134,6 +187,7 @@ Custom harness `tests/test_framework.hpp` registered via macros (`TEST_CASE`). N
 - `test_bcrypt_utils.cpp` – hashing verification and cost clamp.
 - `test_user_controller*.cpp` – duplicate registration, inactive user handling, migration from plaintext/Argon2, wrong password failure.
 - `test_subscription_manager.cpp` – plan mapping, API quota handling, failure scenarios.
+- `test_external_auth_manager.cpp` – OAuth provider configuration, token exchange, account linking.
 - `test_logger.cpp` – structured logging, sensitive field masking.
 
 Run locally: `cmake --build build && ctest --output-on-failure`  
@@ -209,6 +263,31 @@ Example (spec validation): `PERF_VERBOSE=0 CONCURRENCY=220 REQUESTS=5500 ./scrip
 - Default runtime settings live in `config/service_config.example.json`; copy it to `config/service_config.json` (or point `CONFIG_PATH` elsewhere) and tweak hostnames, credentials, and rate limits.
 - Environment variables still override file values, so existing deployment scripts continue to work.
 - Set `CONFIG_PATH=/path/to/config.json` to load a custom configuration outside the repo.
+
+#### OAuth Provider Configuration
+Configure OAuth providers using environment variables:
+
+```bash
+# Google OAuth
+export GOOGLE_CLIENT_ID="your_google_client_id"
+export GOOGLE_CLIENT_SECRET="your_google_client_secret"
+export GOOGLE_REDIRECT_URI="http://localhost:8080/auth/google/callback"
+
+# GitHub OAuth
+export GITHUB_CLIENT_ID="your_github_client_id"
+export GITHUB_CLIENT_SECRET="your_github_client_secret"
+export GITHUB_REDIRECT_URI="http://localhost:8080/auth/github/callback"
+
+# LinkedIn OAuth
+export LINKEDIN_CLIENT_ID="your_linkedin_client_id"
+export LINKEDIN_CLIENT_SECRET="your_linkedin_client_secret"
+export LINKEDIN_REDIRECT_URI="http://localhost:8080/auth/linkedin/callback"
+
+# TradingView OAuth
+export TRADINGVIEW_CLIENT_ID="your_tradingview_client_id"
+export TRADINGVIEW_CLIENT_SECRET="your_tradingview_client_secret"
+export TRADINGVIEW_REDIRECT_URI="http://localhost:8080/auth/tradingview/callback"
+```
 
 ### 7.4 Metrics Endpoint
 - `GET /internal/metrics` returns per-endpoint counters (`requests`, `successes`, `failures`) and average latency (ms) accumulated since process start.

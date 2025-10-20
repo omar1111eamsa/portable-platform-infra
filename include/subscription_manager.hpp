@@ -47,6 +47,12 @@ public:
                                 std::string* outUserId = nullptr);
 
     /**
+     * @brief Ensure the user has a persisted subscription; if missing, create FREE.
+     * @return true if the user ends up with a subscription (created or already existed), false on error.
+     */
+    bool ensureFreePlanIfMissing(const std::string& userEmail);
+
+    /**
      * @brief Administrative update for a user's subscription using their user_id.
      * @param userId Target user identifier.
      * @param update Mutation payload (plan, status, quotas, etc).

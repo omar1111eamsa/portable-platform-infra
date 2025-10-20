@@ -5,6 +5,7 @@
 #include "user_controller.hpp"
 #include "auth_manager.hpp"
 #include "subscription_manager.hpp"
+#include "external_auth_manager.hpp"
 
 /**
  * @class UserServiceAPI
@@ -18,7 +19,8 @@ public:
     UserServiceAPI(Database& db,
                    UserController& userCtrl,
                    SubscriptionManager& subsMgr,
-                   AuthManager& auth);
+                   AuthManager& auth,
+                   ExternalAuthManager& externalAuth);
 
     /**
      * @brief Start listening for HTTP traffic.
@@ -32,4 +34,5 @@ private:
     UserController& userCtrl_;
     SubscriptionManager& subsMgr_;
     AuthManager& auth_;
+    ExternalAuthManager& externalAuth_;
 };

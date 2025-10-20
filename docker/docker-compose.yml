@@ -56,6 +56,19 @@ services:
       RATE_LIMIT_PRO_PER_MIN: "100000"
       RATE_LIMIT_PRO_PER_DAY: "10000000"
       PERF_TEST: "${PERF_TEST:-0}"
+      # OAuth Provider Configuration (set these in your environment)
+      GOOGLE_CLIENT_ID: "664046676081-51sufd2cgg5a4bpnit2jna4qgrld81sq.apps.googleusercontent.com"
+      GOOGLE_CLIENT_SECRET: "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"
+      GOOGLE_REDIRECT_URI: "${GOOGLE_REDIRECT_URI:-http://localhost:8080/auth/google/callback}"
+      GITHUB_CLIENT_ID: "Ov23liw2ycTL6X0bZ2fN"
+      GITHUB_CLIENT_SECRET: "a4ade2ae2c99eb116061b0535181649e4cdb9bbf"
+      GITHUB_REDIRECT_URI: "${GITHUB_REDIRECT_URI:-http://localhost:8080/auth/github/callback}"
+      LINKEDIN_CLIENT_ID: "78gmly0kh9uf48"
+      LINKEDIN_CLIENT_SECRET: "WPL_AP1.iGnEYmx2SwOw8gTT.eHDyQA=="
+      LINKEDIN_REDIRECT_URI: "http://localhost:8080/auth/linkedin/callback"
+      # TRADINGVIEW_CLIENT_ID: "${TRADINGVIEW_CLIENT_ID:-}"
+      # TRADINGVIEW_CLIENT_SECRET: "${TRADINGVIEW_CLIENT_SECRET:-}"
+      # TRADINGVIEW_REDIRECT_URI: "${TRADINGVIEW_REDIRECT_URI:-http://localhost:8080/auth/tradingview/callback}"
     restart: always
 
   user_service_tests:

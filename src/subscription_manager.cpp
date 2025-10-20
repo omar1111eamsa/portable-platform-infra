@@ -174,6 +174,56 @@ bool SubscriptionManager::updateUserSubscription(const std::string& userEmail,
 #endif
 }
 
+bool SubscriptionManager::ensureFreePlanIfMissing(const std::string& userEmail) {
+#ifdef UNIT_TESTING
+    try {
+        auto userIdOpt = UserController::debugGetUserIdByEmail(userEmail);
+        if (!userIdOpt) return false;
+        auto it = gTestSubscriptions.find(*userIdOpt);
+        if (it != gTestSubscriptions.end() && !it->second.plan_name.empty()) {
+            return true; // already has a plan
+        }
+        PlanSettings settings = resolvePlan(0);
+        TestSubscriptionRecord rec;
+        rec.plan_name = settings.name;
+        rec.status = "active";
+        rec.backtests_per_day_limit = settings.backtestsPerDay;
+        rec.api_requests_per_hour_limit = settings.apiRequestsPerHour;
+        gTestSubscriptions[*userIdOpt] = rec;
+        return true;
+    } catch (...) { return false; }
+#else
+    try {
+        ScopedConnection dbconn(db_);
+        pqxx::work txn(dbconn.get());
+
+        pqxx::result r = txn.exec_params("SELECT user_id FROM users WHERE email = $1", userEmail);
+        if (r.empty()) return false;
+        std::string userId = r[0][0].as<std::string>();
+
+        pqxx::result sub = txn.exec_params("SELECT 1 FROM subscriptions WHERE user_id = $1", userId);
+        if (!sub.empty()) {
+            txn.commit();
+            return true; // already has one
+        }
+
+        PlanSettings settings = resolvePlan(0);
+        txn.exec_params(
+            "INSERT INTO subscriptions (user_id, plan_name, status, backtests_per_day_limit, api_requests_per_hour_limit, backtests_used_today, quota_reset_at, start_date, updated_at) "
+            "VALUES ($1, $2, 'active', $3, $4, 0, NOW(), NOW(), NOW())",
+            userId,
+            settings.name,
+            settings.backtestsPerDay,
+            settings.apiRequestsPerHour
+        );
+        txn.commit();
+        return true;
+    } catch (const std::exception&) {
+        return false;
+    }
+#endif
+}
+
 std::optional<SubscriptionManager::SubscriptionSnapshot>
 SubscriptionManager::adminUpdateSubscriptionByUserId(const std::string& userId,
                                                      const SubscriptionAdminUpdate& update) {

@@ -3,6 +3,7 @@
 #include "user_controller.hpp"
 #include "subscription_manager.hpp"
 #include "auth_manager.hpp"
+#include "external_auth_manager.hpp"
 #include "db.hpp"
 #include "ratelimiter_global.hpp"
 #include "logger.hpp"
@@ -11,8 +12,9 @@
 #include <httplib.h>
 #include <nlohmann/json.hpp>
 #include <pqxx/pqxx>
-
 #include <chrono>
+#include <iomanip>
+#include <sstream>
 #include <iostream>
 #include <mutex>
 #include <optional>
@@ -289,8 +291,8 @@ static void recordUsage(Database&, const std::optional<std::string>&, const std:
 
 } // namespace
 
-UserServiceAPI::UserServiceAPI(Database& db, UserController& uc, SubscriptionManager& sm, AuthManager& am)
-: db_(db), userCtrl_(uc), subsMgr_(sm), auth_(am) { }
+UserServiceAPI::UserServiceAPI(Database& db, UserController& uc, SubscriptionManager& sm, AuthManager& am, ExternalAuthManager& eam)
+: db_(db), userCtrl_(uc), subsMgr_(sm), auth_(am), externalAuth_(eam) { }
 
 static json buildPermissionsPayload(const UserSnapshot& snap) {
     json permissions;
@@ -1154,6 +1156,390 @@ void UserServiceAPI::start(const std::string& host, int port) {
         } else {
             res.status = 404;
             res.set_content(R"({"error":"not found"})", "application/json");
+        }
+    });
+
+    // --- OAuth External Authentication Endpoints ---
+
+    // GET /auth/{provider} - Initiate OAuth flow
+    svr.Get(R"(/auth/(google|github|linkedin))", [this](const httplib::Request& req, httplib::Response& res) {
+        EndpointTimer timer("auth.oauth_initiate");
+        std::string provider = req.matches[1];
+        
+        try {
+            OAuthProvider oauth_provider;
+            if (provider == "google") oauth_provider = OAuthProvider::Google;
+            else if (provider == "github") oauth_provider = OAuthProvider::GitHub;
+            else if (provider == "linkedin") oauth_provider = OAuthProvider::LinkedIn;
+            // else if (provider == "tradingview") oauth_provider = OAuthProvider::TradingView;
+            else {
+                res.status = 400;
+                res.set_content(R"({"error":"unsupported provider"})", "application/json");
+                return;
+            }
+            
+            std::string state = externalAuth_.generateState();
+            std::string auth_url = externalAuth_.generateAuthUrl(oauth_provider, state);
+            
+            // Store state in session/cookie for verification (simplified for demo)
+            res.set_header("Location", auth_url);
+            res.status = 302;
+            
+            log_event(LogLevel::kInfo, "auth.oauth_initiated", {{"provider", provider}});
+            timer.markSuccess();
+        } catch (const std::exception& e) {
+            res.status = 500;
+            json j; j["error"] = e.what();
+            res.set_content(j.dump(), "application/json");
+            log_event(LogLevel::kError, "auth.oauth_initiate_error", {{"provider", provider}, {"detail", e.what()}});
+        }
+    });
+
+    // GET /auth/{provider}/callback - OAuth callback
+    svr.Get(R"(/auth/(google|github|linkedin)/callback)", [this](const httplib::Request& req, httplib::Response& res) {
+        EndpointTimer timer("auth.oauth_callback");
+        std::string provider = req.matches[1];
+        
+        try {
+            std::string code = req.get_param_value("code");
+            std::string state = req.get_param_value("state");
+            std::string error = req.get_param_value("error");
+            
+            if (!error.empty()) {
+                res.status = 400;
+                json j; j["error"] = "OAuth error: " + error;
+                res.set_content(j.dump(), "application/json");
+                return;
+            }
+            
+            if (code.empty()) {
+                res.status = 400;
+                res.set_content(R"({"error":"missing authorization code"})", "application/json");
+                return;
+            }
+            
+            OAuthProvider oauth_provider;
+            if (provider == "google") oauth_provider = OAuthProvider::Google;
+            else if (provider == "github") oauth_provider = OAuthProvider::GitHub;
+            else if (provider == "linkedin") oauth_provider = OAuthProvider::LinkedIn;
+            // else if (provider == "tradingview") oauth_provider = OAuthProvider::TradingView;
+            else {
+                res.status = 400;
+                res.set_content(R"({"error":"unsupported provider"})", "application/json");
+                return;
+            }
+            
+            // Exchange code for token
+            auto token_data = externalAuth_.exchangeCodeForToken(oauth_provider, code, state);
+            if (!token_data) {
+                res.status = 400;
+                res.set_content(R"({"error":"failed to exchange code for token"})", "application/json");
+                return;
+            }
+            
+            // Check if access_token exists in response
+            if (token_data->find("access_token") == token_data->end()) {
+                res.status = 400;
+                res.set_content(R"({"error":"invalid token response from OAuth provider"})", "application/json");
+                return;
+            }
+            
+            std::string access_token = token_data->at("access_token");
+            
+            // Get user info from provider
+            auto user_info = externalAuth_.getUserInfo(oauth_provider, access_token);
+            if (!user_info) {
+                res.status = 400;
+                res.set_content(R"({"error":"failed to get user info"})", "application/json");
+                return;
+            }
+            
+            // Check if id exists in user info response (LinkedIn uses "sub" for OpenID Connect)
+            std::string provider_user_id;
+            if (user_info->find("id") != user_info->end()) {
+                provider_user_id = user_info->at("id");
+            } else if (user_info->find("sub") != user_info->end()) {
+                provider_user_id = user_info->at("sub");
+            } else {
+                res.status = 400;
+                res.set_content(R"({"error":"invalid user info response from OAuth provider"})", "application/json");
+                return;
+            }
+            std::string provider_email = user_info->find("email") != user_info->end() ? user_info->at("email") : "";
+            std::string provider_name = user_info->find("name") != user_info->end() ? user_info->at("name") : "";
+
+            // Normalize GitHub email: require a real email (no noreply fallback)
+            if (provider == "github") {
+                if (provider_email == "null" || provider_email == "NULL") {
+                    provider_email.clear();
+                }
+            }
+            
+            // Check if user already exists
+            auto existing_user = externalAuth_.findUserByExternalAuth(oauth_provider, provider_user_id);
+            if (existing_user) {
+                // User exists → ensure they have a persisted plan (FREE if missing), then generate JWT
+                subsMgr_.ensureFreePlanIfMissing(existing_user->at("email"));
+                // Generate JWT
+                std::string token = auth_.generateToken(
+                    existing_user->at("user_id"),
+                    existing_user->at("role"),
+                    "FREE", // Default plan, will be updated by subscription manager
+                    3600
+                );
+                
+                json resp;
+                resp["success"] = true;
+                resp["token"] = token;
+                resp["user_id"] = existing_user->at("user_id");
+                resp["email"] = existing_user->at("email");
+                resp["role"] = existing_user->at("role");
+                resp["provider"] = provider;
+                
+                log_event(LogLevel::kInfo, "auth.oauth_login_success", {
+                    {"provider", provider}, 
+                    {"user_id", existing_user->at("user_id")}
+                });
+                timer.markSuccess();
+                res.status = 200;
+                res.set_content(resp.dump(), "application/json");
+                return;
+            }
+            
+            // User doesn't exist, check if user with this email already exists
+            if (provider_email.empty()) {
+                res.status = 400;
+                res.set_content(R"({"error":"email required for new user creation"})", "application/json");
+                return;
+            }
+            
+            // Check if user with this email already exists
+            auto existing_user_by_email = userCtrl_.getUserByEmail(provider_email);
+            std::string user_id_to_link;
+            
+            if (existing_user_by_email) {
+                // User exists, link OAuth to existing account
+                user_id_to_link = existing_user_by_email->user_id;
+                log_event(LogLevel::kInfo, "auth.oauth_link_existing", {
+                    {"provider", provider}, 
+                    {"user_id", user_id_to_link},
+                    {"email", provider_email}
+                });
+            } else {
+                // Create new user with random password (they'll use OAuth)
+                std::string random_password = "oauth_" + std::to_string(std::time(nullptr));
+                auto new_user_id = userCtrl_.registerUser(provider_email, random_password, provider_name, "user");
+                if (!new_user_id) {
+                    res.status = 500;
+                    res.set_content(R"({"error":"failed to create user"})", "application/json");
+                    return;
+                }
+                user_id_to_link = *new_user_id;
+                
+                // Initialize subscription for new user
+                subsMgr_.updateUserSubscription(provider_email, 0, "oauth_" + provider);
+            }
+            
+            // Link external auth - convert expires_in to timestamp
+            std::optional<std::string> token_expires_at = std::nullopt;
+            if (token_data->find("expires_in") != token_data->end()) {
+                try {
+                    int expires_in_seconds = std::stoi(token_data->at("expires_in"));
+                    auto now = std::chrono::system_clock::now();
+                    auto expires_at = now + std::chrono::seconds(expires_in_seconds);
+                    auto time_t = std::chrono::system_clock::to_time_t(expires_at);
+                    std::ostringstream oss;
+                    oss << std::put_time(std::gmtime(&time_t), "%Y-%m-%d %H:%M:%S+00");
+                    token_expires_at = oss.str();
+                } catch (const std::exception& e) {
+                    std::cerr << "Error parsing expires_in: " << e.what() << std::endl;
+                }
+            }
+            
+            externalAuth_.linkExternalAuth(
+                user_id_to_link,
+                oauth_provider,
+                provider_user_id,
+                provider_email,
+                provider_name,
+                access_token,
+                token_data->find("refresh_token") != token_data->end() ? std::make_optional(token_data->at("refresh_token")) : std::nullopt,
+                token_expires_at
+            );
+            
+            // Generate JWT
+            std::string token = auth_.generateToken(user_id_to_link, "user", "FREE", 3600);
+            
+            json resp;
+            resp["success"] = true;
+            resp["token"] = token;
+            resp["user_id"] = user_id_to_link;
+            resp["email"] = provider_email;
+            resp["role"] = "user";
+            resp["provider"] = provider;
+            
+            log_event(LogLevel::kInfo, "auth.oauth_register_success", {
+                {"provider", provider}, 
+                {"user_id", user_id_to_link},
+                {"email", provider_email}
+            });
+            timer.markSuccess();
+            res.status = 201;
+            res.set_content(resp.dump(), "application/json");
+            
+        } catch (const std::exception& e) {
+            res.status = 500;
+            json j; j["error"] = e.what();
+            res.set_content(j.dump(), "application/json");
+            log_event(LogLevel::kError, "auth.oauth_callback_error", {{"provider", provider}, {"detail", e.what()}});
+        }
+    });
+
+    // POST /auth/link - Link external auth to existing user
+    svr.Post("/auth/link", [this](const httplib::Request& req, httplib::Response& res) {
+        EndpointTimer timer("auth.oauth_link");
+        
+        try {
+            json body = json::parse(req.body);
+            std::string user_id = body.at("user_id").get<std::string>();
+            std::string provider = body.at("provider").get<std::string>();
+            std::string provider_user_id = body.at("provider_user_id").get<std::string>();
+            std::string provider_email = body.value("provider_email", "");
+            std::string provider_name = body.value("provider_name", "");
+            
+            OAuthProvider oauth_provider;
+            if (provider == "google") oauth_provider = OAuthProvider::Google;
+            else if (provider == "github") oauth_provider = OAuthProvider::GitHub;
+            else if (provider == "linkedin") oauth_provider = OAuthProvider::LinkedIn;
+            // else if (provider == "tradingview") oauth_provider = OAuthProvider::TradingView;
+            else {
+                res.status = 400;
+                res.set_content(R"({"error":"unsupported provider"})", "application/json");
+                return;
+            }
+            
+            auto external_auth_id = externalAuth_.linkExternalAuth(
+                user_id,
+                oauth_provider,
+                provider_user_id,
+                provider_email,
+                provider_name
+            );
+            
+            if (!external_auth_id) {
+                res.status = 500;
+                res.set_content(R"({"error":"failed to link external auth"})", "application/json");
+                return;
+            }
+            
+            json resp;
+            resp["success"] = true;
+            resp["external_auth_id"] = *external_auth_id;
+            resp["provider"] = provider;
+            
+            log_event(LogLevel::kInfo, "auth.oauth_link_success", {
+                {"user_id", user_id}, 
+                {"provider", provider}
+            });
+            timer.markSuccess();
+            res.status = 200;
+            res.set_content(resp.dump(), "application/json");
+            
+        } catch (const json::exception& e) {
+            res.status = 400;
+            json j; j["error"] = "Invalid request"; j["detail"] = e.what();
+            res.set_content(j.dump(), "application/json");
+        } catch (const std::exception& e) {
+            res.status = 500;
+            json j; j["error"] = e.what();
+            res.set_content(j.dump(), "application/json");
+        }
+    });
+
+    // DELETE /auth/unlink - Unlink external auth from user
+    svr.Delete("/auth/unlink", [this](const httplib::Request& req, httplib::Response& res) {
+        EndpointTimer timer("auth.oauth_unlink");
+        
+        try {
+            json body = json::parse(req.body);
+            std::string user_id = body.at("user_id").get<std::string>();
+            std::string provider = body.at("provider").get<std::string>();
+            
+            OAuthProvider oauth_provider;
+            if (provider == "google") oauth_provider = OAuthProvider::Google;
+            else if (provider == "github") oauth_provider = OAuthProvider::GitHub;
+            else if (provider == "linkedin") oauth_provider = OAuthProvider::LinkedIn;
+            // else if (provider == "tradingview") oauth_provider = OAuthProvider::TradingView;
+            else {
+                res.status = 400;
+                res.set_content(R"({"error":"unsupported provider"})", "application/json");
+                return;
+            }
+            
+            bool success = externalAuth_.unlinkExternalAuth(user_id, oauth_provider);
+            if (!success) {
+                res.status = 404;
+                res.set_content(R"({"error":"external auth not found"})", "application/json");
+                return;
+            }
+            
+            json resp;
+            resp["success"] = true;
+            resp["message"] = "External auth unlinked successfully";
+            
+            log_event(LogLevel::kInfo, "auth.oauth_unlink_success", {
+                {"user_id", user_id}, 
+                {"provider", provider}
+            });
+            timer.markSuccess();
+            res.status = 200;
+            res.set_content(resp.dump(), "application/json");
+            
+        } catch (const json::exception& e) {
+            res.status = 400;
+            json j; j["error"] = "Invalid request"; j["detail"] = e.what();
+            res.set_content(j.dump(), "application/json");
+        } catch (const std::exception& e) {
+            res.status = 500;
+            json j; j["error"] = e.what();
+            res.set_content(j.dump(), "application/json");
+        }
+    });
+
+    // GET /users/{user_id}/external-auths - Get user's external auths
+    svr.Get(R"(/users/([0-9a-fA-F-]+)/external-auths)", [this](const httplib::Request& req, httplib::Response& res) {
+        EndpointTimer timer("users.external_auths_get");
+        std::string user_id = req.matches[1];
+        
+        try {
+            auto external_auths = externalAuth_.getUserExternalAuths(user_id);
+            
+            json resp;
+            resp["user_id"] = user_id;
+            resp["external_auths"] = json::array();
+            
+            for (const auto& auth : external_auths) {
+                json auth_json;
+                auth_json["id"] = auth.id;
+                auth_json["provider"] = auth.provider;
+                auth_json["provider_user_id"] = auth.provider_user_id;
+                if (auth.provider_email) auth_json["provider_email"] = *auth.provider_email;
+                if (auth.provider_name) auth_json["provider_name"] = *auth.provider_name;
+                auth_json["created_at"] = auth.created_at;
+                auth_json["updated_at"] = auth.updated_at;
+                
+                resp["external_auths"].push_back(auth_json);
+            }
+            
+            log_event(LogLevel::kInfo, "users.external_auths_read", {{"user_id", user_id}});
+            timer.markSuccess();
+            res.status = 200;
+            res.set_content(resp.dump(), "application/json");
+            
+        } catch (const std::exception& e) {
+            res.status = 500;
+            json j; j["error"] = e.what();
+            res.set_content(j.dump(), "application/json");
         }
     });
 
