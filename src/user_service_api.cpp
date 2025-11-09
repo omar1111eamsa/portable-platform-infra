@@ -8,23 +8,38 @@
 #include "ratelimiter_global.hpp"
 #include "logger.hpp"
 #include "metrics.hpp"
+#include "validation.hpp"
 
-#include <httplib.h>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/signal_set.hpp>
+#include <boost/asio.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/beast/http.hpp>
+#include <boost/beast/version.hpp>
 #include <nlohmann/json.hpp>
 #include <pqxx/pqxx>
 #include <chrono>
 #include <iomanip>
 #include <sstream>
 #include <iostream>
+#include <cstdlib>
+#include <memory>
+#include <thread>
 #include <mutex>
 #include <optional>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <algorithm>
 #include <cctype>
+#include <regex>
+#include <unordered_map>
+#include <unordered_set>
 
 using json = nlohmann::json;
+
+namespace beast = boost::beast;
+namespace http = beast::http;
+namespace net = boost::asio;
+using tcp = net::ip::tcp;
 
 namespace {
 
@@ -39,6 +54,282 @@ private:
     pqxx::connection* conn_;
 };
 #endif
+
+struct RegexMatches {
+    std::vector<std::string> captures;
+
+    const std::string& operator[](std::size_t idx) const {
+        static const std::string empty;
+        if (idx < captures.size()) {
+            return captures[idx];
+        }
+        return empty;
+    }
+
+    std::size_t size() const {
+        return captures.size();
+    }
+};
+
+struct HttpRequest {
+    std::string method;
+    std::string path;
+    std::string body;
+    std::string remote_addr;
+    std::unordered_map<std::string, std::string> query_params;
+    RegexMatches matches;
+
+    std::string get_param_value(const std::string& key) const {
+        auto it = query_params.find(key);
+        if (it == query_params.end()) {
+            return {};
+        }
+        return it->second;
+    }
+};
+
+struct HttpResponse {
+    int status = 200;
+    std::string body;
+    std::string content_type = "application/json";
+    std::vector<std::pair<std::string, std::string>> headers;
+
+    void set_content(const std::string& value, const std::string& type) {
+        body = value;
+        content_type = type;
+    }
+
+    void set_header(const std::string& key, const std::string& value) {
+        headers.emplace_back(key, value);
+    }
+};
+
+using RequestHandler = std::function<void(const HttpRequest&, HttpResponse&)>;
+
+struct Route {
+    std::string method;
+    std::string path;
+    std::regex pattern;
+    bool use_regex{false};
+    RequestHandler handler;
+};
+
+std::string percentDecode(const std::string& in) {
+    std::string out;
+    out.reserve(in.size());
+    for (std::size_t i = 0; i < in.size(); ++i) {
+        if (in[i] == '%' && i + 2 < in.size()) {
+            std::string hex = in.substr(i + 1, 2);
+            char decoded = static_cast<char>(std::strtol(hex.c_str(), nullptr, 16));
+            out.push_back(decoded);
+            i += 2;
+        } else if (in[i] == '+') {
+            out.push_back(' ');
+        } else {
+            out.push_back(in[i]);
+        }
+    }
+    return out;
+}
+
+std::unordered_map<std::string, std::string> parseQueryParams(const std::string& query) {
+    std::unordered_map<std::string, std::string> params;
+    std::size_t start = 0;
+    while (start < query.size()) {
+        auto sep = query.find('&', start);
+        if (sep == std::string::npos) sep = query.size();
+        auto eq = query.find('=', start);
+        std::string key;
+        std::string value;
+        if (eq != std::string::npos && eq < sep) {
+            key = percentDecode(query.substr(start, eq - start));
+            value = percentDecode(query.substr(eq + 1, sep - eq - 1));
+        } else {
+            key = percentDecode(query.substr(start, sep - start));
+            value = "";
+        }
+        if (!key.empty()) {
+            params[key] = value;
+        }
+        start = sep + 1;
+    }
+    return params;
+}
+
+RegexMatches toRegexMatches(const std::smatch& sm) {
+    RegexMatches matches;
+    for (const auto& capture : sm) {
+        matches.captures.push_back(capture.str());
+    }
+    return matches;
+}
+
+bool methodEquals(const std::string& lhs, const std::string& rhs) {
+    if (lhs.size() != rhs.size()) return false;
+    for (std::size_t i = 0; i < lhs.size(); ++i) {
+        if (std::tolower(static_cast<unsigned char>(lhs[i])) !=
+            std::tolower(static_cast<unsigned char>(rhs[i]))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+class HttpRouter {
+public:
+    void addRoute(const std::string& method,
+                  const std::string& path,
+                  bool regex,
+                  RequestHandler handler) {
+        Route route;
+        route.method = method;
+        route.path = path;
+        route.use_regex = regex;
+        if (regex) {
+            route.pattern = std::regex(path);
+        }
+        route.handler = std::move(handler);
+        routes_.push_back(std::move(route));
+    }
+
+    bool dispatch(const HttpRequest& request, HttpResponse& response) const {
+        for (const auto& route : routes_) {
+            if (!methodEquals(request.method, route.method)) {
+                continue;
+            }
+
+            if (!route.use_regex && route.path == request.path) {
+                route.handler(request, response);
+                return true;
+            }
+
+            if (route.use_regex) {
+                std::smatch match;
+                if (std::regex_match(request.path, match, route.pattern)) {
+                    HttpRequest enriched = request;
+                    enriched.matches = toRegexMatches(match);
+                    route.handler(enriched, response);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+private:
+    std::vector<Route> routes_;
+};
+
+HttpRequest buildHttpRequest(const http::request<http::string_body>& req,
+                             const std::string& remote) {
+    HttpRequest request;
+    request.method = std::string(req.method_string());
+    std::string target = std::string(req.target());
+    auto query_pos = target.find('?');
+    if (query_pos == std::string::npos) {
+        request.path = target;
+    } else {
+        request.path = target.substr(0, query_pos);
+        request.query_params = parseQueryParams(target.substr(query_pos + 1));
+    }
+    request.body = req.body();
+    request.remote_addr = remote;
+    return request;
+}
+
+http::response<http::string_body> buildBeastResponse(const HttpResponse& source,
+                                                     unsigned version,
+                                                     bool keep_alive) {
+    http::response<http::string_body> res{
+        static_cast<http::status>(source.status), version};
+    res.set(http::field::server, "cqos-user-service");
+    res.set(http::field::content_type, source.content_type.empty()
+        ? "application/json"
+        : source.content_type);
+    for (const auto& header : source.headers) {
+        res.set(header.first, header.second);
+    }
+    res.keep_alive(keep_alive);
+    res.body() = source.body;
+    res.prepare_payload();
+    return res;
+}
+
+void handleSession(tcp::socket socket,
+                   std::shared_ptr<HttpRouter> router) {
+    beast::flat_buffer buffer;
+    boost::system::error_code ec;
+
+    std::string remote_addr;
+    auto remote_ep = socket.remote_endpoint(ec);
+    if (!ec) {
+        remote_addr = remote_ep.address().to_string();
+    } else {
+        remote_addr = "unknown";
+    }
+
+    for (;;) {
+        http::request<http::string_body> req;
+        http::read(socket, buffer, req, ec);
+        if (ec == http::error::end_of_stream) {
+            break;
+        }
+        if (ec) {
+            log_event(LogLevel::kWarn, "http.read_error", {{"detail", ec.message()}});
+            break;
+        }
+
+        HttpResponse response;
+        auto request = buildHttpRequest(req, remote_addr);
+        bool handled = false;
+
+        try {
+            handled = router->dispatch(request, response);
+        } catch (const std::exception& ex) {
+            log_event(LogLevel::kError, "http.handler_exception", {{"detail", ex.what()}});
+            response.status = 500;
+            response.set_content(R"({"error":"internal server error"})", "application/json");
+            handled = true;
+        }
+
+        if (!handled) {
+            response.status = 404;
+            response.set_content(R"({"error":"not found"})", "application/json");
+        }
+
+        auto beast_res = buildBeastResponse(response, req.version(), req.keep_alive());
+        http::write(socket, beast_res, ec);
+        if (ec) {
+            log_event(LogLevel::kWarn, "http.write_error", {{"detail", ec.message()}});
+            break;
+        }
+        if (!beast_res.keep_alive()) {
+            break;
+        }
+    }
+
+    socket.shutdown(tcp::socket::shutdown_send, ec);
+}
+
+void runServer(const std::string& host,
+               int port,
+               std::shared_ptr<HttpRouter> router) {
+    auto address = net::ip::make_address(host);
+    net::io_context ioc{1};
+    tcp::acceptor acceptor{ioc, {address, static_cast<unsigned short>(port)}};
+
+    for (;;) {
+        tcp::socket socket{ioc};
+        boost::system::error_code ec;
+        acceptor.accept(socket, ec);
+        if (ec) {
+            log_event(LogLevel::kWarn, "http.accept_error", {{"detail", ec.message()}});
+            continue;
+        }
+
+        std::thread{handleSession, std::move(socket), router}.detach();
+    }
+}
 
 // Use cache line alignment for the most frequently accessed structure
 struct alignas(64) UserSnapshot {
@@ -351,66 +642,39 @@ static json buildPermissionsPayload(const UserSnapshot& snap) {
 }
 
 void UserServiceAPI::start(const std::string& host, int port) {
-    httplib::Server svr;
-    
-    // Check for performance test mode to apply optimal settings - use branch prediction
-    static const char* PERF_TEST_TRUE = "1";
-    static const char* PERF_TEST_STR = "true";
-    const char* perf_test = std::getenv("PERF_TEST");
-    bool is_perf_test = false;
-    
-    // Fast path for environment check with branch prediction
-    if (__builtin_expect(perf_test != nullptr, 1)) {
-        is_perf_test = (*perf_test == *PERF_TEST_TRUE) || 
-                      (std::string(perf_test) == PERF_TEST_STR);
-    }
-    
-    // Configure thread affinity and NUMA awareness
+    auto router = std::make_shared<HttpRouter>();
+
+    const char* perf_test_env = std::getenv("PERF_TEST");
+    const bool is_perf_test = perf_test_env &&
+        (std::string(perf_test_env) == "1" || std::string(perf_test_env) == "true");
+
     const int num_cores = std::thread::hardware_concurrency();
-    
-    // Performance optimization settings with thread affinity
-    if (__builtin_expect(is_perf_test, 1)) {
-        // Use smaller thread pool to reduce context switching overhead
-        svr.new_task_queue = [] { 
-            return new httplib::ThreadPool(32); // Optimized thread pool size
-        };
-        
-        // Extreme performance mode for testing
-        svr.set_read_timeout(1);  // Minimal timeouts
-        svr.set_write_timeout(1); // Minimal timeouts
-        svr.set_keep_alive_max_count(10000); // Very high keep-alive count
-        svr.set_payload_max_length(1024 * 1024); // 1MB payload limit
-        
-        // Pre-populate the cache to avoid database hits
+    if (is_perf_test) {
         log_event(LogLevel::kInfo, "server.perf_test_mode", {
-            {"enabled", "true"}, 
-            {"thread_pool", "32"}, 
-            {"cpu_cores", std::to_string(num_cores)},
-            {"optimized", "true"}
+            {"enabled", "true"},
+            {"cpu_cores", std::to_string(num_cores)}
         });
     } else {
-        // Optimized Production settings - always active for real clients
-        svr.new_task_queue = [] { 
-            return new httplib::ThreadPool(64); // Optimized thread pool for production
-        };
-        
-        // Optimized Production performance mode
-        svr.set_read_timeout(1);  // Minimal timeouts for performance
-        svr.set_write_timeout(1); // Minimal timeouts for performance
-        svr.set_keep_alive_max_count(10000); // High keep-alive for connection reuse
-        svr.set_payload_max_length(1024 * 1024); // 1MB payload limit
-        
         log_event(LogLevel::kInfo, "server.production_optimized", {
-            {"enabled", "true"}, 
-            {"thread_pool", "64"}, 
-            {"cpu_cores", std::to_string(num_cores)},
-            {"optimized", "true"}
+            {"enabled", "true"},
+            {"cpu_cores", std::to_string(num_cores)}
         });
     }
 
+    auto addRoute = [router](const std::string& method,
+                             const std::string& path,
+                             RequestHandler handler) {
+        router->addRoute(method, path, false, std::move(handler));
+    };
+
+    auto addRegexRoute = [router](const std::string& method,
+                                  const std::string& pattern,
+                                  RequestHandler handler) {
+        router->addRoute(method, pattern, true, std::move(handler));
+    };
 
     // --- POST /internal/auth/register
-    svr.Post("/internal/auth/register", [this](const httplib::Request& req, httplib::Response& res) {
+    addRoute("POST", "/internal/auth/register", [this](const HttpRequest& req, HttpResponse& res) {
         EndpointTimer timer("auth.register");
         std::string caller = req.remote_addr.empty() ? "unknown_ip" : req.remote_addr;
         // Check if performance testing mode is enabled
@@ -432,6 +696,12 @@ void UserServiceAPI::start(const std::string& host, int port) {
 
         try {
             json body = json::parse(req.body);
+            if (!body.is_object()) {
+                res.status = 400;
+                res.set_content(R"({"error":"payload must be a JSON object"})", "application/json");
+                return;
+            }
+
             std::string email = body.at("email").get<std::string>();
             std::string password = body.at("password").get<std::string>();
             std::string full_name = body.value("full_name", "");
@@ -441,6 +711,19 @@ void UserServiceAPI::start(const std::string& host, int port) {
             if (email.empty() || password.empty()) {
                 res.status = 400;
                 res.set_content(R"({"error":"email and password are required"})", "application/json");
+                return;
+            }
+            if (!validation::is_valid_email(email)) {
+                res.status = 400;
+                res.set_content(R"({"error":"invalid email format"})", "application/json");
+                return;
+            }
+            if (auto password_issue = validation::validate_password_strength(password)) {
+                json j;
+                j["error"] = "weak password";
+                j["detail"] = *password_issue;
+                res.status = 400;
+                res.set_content(j.dump(), "application/json");
                 return;
             }
             if (!kAllowedRoles.count(role)) {
@@ -495,7 +778,7 @@ void UserServiceAPI::start(const std::string& host, int port) {
     });
 
     // --- POST /internal/auth/login
-    svr.Post("/internal/auth/login", [this](const httplib::Request& req, httplib::Response& res) {
+    addRoute("POST", "/internal/auth/login", [this](const HttpRequest& req, HttpResponse& res) {
         EndpointTimer timer("auth.login");
         std::string emailForRl = "anonymous";
         try {
@@ -517,8 +800,25 @@ void UserServiceAPI::start(const std::string& host, int port) {
 
         try {
             json body = json::parse(req.body);
+            if (!body.is_object()) {
+                res.status = 400;
+                res.set_content(R"({"error":"payload must be a JSON object"})", "application/json");
+                return;
+            }
+
             std::string email = body.at("email").get<std::string>();
             std::string password = body.at("password").get<std::string>();
+
+            if (!validation::is_valid_email(email)) {
+                res.status = 400;
+                res.set_content(R"({"success":false,"error":"invalid email format"})", "application/json");
+                return;
+            }
+            if (password.empty()) {
+                res.status = 400;
+                res.set_content(R"({"success":false,"error":"password must not be empty"})", "application/json");
+                return;
+            }
 
             auto authResult = userCtrl_.verifyCredentials(email, password);
             if (!authResult) {
@@ -580,7 +880,7 @@ void UserServiceAPI::start(const std::string& host, int port) {
     });
 
     // --- POST /internal/auth/validate-token
-    svr.Post("/internal/auth/validate-token", [this](const httplib::Request& req, httplib::Response& res) {
+    addRoute("POST", "/internal/auth/validate-token", [this](const HttpRequest& req, HttpResponse& res) {
         EndpointTimer timer("auth.validate_token");
         
         // Check if this is a performance test - if so, use ultra-fast path
@@ -726,9 +1026,9 @@ void UserServiceAPI::start(const std::string& host, int port) {
     });
 
     // --- GET /internal/users/{user_id}/permissions
-    svr.Get(R"(/internal/users/([0-9a-fA-F-]+)/permissions)", [this](const httplib::Request& req, httplib::Response& res) {
+    addRegexRoute("GET", R"(/internal/users/([0-9a-fA-F-]+)/permissions)", [this](const HttpRequest& req, HttpResponse& res) {
         EndpointTimer timer("users.permissions_get");
-        std::string userId = req.matches[1];
+        std::string userId = percentDecode(req.matches[1]);
         
         // Check if this is a performance test - if so, use ultra-fast path
         const char* perf_test = std::getenv("PERF_TEST");
@@ -782,9 +1082,9 @@ void UserServiceAPI::start(const std::string& host, int port) {
     });
 
     // --- PUT /internal/users/{email}/subscription (legacy helper for ops)
-    svr.Put(R"(/internal/users/([^/]+)/subscription)", [this](const httplib::Request& req, httplib::Response& res) {
+    addRegexRoute("PUT", R"(/internal/users/([^/]+)/subscription)", [this](const HttpRequest& req, HttpResponse& res) {
         EndpointTimer timer("users.subscription_put");
-        std::string email = req.matches[1];
+        std::string email = percentDecode(req.matches[1]);
         std::string reason;
         if (gRateLimiter) {
             if (!gRateLimiter->allowRequest(email, "PRO", reason)) {
@@ -839,9 +1139,9 @@ void UserServiceAPI::start(const std::string& host, int port) {
     });
 
     // --- PATCH /internal/users/{user_id}/subscription
-    svr.Patch(R"(/internal/users/([0-9a-fA-F-]+)/subscription)", [this](const httplib::Request& req, httplib::Response& res) {
+    addRegexRoute("PATCH", R"(/internal/users/([0-9a-fA-F-]+)/subscription)", [this](const HttpRequest& req, HttpResponse& res) {
         EndpointTimer timer("users.subscription_patch");
-        std::string userId = req.matches[1];
+        std::string userId = percentDecode(req.matches[1]);
 
         auto userSummary = userCtrl_.getUserById(userId);
         if (!userSummary) {
@@ -1034,9 +1334,9 @@ void UserServiceAPI::start(const std::string& host, int port) {
     });
 
     // --- PATCH /internal/users/{user_id}/role
-    svr.Patch(R"(/internal/users/([0-9a-fA-F-]+)/role)", [this](const httplib::Request& req, httplib::Response& res) {
+    addRegexRoute("PATCH", R"(/internal/users/([0-9a-fA-F-]+)/role)", [this](const HttpRequest& req, HttpResponse& res) {
         EndpointTimer timer("users.role_patch");
-        std::string userId = req.matches[1];
+        std::string userId = percentDecode(req.matches[1]);
 
         auto current = userCtrl_.getUserById(userId);
         if (!current) {
@@ -1130,20 +1430,20 @@ void UserServiceAPI::start(const std::string& host, int port) {
         }
     });
 
-    svr.Get("/internal/metrics", [](const httplib::Request&, httplib::Response& res) {
+    addRoute("GET", "/internal/metrics", [](const HttpRequest&, HttpResponse& res) {
         auto payload = MetricsRegistry::instance().snapshot();
         res.status = 200;
         res.set_content(payload.dump(), "application/json");
     });
 
     // health endpoint
-    svr.Get("/health", [](const httplib::Request&, httplib::Response& res) {
+    addRoute("GET", "/health", [](const HttpRequest&, HttpResponse& res) {
         res.status = 200;
         res.set_content(R"({"status":"ok"})", "application/json");
     });
 
     // --- GET /perf-test - Ultra-fast performance test endpoint
-    svr.Get("/perf-test", [](const httplib::Request&, httplib::Response& res) {
+    addRoute("GET", "/perf-test", [](const HttpRequest&, HttpResponse& res) {
         // Check if this is a performance test
         const char* perf_test = std::getenv("PERF_TEST");
         bool is_perf_test = perf_test && (std::string(perf_test) == "1" || std::string(perf_test) == "true");
@@ -1162,9 +1462,9 @@ void UserServiceAPI::start(const std::string& host, int port) {
     // --- OAuth External Authentication Endpoints ---
 
     // GET /auth/{provider} - Initiate OAuth flow
-    svr.Get(R"(/auth/(google|github|linkedin))", [this](const httplib::Request& req, httplib::Response& res) {
+    addRegexRoute("GET", R"(/auth/(google|github|linkedin))", [this](const HttpRequest& req, HttpResponse& res) {
         EndpointTimer timer("auth.oauth_initiate");
-        std::string provider = req.matches[1];
+        std::string provider = percentDecode(req.matches[1]);
         
         try {
             OAuthProvider oauth_provider;
@@ -1196,9 +1496,9 @@ void UserServiceAPI::start(const std::string& host, int port) {
     });
 
     // GET /auth/{provider}/callback - OAuth callback
-    svr.Get(R"(/auth/(google|github|linkedin)/callback)", [this](const httplib::Request& req, httplib::Response& res) {
+    addRegexRoute("GET", R"(/auth/(google|github|linkedin)/callback)", [this](const HttpRequest& req, HttpResponse& res) {
         EndpointTimer timer("auth.oauth_callback");
-        std::string provider = req.matches[1];
+        std::string provider = percentDecode(req.matches[1]);
         
         try {
             std::string code = req.get_param_value("code");
@@ -1396,7 +1696,7 @@ void UserServiceAPI::start(const std::string& host, int port) {
     });
 
     // POST /auth/link - Link external auth to existing user
-    svr.Post("/auth/link", [this](const httplib::Request& req, httplib::Response& res) {
+    addRoute("POST", "/auth/link", [this](const HttpRequest& req, HttpResponse& res) {
         EndpointTimer timer("auth.oauth_link");
         
         try {
@@ -1457,7 +1757,7 @@ void UserServiceAPI::start(const std::string& host, int port) {
     });
 
     // DELETE /auth/unlink - Unlink external auth from user
-    svr.Delete("/auth/unlink", [this](const httplib::Request& req, httplib::Response& res) {
+    addRoute("DELETE", "/auth/unlink", [this](const HttpRequest& req, HttpResponse& res) {
         EndpointTimer timer("auth.oauth_unlink");
         
         try {
@@ -1507,9 +1807,9 @@ void UserServiceAPI::start(const std::string& host, int port) {
     });
 
     // GET /users/{user_id}/external-auths - Get user's external auths
-    svr.Get(R"(/users/([0-9a-fA-F-]+)/external-auths)", [this](const httplib::Request& req, httplib::Response& res) {
+    addRegexRoute("GET", R"(/users/([0-9a-fA-F-]+)/external-auths)", [this](const HttpRequest& req, HttpResponse& res) {
         EndpointTimer timer("users.external_auths_get");
-        std::string user_id = req.matches[1];
+        std::string user_id = percentDecode(req.matches[1]);
         
         try {
             auto external_auths = externalAuth_.getUserExternalAuths(user_id);
@@ -1544,5 +1844,5 @@ void UserServiceAPI::start(const std::string& host, int port) {
     });
 
     log_event(LogLevel::kInfo, "http.listen", {{"host", host}, {"port", std::to_string(port)}});
-    svr.listen(host.c_str(), port);
+    runServer(host, port, router);
 }

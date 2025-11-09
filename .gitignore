@@ -33,6 +33,10 @@ docker/*.log
 
 # Local configuration overrides
 config/service_config.json
+config/secrets/*
+!config/secrets/README.md
 
 # Misc
 *.DS_Store
+
+test

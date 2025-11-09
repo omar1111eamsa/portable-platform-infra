@@ -1,6 +1,5 @@
 #pragma once
 
-#include <httplib.h>
 #include "db.hpp"
 #include "user_controller.hpp"
 #include "auth_manager.hpp"

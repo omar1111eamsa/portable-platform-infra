@@ -8,8 +8,15 @@
 - `JWT_PRIVATE_PATH`, `JWT_PUBLIC_PATH`
 - `RATE_LIMIT_TESTMODE` (optional)
 - `CONFIG_PATH` (optional JSON file; see below)
+- OAuth secrets can be provided via `_FILE` variants (see below).
 
 > **Note:** The Docker image generates its own RSA keypair under `/usr/local/bin/keys`. When running the service outside of Docker, ensure `JWT_*_PATH` points to valid PEM files (sample keys are available under `keys/` or create new ones via `openssl genrsa` / `openssl rsa -pubout`).
+
+### OAuth Secrets
+Store provider credentials in Docker secrets (preferred) or use the `_FILE` pattern:
+- Populate the files listed in `config/secrets/README.md`.
+- `docker/docker-compose.yml` mounts them at `/run/secrets/*` and exports `GOOGLE_CLIENT_ID_FILE`, `GITHUB_CLIENT_SECRET_FILE`, etc.
+- When running locally without Docker secrets, set either `PROVIDER_CLIENT_ID` or `PROVIDER_CLIENT_ID_FILE` environment variables. The service automatically reads the `_FILE` fallback first.
 
 ## Configuration File
 - Copy `config/service_config.example.json` to `config/service_config.json` and adjust values for your environment.

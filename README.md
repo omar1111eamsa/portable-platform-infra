@@ -8,7 +8,7 @@ This repository houses the identity microservice that powers MYAPP's internal au
 
 | Layer | Responsibility | Key Files |
 |-------|----------------|-----------|
-| **HTTP API** | Exposes internal REST endpoints (`/internal/auth/*`, `/internal/users/*`) using [`cpp-httplib`](https://github.com/yhirose/cpp-httplib). | `src/user_service_api.cpp`, `include/user_service_api.hpp` |
+| **HTTP API** | Exposes internal REST endpoints (`/internal/auth/*`, `/internal/users/*`) using [`Boost.Beast`](https://www.boost.org/doc/libs/release/libs/beast/). | `src/user_service_api.cpp`, `include/user_service_api.hpp` |
 | **Domain Managers** | Encapsulate core business logic and database interactions for users, subscriptions, and authentication. | `UserController`, `SubscriptionManager`, `AuthManager` |
 | **Infrastructure** | Database bootstrap (`Database`), rate limiter (Redis with in-memory fallback), structured logger, migrations, Docker setup. | `src/db.cpp`, `src/ratelimiter*.cpp`, `src/logger.cpp`, `docker/`, `migrations/` |
 | **Testing** | Unit test harness (custom), integration tests via Python/requests, perf smoke script. | `tests/`, `tests/integration/`, `scripts/perf_smoke.sh` |
@@ -101,6 +101,7 @@ Captures per-request audit metadata (user id, endpoint, structured metadata) for
 - **Account Linking**: Users can link multiple OAuth providers to their accounts.
 - **Automatic Registration**: New users are automatically created when authenticating via OAuth.
 - **Token Management**: Access and refresh tokens are stored securely for future API calls.
+- **Secret Management**: Provider credentials are loaded from either `PROVIDER_*` env vars or their `_FILE` counterparts (Docker secrets), so nothing sensitive needs to live in `docker-compose.yml`.
 
 ### 3.5 Structured Logging
 - Centralized `log_event(LogLevel, message, fields)` function outputs JSON with ISO timestamps and masked sensitive fields (`password`, `token`, etc.).

@@ -19,6 +19,9 @@ include_directories(/usr/local/include)
 
 find_package(Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
+
+include_directories(${Boost_INCLUDE_DIRS})
 
 # Ensure JWT key material exists for local builds
 find_program(OPENSSL_EXECUTABLE openssl)
@@ -71,6 +74,7 @@ target_link_libraries(user_management_service
     PRIVATE
     pqxx
     ${OPENSSL_LIBRARIES}
+    Boost::system
     Threads::Threads
     sodium
     hiredis
@@ -95,6 +99,7 @@ add_executable(user_management_tests
     tests/test_config_loader.cpp
     tests/test_metrics.cpp
     tests/test_external_auth_manager.cpp
+    tests/test_validation.cpp
     src/auth_manager.cpp
     src/bcrypt_utils.cpp
     src/config_loader.cpp
@@ -104,6 +109,7 @@ add_executable(user_management_tests
     src/subscription_manager.cpp
     src/external_auth_manager.cpp
     src/db.cpp
+    src/validation.cpp
 )
 
 target_include_directories(user_management_tests
@@ -122,6 +128,7 @@ target_link_libraries(user_management_tests
     PRIVATE
     pqxx
     ${OPENSSL_LIBRARIES}
+    Boost::system
     Threads::Threads
     sodium
     hiredis
