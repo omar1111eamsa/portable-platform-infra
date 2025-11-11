@@ -35,24 +35,12 @@ jobs:
       - name: Prepare Docker secrets
         run: |
           mkdir -p config/secrets
-          cat <<'EOF' > config/secrets/google_client_id
-          ci-google-client-id
-EOF
-          cat <<'EOF' > config/secrets/google_client_secret
-          ci-google-client-secret
-EOF
-          cat <<'EOF' > config/secrets/github_client_id
-          ci-github-client-id
-EOF
-          cat <<'EOF' > config/secrets/github_client_secret
-          ci-github-client-secret
-EOF
-          cat <<'EOF' > config/secrets/linkedin_client_id
-          ci-linkedin-client-id
-EOF
-          cat <<'EOF' > config/secrets/linkedin_client_secret
-          ci-linkedin-client-secret
-EOF
+          printf 'ci-google-client-id\n' > config/secrets/google_client_id
+          printf 'ci-google-client-secret\n' > config/secrets/google_client_secret
+          printf 'ci-github-client-id\n' > config/secrets/github_client_id
+          printf 'ci-github-client-secret\n' > config/secrets/github_client_secret
+          printf 'ci-linkedin-client-id\n' > config/secrets/linkedin_client_id
+          printf 'ci-linkedin-client-secret\n' > config/secrets/linkedin_client_secret
 
       - name: Configure
         run: cmake -S . -B build
