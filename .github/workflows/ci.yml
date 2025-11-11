@@ -32,6 +32,28 @@ jobs:
             jq \
             bc
 
+      - name: Prepare Docker secrets
+        run: |
+          mkdir -p config/secrets
+          cat <<'EOF' > config/secrets/google_client_id
+ci-google-client-id
+EOF
+          cat <<'EOF' > config/secrets/google_client_secret
+ci-google-client-secret
+EOF
+          cat <<'EOF' > config/secrets/github_client_id
+ci-github-client-id
+EOF
+          cat <<'EOF' > config/secrets/github_client_secret
+ci-github-client-secret
+EOF
+          cat <<'EOF' > config/secrets/linkedin_client_id
+ci-linkedin-client-id
+EOF
+          cat <<'EOF' > config/secrets/linkedin_client_secret
+ci-linkedin-client-secret
+EOF
+
       - name: Configure
         run: cmake -S . -B build
 
