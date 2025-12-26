@@ -1,0 +1,118 @@
+services:
+  postgres:
+    image: postgres:14
+    container_name: cqos-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cqos
+      # Increase connection limits for production optimization
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+
+  redis:
+    image: redis:7
+    container_name: cqos-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  user_service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: cqos-user-service
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: cqos
+      DB_USER: appuser
+      DB_PASSWORD: postgres
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_PRIVATE_PATH: /usr/local/bin/keys/private.pem
+      JWT_PUBLIC_PATH: /usr/local/bin/keys/public.pem
+      RATE_LIMIT_TESTMODE: "0"
+      RATE_LIMIT_PRO_PER_MIN: "100000"
+      RATE_LIMIT_PRO_PER_DAY: "10000000"
+      PERF_TEST: "${PERF_TEST:-0}"
+      # OAuth Provider Configuration (set these in your environment)
+      GOOGLE_CLIENT_ID_FILE: /run/secrets/google_client_id
+      GOOGLE_CLIENT_SECRET_FILE: /run/secrets/google_client_secret
+      GOOGLE_REDIRECT_URI: "${GOOGLE_REDIRECT_URI:-http://localhost:8080/auth/google/callback}"
+      GITHUB_CLIENT_ID_FILE: /run/secrets/github_client_id
+      GITHUB_CLIENT_SECRET_FILE: /run/secrets/github_client_secret
+      GITHUB_REDIRECT_URI: "${GITHUB_REDIRECT_URI:-http://localhost:8080/auth/github/callback}"
+      LINKEDIN_CLIENT_ID_FILE: /run/secrets/linkedin_client_id
+      LINKEDIN_CLIENT_SECRET_FILE: /run/secrets/linkedin_client_secret
+      LINKEDIN_REDIRECT_URI: "http://localhost:8080/auth/linkedin/callback"
+      # TRADINGVIEW_CLIENT_ID: "${TRADINGVIEW_CLIENT_ID:-}"
+      # TRADINGVIEW_CLIENT_SECRET: "${TRADINGVIEW_CLIENT_SECRET:-}"
+      # TRADINGVIEW_REDIRECT_URI: "${TRADINGVIEW_REDIRECT_URI:-http://localhost:8080/auth/tradingview/callback}"
+    restart: always
+    secrets:
+      - google_client_id
+      - google_client_secret
+      - github_client_id
+      - github_client_secret
+      - linkedin_client_id
+      - linkedin_client_secret
+
+  user_service_tests:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    entrypoint: ["/usr/local/bin/user_management_tests"]
+    environment:
+      UNIT_TESTING: "1"
+      TEST_KEYS_DIR: "/usr/local/bin/keys"
+
+  integration_tests:
+    image: python:3.11-slim
+    depends_on:
+      - user_service
+    working_dir: /workspace
+    entrypoint: ["python"]
+    command: ["tests/integration/test_api.py"]
+    environment:
+      SERVICE_BASE_URL: "http://user_service:8080"
+    volumes:
+      - ..:/workspace:ro
+
+volumes:
+  pg_data:
+  redis_data:
+
+secrets:
+  google_client_id:
+    file: ../config/secrets/google_client_id
+  google_client_secret:
+    file: ../config/secrets/google_client_secret
+  github_client_id:
+    file: ../config/secrets/github_client_id
+  github_client_secret:
+    file: ../config/secrets/github_client_secret
+  linkedin_client_id:
+    file: ../config/secrets/linkedin_client_id
+  linkedin_client_secret:
+    file: ../config/secrets/linkedin_client_secret
