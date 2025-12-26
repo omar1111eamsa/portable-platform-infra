@@ -1,0 +1,546 @@
+openapi: 3.0.3
+info:
+  title: CQOS User Management & Subscription Service
+  version: 1.0.0
+  description: Internal identity provider for MYAPP microservices.
+servers:
+  - url: http://localhost:8080
+paths:
+  /health:
+    get:
+      summary: Health check
+      tags: [Observability]
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  /internal/auth/register:
+    post:
+      summary: Register a new user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistrationRequest'
+      responses:
+        '201':
+          description: User successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRegistrationResponse'
+        '400':
+          description: Invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /internal/auth/login:
+    post:
+      summary: Authenticate credentials and mint a JWT
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login succeeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitResponse'
+  /internal/auth/validate-token:
+    post:
+      summary: Validate a JWT and retrieve permissions snapshot
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenValidationRequest'
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionsEnvelope'
+        '401':
+          description: Token is invalid or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitResponse'
+  /internal/users/{user_id}/permissions:
+    get:
+      summary: Retrieve permissions and quota details for a user
+      tags: [Permissions]
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: UUID of the user (matches the `sub` claim in JWTs)
+      responses:
+        '200':
+          description: Permissions snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionsEnvelope'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitResponse'
+  /internal/users/{email}/subscription:
+    put:
+      summary: Upsert subscription details for a user (internal tooling)
+      tags: [Subscriptions]
+      parameters:
+        - in: path
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionUpdateRequest'
+      responses:
+        '200':
+          description: Subscription updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitResponse'
+  /internal/users/{user_id}/subscription:
+    patch:
+      summary: Admin update subscription for a user
+      tags: [Subscriptions]
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionAdminUpdateRequest'
+      responses:
+        '200':
+          description: Subscription updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionAdminUpdateResponse'
+        '400':
+          description: Invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Unexpected failure while persisting the subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /internal/users/{user_id}/role:
+    patch:
+      summary: Update a user's role and active status
+      tags: [Users]
+      parameters:
+      
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleUpdateRequest'
+      responses:
+        '200':
+          description: Role updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleUpdateResponse'
+        '400':
+          description: Invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Unexpected failure while persisting the user record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /internal/metrics:
+    get:
+      summary: Retrieve aggregated internal metrics
+      tags: [Observability]
+      responses:
+        '200':
+          description: Metrics snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsSnapshot'
+components:
+  schemas:
+    UserRegistrationRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        full_name:
+          type: string
+        role:
+          type: string
+          enum: [user, admin, support, marketing]
+          default: user
+        provider_subscription_id:
+          type: string
+    UserRegistrationResponse:
+      type: object
+      required: [success, user_id, email, role]
+      properties:
+        success:
+          type: boolean
+          example: true
+        user_id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+    LoginResponse:
+      type: object
+      required: [success, token, user_id, role, plan]
+      properties:
+        success:
+          type: boolean
+        token:
+          type: string
+          description: RSA-signed JWT (RS256)
+        user_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+        plan:
+          type: string
+          description: Normalized plan name (FREE, PRO, ELITE)
+    TokenValidationRequest:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+          description: JWT issued by the login endpoint
+    PermissionsEnvelope:
+      type: object
+      required: [valid, user_id, email, role, is_active, permissions, quotas, plan_name, plan_status]
+      properties:
+        valid:
+          type: boolean
+          example: true
+        user_id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+        is_active:
+          type: boolean
+        permissions:
+          $ref: '#/components/schemas/Permissions'
+        quotas:
+          $ref: '#/components/schemas/Quotas'
+        plan_name:
+          type: string
+          enum: [FREE, PRO, ELITE]
+        plan_status:
+          type: string
+          enum: [active, past_due, canceled]
+        subscription:
+          $ref: '#/components/schemas/SubscriptionSummary'
+    Permissions:
+      type: object
+      properties:
+        can_backtest:
+          type: boolean
+        can_use_api:
+          type: boolean
+        is_admin:
+          type: boolean
+    Quotas:
+      type: object
+      properties:
+        backtests_per_day_limit:
+          type: integer
+        backtests_used_today:
+          type: integer
+        backtests_remaining_today:
+          type: integer
+        api_requests_per_hour_limit:
+          type: integer
+          nullable: true
+        quota_reset_at:
+          type: string
+          format: date-time
+          nullable: true
+    SubscriptionSummary:
+      type: object
+      properties:
+        plan_name:
+          type: string
+        status:
+          type: string
+        backtests_per_day_limit:
+          type: integer
+        backtests_used_today:
+          type: integer
+        api_requests_per_hour_limit:
+          type: integer
+          nullable: true
+        quota_reset_at:
+          type: string
+          format: date-time
+          nullable: true
+    SubscriptionUpdateRequest:
+      type: object
+      required: [plan_type]
+      properties:
+        plan_type:
+          type: integer
+          description: Numeric legacy code (0/1=FREE, 89=PRO, 199=ELITE)
+        payment_reference:
+          type: string
+    SubscriptionAdminUpdateRequest:
+      type: object
+      properties:
+        plan_type:
+          type: integer
+          description: Numeric legacy code (0/1=FREE, 89=PRO, 199=ELITE)
+        plan_name:
+          type: string
+          description: Normalized plan name (FREE, PRO, ELITE)
+        status:
+          type: string
+          enum: [active, past_due, canceled]
+        backtests_per_day_limit:
+          type: integer
+          minimum: 1
+        api_requests_per_hour_limit:
+          type: integer
+          nullable: true
+          minimum: 0
+        reset_backtests:
+          type: boolean
+          default: false
+        provider_reference:
+          type: string
+          nullable: true
+      minProperties: 1
+    SubscriptionAdminUpdateResponse:
+      type: object
+      required: [user_id, email, subscription]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        subscription:
+          $ref: '#/components/schemas/SubscriptionSnapshot'
+        permissions:
+          $ref: '#/components/schemas/PermissionsEnvelope'
+          nullable: true
+    SubscriptionSnapshot:
+      type: object
+      required: [plan_name, status, backtests_per_day_limit, backtests_used_today]
+      properties:
+        plan_name:
+          type: string
+        status:
+          type: string
+        backtests_per_day_limit:
+          type: integer
+        backtests_used_today:
+          type: integer
+        api_requests_per_hour_limit:
+          type: integer
+          nullable: true
+    RoleUpdateRequest:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [user, admin, support, marketing]
+        is_active:
+          type: boolean
+      minProperties: 1
+    RoleUpdateResponse:
+      type: object
+      required: [user_id, email, role, is_active]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+        is_active:
+          type: boolean
+    MetricsSnapshot:
+      type: object
+      additionalProperties:
+        type: object
+        properties:
+          requests:
+            type: integer
+          successes:
+            type: integer
+          failures:
+            type: integer
+          avg_latency_ms:
+            type: number
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+        detail:
+          type: string
+    SuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Subscription updated
+    RateLimitResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Too Many Requests
+        reason:
+          type: string
+          example: rate_limit_minute

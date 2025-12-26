@@ -1,0 +1,42 @@
+# Build artifacts
+/build/
+/Testing/
+user_management_service/build
+# CMake cache
+/CMakeFiles/
+/CMakeCache.txt
+/cmake_install.cmake
+
+# Generated binaries
+/user_management_service
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Logs and coverage
+*.log
+/coverage/
+coverage-build/
+
+# IDE / Editor settings
+.idea/
+.vscode/
+*.swp
+
+# Docker artifacts
+docker/*.log
+
+# RSA keys (generated locally)
+/keys/private.pem
+/keys/public.pem
+
+# Local configuration overrides
+config/service_config.json
+config/secrets/*
+!config/secrets/README.md
+
+# Misc
+*.DS_Store
+
+test
