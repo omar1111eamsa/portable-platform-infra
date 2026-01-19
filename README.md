@@ -43,22 +43,39 @@ All secrets are expected to be injected at runtime via:
 
 portable-platform/
 ├── deploy/
+
 │   ├── local/              # Local development deployments
+
 │   └── prod/               # Production deployment definitions
+
 │
+
 ├── infra/
+
 │   ├── consul/             # Service discovery configuration
+
 │   ├── postgres/           # Database infrastructure
+
 │   └── redis/              # Cache & rate-limiting infrastructure
+
 │
+
 ├── services/
+
 │   ├── api-gateway/        # Deployment wiring for API Gateway
+
 │   └── user-service/       # Deployment wiring for User Service
+
 │
+
 ├── scripts/                # Operational and helper scripts
+
 │
+
 ├── .github/
+
 │   └── workflows/          # CI/CD pipelines (build & deploy)
+
 │
 └── README.md
 
