@@ -1,0 +1,135 @@
+services:
+  consul:
+    image: hashicorp/consul:1.17
+    command: ["agent", "-server", "-bootstrap-expect=1", "-ui", "-client=0.0.0.0", "-data-dir=/consul/data"]
+    environment:
+      CONSUL_BIND_INTERFACE: eth0
+    volumes:
+      - consul_data:/consul/data
+    networks: [backend]
+    healthcheck:
+      test: ["CMD", "consul", "info"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    security_opt: [ "no-new-privileges:true" ]
+    cap_drop: [ "ALL" ]
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: userdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d userdb"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    security_opt: [ "no-new-privileges:true" ]
+    cap_drop: [ "ALL" ]
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks: [backend]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    security_opt: [ "no-new-privileges:true" ]
+    cap_drop: [ "ALL" ]
+
+  user-service:
+    image: GCP_REGISTRY/user-service:1.0.0
+    environment:
+      # Core
+      SPRING_APPLICATION_NAME: user-service
+      SERVER_PORT: "8081"
+
+      # DB
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/userdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+
+      # Consul 
+      SPRING_CLOUD_CONSUL_HOST: consul
+      SPRING_CLOUD_CONSUL_PORT: "8500"
+      SPRING_CLOUD_CONSUL_ENABLED: "true"
+      SPRING_CLOUD_CONSUL_DISCOVERY_ENABLED: "true"
+      SPRING_CLOUD_CONSUL_DISCOVERY_REGISTER: "true"
+      SPRING_CLOUD_SERVICE_REGISTRY_AUTO_REGISTRATION_ENABLED: "true"
+      SPRING_CLOUD_CONSUL_DISCOVERY_HEALTH_CHECK_PATH: /actuator/health
+
+      # Avoid Consul marking DOWN if RabbitMQ is not deployed yet:
+      MANAGEMENT_HEALTH_RABBIT_ENABLED: "false"
+      MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: "always"
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info"
+
+      # Secrets should be injected from the VM/secret manager in real prod:
+      SECURITY_JWT_SECRET_KEY: "SECRET_PROD"
+      SECURITY_JWT_EXPIRATION_TIME: "3600000"
+    depends_on:
+      consul:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [backend]
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt: [ "no-new-privileges:true" ]
+    cap_drop: [ "ALL" ]
+
+  api-gateway:
+    image: GCP_REGISTRY/api-gateway:1.0.0
+    environment:
+      SPRING_APPLICATION_NAME: api-gateway
+      SERVER_PORT: "8888"
+
+      # Consul for discovery/routing
+      SPRING_CLOUD_CONSUL_HOST: consul
+      SPRING_CLOUD_CONSUL_PORT: "8500"
+      SPRING_CLOUD_CONSUL_DISCOVERY_ENABLED: "true"
+      SPRING_CLOUD_CONSUL_DISCOVERY_REGISTER: "true"
+
+      # CORS
+      FRONTEND_ORIGIN: "https://YOUR_FRONTEND_DOMAIN"
+
+      SECURITY_JWT_SECRET_KEY: "CHANGE_ME_IN_PROD"
+      SECURITY_JWT_EXPIRATION_TIME: "3600000"
+    depends_on:
+      consul:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+    networks: [backend]
+    ports:
+      - "8888:8888"   # ONLY public entry for backend VM
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt: [ "no-new-privileges:true" ]
+    cap_drop: [ "ALL" ]
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  pg_data:
+  redis_data:
+  consul_data:
