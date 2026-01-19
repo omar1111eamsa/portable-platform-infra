@@ -41,7 +41,9 @@ All secrets are expected to be injected at runtime via:
 
 ## Repository Structure
 
+
 portable-platform/
+
 ├── deploy/
 
 │   ├── local/                    # Local development deployments
