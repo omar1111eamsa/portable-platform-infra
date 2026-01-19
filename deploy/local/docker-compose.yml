@@ -1,2 +1,139 @@
-version: "3.9"
-services: {}
+
+name: backend-local
+
+services:
+  consul:
+    image: hashicorp/consul:1.17
+    container_name: consul
+    command: ["agent", "-server", "-bootstrap-expect=1", "-ui", "-client=0.0.0.0", "-data-dir=/consul/data"]
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+    volumes:
+      - consul_data:/consul/data
+    networks:
+      - backend-net
+    healthcheck:
+      test: ["CMD", "consul", "info"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: userdb
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-userdb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - backend-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-userdb}"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - backend-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  user-service:
+    container_name: user-service
+    build:
+      context: ../../../USER-SERVICE
+      dockerfile: dockerfile
+    environment:
+      SPRING_APPLICATION_NAME: user-service
+      SERVER_PORT: "8081"
+
+      # DB
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-userdb}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+
+      # Consul
+      SPRING_CLOUD_CONSUL_HOST: consul
+      SPRING_CLOUD_CONSUL_PORT: "8500"
+      SPRING_CLOUD_CONSUL_ENABLED: "true"
+      SPRING_CLOUD_CONSUL_DISCOVERY_ENABLED: "true"
+      SPRING_CLOUD_CONSUL_DISCOVERY_REGISTER: "true"
+      SPRING_CLOUD_SERVICE_REGISTRY_AUTO_REGISTRATION_ENABLED: "true"
+      SPRING_CLOUD_CONSUL_DISCOVERY_HEALTH_CHECK_PATH: /actuator/health
+
+      # If RabbitMQ not running locally
+      MANAGEMENT_HEALTH_RABBIT_ENABLED: "false"
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info"
+    depends_on:
+      consul:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    networks:
+      - backend-net
+    restart: unless-stopped
+
+  api-gateway:
+    container_name: api-gateway
+    build:
+      context: ../../../API-GATEWAY
+      dockerfile: dockerfile
+    environment:
+      SPRING_APPLICATION_NAME: api-gateway
+      SERVER_PORT: "8888"
+
+      # Consul
+      SPRING_CLOUD_CONSUL_HOST: consul
+      SPRING_CLOUD_CONSUL_PORT: "8500"
+      SPRING_CLOUD_CONSUL_DISCOVERY_ENABLED: "true"
+      SPRING_CLOUD_CONSUL_DISCOVERY_REGISTER: "true"
+
+      # Redis 
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: "6379"
+
+      # CORS (local)
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:3000}
+
+    depends_on:
+      consul:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+    ports:
+      - "8888:8888"
+    networks:
+      - backend-net
+    restart: unless-stopped
+
+networks:
+  backend-net:
+    driver: bridge
+
+volumes:
+  pg_data:
+  redis_data:
+  consul_data:
+
