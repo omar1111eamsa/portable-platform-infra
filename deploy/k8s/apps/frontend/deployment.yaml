@@ -15,11 +15,17 @@ spec:
       labels:
         app: frontend
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: backend-vm
+      tolerations:
+        - key: node.kubernetes.io/disk-pressure
+          operator: Exists
+          effect: NoSchedule
       imagePullSecrets:
         - name: ghcr-secret
       containers:
         - name: frontend
-          image: ghcr.io/myapp/front-end:425f02e840333ca5c8b339735930e040aad998ae
+          image: ghcr.io/myapp/front-end:425f02e
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
