@@ -19,7 +19,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: predictions-intake
-          image: ghcr.io/myapp/backend-predictions-intake-service:test-ci-predictions
+          image: ghcr.io/myapp/backend-predictions-intake-service:dd9383d68d5f0f765eb4bab581c9bd8c4236d667
           imagePullPolicy: Always
           ports:
             - containerPort: 8082
