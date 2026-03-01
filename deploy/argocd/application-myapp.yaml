@@ -1,0 +1,23 @@
+# ArgoCD Application — MyApp
+# Branche suivie : test-argocd (pour tests, pas main)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: myapp
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/MyApp/portable-platform-infra.git
+    targetRevision: test-argocd
+    path: deploy/k8s
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: myapp
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true

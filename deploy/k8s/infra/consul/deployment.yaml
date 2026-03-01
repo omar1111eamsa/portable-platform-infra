@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consul
+  namespace: myapp
+  labels:
+    app: consul
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: consul
+  template:
+    metadata:
+      labels:
+        app: consul
+    spec:
+      containers:
+        - name: consul
+          image: hashicorp/consul:1.17
+          args:
+            - agent
+            - -server
+            - -bootstrap-expect=1
+            - -ui
+            - -client=0.0.0.0
+            - -data-dir=/consul/data
+          ports:
+            - containerPort: 8500
+              name: http
+            - containerPort: 8600
+              protocol: UDP
+              name: dns
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "300m"
+          livenessProbe:
+            exec:
+              command:
+                - consul
+                - info
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - consul
+                - info
+            initialDelaySeconds: 10
+            periodSeconds: 5
