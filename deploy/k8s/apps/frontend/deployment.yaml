@@ -19,7 +19,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: frontend
-          image: ghcr.io/myapp/front-end:8157188292370ec7b5ac67c71e471398ed98fb78
+          image: ghcr.io/myapp/front-end:test-ci-frontend
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
@@ -27,7 +27,7 @@ spec:
             - name: NODE_ENV
               value: production
             - name: NEXT_PUBLIC_API_URL
-              value: "http://api-gateway:8888"
+              value: "/api"
           resources:
             requests:
               memory: "128Mi"
