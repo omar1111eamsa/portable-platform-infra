@@ -19,7 +19,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: crm-client
-          image: ghcr.io/myapp/backend-crm-client:cb8d161dd5b546c1d7ace34f927c861aee22d71e
+          image: ghcr.io/myapp/backend-crm-client:28bf3d4
           imagePullPolicy: Always
           ports:
             - containerPort: 8083
