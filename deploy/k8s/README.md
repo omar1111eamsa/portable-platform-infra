@@ -1,23 +1,27 @@
 # Kubernetes Manifests — MyApp
 
-Manifests Kubernetes pour déploiement GitOps (ArgoCD).
+Manifests Kubernetes pour déploiement GitOps (ArgoCD).  
+Compatible avec réinitialisation des VMs : ordre correct, PVC postgres, Ingress IP, CronJobs disque.
 
 ## Structure
 
 ```
 k8s/
 ├── base/              # Namespace myapp
-│   ├── namespace.yaml
-│   └── kustomization.yaml
-├── infra/             # PostgreSQL, Redis, Consul
+├── infra/             # PostgreSQL, Redis, Consul, RabbitMQ
 │   ├── postgres/      # Secret, PVC, Deployment, Service
 │   ├── redis/         # Deployment, Service
 │   ├── consul/        # Deployment, Service
+│   ├── rabbitmq/      # Deployment, Service
 │   └── kustomization.yaml
-└── apps/              # Applications
-    ├── api-gateway/   # Deployment, Service, Ingress
-    ├── frontend/      # Deployment, Service, Ingress
-    └── kustomization.yaml
+├── apps/              # API Gateway, Frontend, User, Payment, CRM, etc.
+│   ├── api-gateway/
+│   ├── frontend/
+│   ├── ingress-ip.yaml  # Accès par IP (http://203.0.113.10)
+│   └── kustomization.yaml
+├── cronjobs/          # Nettoyage disque (backend-vm, frontend-vm)
+├── scripts/           # clean-node-disk.sh (manuel)
+└── DEPLOYMENT.md      # Prérequis et ordre de déploiement
 ```
 
 ## Déploiement
@@ -42,13 +46,13 @@ ssh -A -i ~/.ssh/myapp_vms -J hodeconlimited@203.0.113.10 hodeconlimited@10.0.0.
   "sudo k3s kubectl apply -k -" < <(kubectl kustomize deploy/k8s/base)
 ```
 
-Ou copier les manifests et appliquer :
-
+Ou en une fois :
 ```bash
-kubectl apply -k deploy/k8s/base/
-kubectl apply -k deploy/k8s/infra/
-kubectl apply -k deploy/k8s/apps/
+kubectl apply -k deploy/k8s/
 ```
+
+Voir [DEPLOYMENT.md](DEPLOYMENT.md) pour les prérequis (ghcr-secret, noms de nœuds).
+Voir [CHECKLIST.md](CHECKLIST.md) pour la liste des configurations manquantes (DevOps + développeurs).
 
 ### ArgoCD
 
@@ -67,6 +71,30 @@ Configurer une Application ArgoCD pointant vers ce dépôt, path `deploy/k8s/`.
 - App : `app.localhost` → frontend:3000
 
 Adapter les hosts dans les fichiers Ingress selon ton domaine.
+
+## Dépannage : Pression disque (ImagePullBackOff, Evicted)
+
+Si des pods sont `Evicted` avec le motif `ephemeral-storage`, libérer de l'espace sur chaque nœud :
+
+```bash
+# Depuis ta machine (remplacer user et IP par tes identifiants)
+for node in 10.0.0.11 10.0.0.12; do
+  ssh -A -i ~/.ssh/myapp_vms -J hodeconlimited@203.0.113.10 hodeconlimited@$node \
+    'sudo bash -s' < deploy/k8s/scripts/clean-node-disk.sh
+done
+```
+
+Ou manuellement sur chaque VM :
+
+```bash
+sudo bash deploy/k8s/scripts/clean-node-disk.sh
+```
+
+Puis supprimer les pods éjectés et laisser les ReplicaSets recréer :
+
+```bash
+kubectl delete pods -n myapp --field-selector=status.phase=Failed
+```
 
 ## Sécurité
 

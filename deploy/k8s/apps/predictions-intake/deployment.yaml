@@ -6,7 +6,7 @@ metadata:
   labels:
     app: predictions-intake
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: predictions-intake
@@ -15,12 +15,30 @@ spec:
       labels:
         app: predictions-intake
     spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: predictions-intake
       imagePullSecrets:
         - name: ghcr-secret
       containers:
         - name: predictions-intake
           image: ghcr.io/myapp/backend-predictions-intake-service:3678d69
           imagePullPolicy: Always
+          env:
+            - name: SPRING_CLOUD_CONSUL_HOST
+              value: consul
+            - name: SPRING_CLOUD_CONSUL_PORT
+              value: "8500"
+            - name: SPRING_CLOUD_CONSUL_DISCOVERY_ENABLED
+              value: "true"
+            - name: SPRING_CLOUD_CONSUL_DISCOVERY_REGISTER
+              value: "true"
+            - name: SPRING_CLOUD_CONSUL_DISCOVERY_SERVICE_NAME
+              value: prediction-intake-service
           ports:
             - containerPort: 8082
           resources:

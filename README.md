@@ -2,82 +2,70 @@
 
 ## Overview
 
-This repository is the **central infrastructure and deployment control plane** for the backend services of the platform.  
-It is responsible for **orchestrating, configuring, and deploying backend microservices and supporting infrastructure** in a secure, reproducible, and scalable way.
+This repository is the **central infrastructure and deployment control plane** for the MyApp platform.  
+It orchestrates, configures, and deploys backend microservices and supporting infrastructure in a secure, reproducible, and scalable way.
 
-**Application source code is intentionally not stored here.**  
-Each backend service (e.g. user-service, api-gateway) lives in its own dedicated repository.
-
----
-
-## Responsibilities of This Repository
-
-This repository manages **how backend services run**, not **how they are implemented**.
-
-It provides:
-- Container orchestration (Docker & Docker Compose)
-- Service-to-service infrastructure (Consul, Redis, PostgreSQL)
-- Environment-specific deployment definitions (local / production)
-- CI/CD deployment workflows
-- Operational scripts for backend environments
-
----
-
-## What This Repository Does NOT Contain
-
-For clarity and security, this repository does **not** contain:
-- Application business logic
-- Backend service source code
-- Frontend code
-- Secrets, credentials, or private keys
-- Environment-specific sensitive values
-
-All secrets are expected to be injected at runtime via:
-- CI/CD secrets
-- Environment variables
-- Secure secret managers (future)
+**Application source code is not stored here.**  
+Each backend service (user-management, api-gateway, payment-service, etc.) lives in its own dedicated repository.
 
 ---
 
 ## Repository Structure
 
-
-portable-platform/
-
-├── deploy/
-
-│   ├── local/                    # Local development deployments
-
-│   └── prod/                     # Production deployment definitions
-
-│
-
-├── infra/
-
-│   ├── consul/                   # Service discovery configuration
-
-│   ├── postgres/                 # Database infrastructure
-
-│   └── redis/                    # Cache & rate-limiting infrastructure
-
-│
-
-├── services/
-
-│   ├── api-gateway/              # Deployment wiring for API Gateway
-
-│   └── user-service/             # Deployment wiring for User Service
-
-│
-
-├── scripts/                      # Operational and helper scripts
-
-│
-
-├── .github/
-
-│   └── workflows/                # CI/CD pipelines (build & deploy)
-
-│
+```
+portable-platform-infra/
+├── ansible/                    # Ansible roles (k3s server setup)
+│   └── roles/k3s-server/
+├── deploy/                     # Deployment definitions
+│   ├── k8s/                   # Kubernetes manifests (k3s)
+│   │   ├── base/              # Namespace
+│   │   ├── infra/             # Postgres, Redis, Consul, RabbitMQ
+│   │   ├── apps/              # api-gateway, frontend, user-management, etc.
+│   │   ├── cronjobs/          # Disk cleanup, evicted pods cleanup
+│   │   ├── DEPLOYMENT.md
+│   │   ├── CHECKLIST.md
+│   │   └── README.md
+│   ├── local/                 # Docker Compose (local dev)
+│   ├── prod/                  # Docker Compose (production)
+│   ├── docs/                  # Architecture documentation (.tex, etc.)
+│   └── argocd/                # ArgoCD application (optional)
+├── .github/workflows/         # CI/CD pipelines
+├── .env.example
 └── README.md
+```
 
+---
+
+## Responsibilities
+
+- **Kubernetes (k3s)** : manifests, Ingress, CronJobs
+- **Infrastructure** : PostgreSQL, Redis, Consul, RabbitMQ
+- **CI/CD** : deployment workflows
+- **Documentation** : architecture, deployment guide, checklist
+
+---
+
+## Deployment (k8s)
+
+```bash
+# Prérequis : ghcr-secret, KUBECONFIG pointant vers le cluster
+kubectl apply -k deploy/k8s/
+```
+
+See [deploy/k8s/DEPLOYMENT.md](deploy/k8s/DEPLOYMENT.md) for prerequisites and order.
+
+See [deploy/k8s/CHECKLIST.md](deploy/k8s/CHECKLIST.md) for missing configurations (DevOps + devs).
+
+---
+
+## Security
+
+- No secrets committed to the repository
+- Secrets injected at runtime (ghcr-secret, postgres-credentials, etc.)
+- Backend services internal; only API Gateway + Frontend exposed via Ingress
+
+---
+
+## License
+
+Proprietary — internal platform management.

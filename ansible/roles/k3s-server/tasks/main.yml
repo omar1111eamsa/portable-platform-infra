@@ -1,0 +1,101 @@
+---
+# Rôle k3s-server — Installer k3s en mode server (master)
+# S'exécute sur backend_vm
+
+- name: Check if curl is installed
+  ansible.builtin.command: which curl
+  register: curl_check
+  changed_when: false
+  failed_when: false
+
+- name: Install prerequisites (curl)
+  ansible.builtin.apt:
+    name: curl
+    state: present
+    update_cache: no
+  become: true
+  when: curl_check.rc != 0
+
+- name: Download k3s binary on controller (backend has slow/unreliable GitHub access)
+  ansible.builtin.get_url:
+    url: "https://github.com/k3s-io/k3s/releases/download/{{ k3s_version }}/k3s"
+    dest: "/tmp/k3s-{{ k3s_version }}"
+    mode: "0755"
+  delegate_to: localhost
+  run_once: true
+  become: false
+
+- name: Copy k3s binary to backend
+  ansible.builtin.copy:
+    src: "/tmp/k3s-{{ k3s_version }}"
+    dest: /usr/local/bin/k3s
+    mode: "0755"
+  become: true
+
+- name: Download k3s install script on controller
+  ansible.builtin.get_url:
+    url: https://get.k3s.io
+    dest: "/tmp/install-k3s.sh"
+    mode: "0755"
+  delegate_to: localhost
+  run_once: true
+  become: false
+
+- name: Copy install script to backend
+  ansible.builtin.copy:
+    src: "/tmp/install-k3s.sh"
+    dest: /tmp/install-k3s.sh
+    mode: "0755"
+  become: true
+
+- name: Install k3s systemd service (skip binary download)
+  ansible.builtin.shell: INSTALL_K3S_SKIP_DOWNLOAD=true /tmp/install-k3s.sh server --write-kubeconfig-mode 644
+  args:
+    creates: /etc/systemd/system/k3s.service
+  become: true
+  register: k3s_install
+
+- name: Check if k3s binary exists
+  ansible.builtin.stat:
+    path: /usr/local/bin/k3s
+  register: k3s_binary
+  become: true
+
+- name: Check if k3s systemd service exists
+  ansible.builtin.stat:
+    path: /etc/systemd/system/k3s.service
+  register: k3s_service_file
+  become: true
+
+- name: Create k3s systemd service (fallback if install script did not)
+  ansible.builtin.template:
+    src: k3s.service.j2
+    dest: /etc/systemd/system/k3s.service
+  become: true
+  when: k3s_binary.stat.exists and not k3s_service_file.stat.exists
+
+- name: Run systemctl daemon-reload and start k3s
+  ansible.builtin.shell: |
+    systemctl daemon-reload
+    systemctl start k3s 2>/dev/null || systemctl start k3s-server 2>/dev/null || (nohup /usr/local/bin/k3s server >/var/log/k3s.log 2>&1 &)
+  become: true
+  args:
+    executable: /bin/bash
+
+- name: Wait for k3s to be ready
+  ansible.builtin.wait_for:
+    path: /etc/rancher/k3s/k3s.yaml
+    state: present
+    timeout: 600
+  register: k3s_ready
+
+- name: Get node token for agents
+  ansible.builtin.slurp:
+    src: /var/lib/rancher/k3s/server/node-token
+  register: k3s_token
+  become: true
+
+- name: Store token and version for agents (facts)
+  ansible.builtin.set_fact:
+    k3s_node_token: "{{ k3s_token.content | b64decode | trim }}"
+    k3s_version: "{{ k3s_version }}"

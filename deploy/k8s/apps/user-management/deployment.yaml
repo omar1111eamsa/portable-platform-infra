@@ -6,7 +6,7 @@ metadata:
   labels:
     app: user-management
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: user-management
@@ -15,6 +15,13 @@ spec:
       labels:
         app: user-management
     spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: user-management
       imagePullSecrets:
         - name: ghcr-secret
       containers:
@@ -36,6 +43,8 @@ spec:
               value: "true"
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_REGISTER
               value: "true"
+            - name: SPRING_CLOUD_CONSUL_DISCOVERY_SERVICE_NAME
+              value: user-service
             - name: SPRING_DATASOURCE_URL
               value: jdbc:postgresql://postgres:5432/userdb
             - name: SPRING_DATASOURCE_USERNAME

@@ -6,7 +6,7 @@ metadata:
   labels:
     app: chatbot
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: chatbot
@@ -15,6 +15,13 @@ spec:
       labels:
         app: chatbot
     spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: chatbot
       imagePullSecrets:
         - name: ghcr-secret
       containers:

@@ -12,3 +12,5 @@ resources:
   - redis/service.yaml
   - consul/deployment.yaml
   - consul/service.yaml
+  - rabbitmq/deployment.yaml
+  - rabbitmq/service.yaml

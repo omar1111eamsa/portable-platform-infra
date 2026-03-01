@@ -1,0 +1,45 @@
+# CronJob: libère l'espace disque sur frontend-vm (images, containers arrêtés)
+# S'exécute toutes les 30 minutes (15 et 45 pour éviter chevauchement avec backend)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: clean-disk-frontend
+  namespace: myapp
+spec:
+  schedule: "15,45 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          nodeSelector:
+            kubernetes.io/hostname: frontend-vm
+          tolerations:
+            - key: node.kubernetes.io/disk-pressure
+              operator: Exists
+              effect: NoSchedule
+          restartPolicy: OnFailure
+          containers:
+            - name: clean-disk
+              image: alpine:3.19
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.19/community cri-tools
+                  export CRI_RUNTIME_ENDPOINT=unix:///host/run/k3s/containerd/containerd.sock
+                  echo "=== Cleanup frontend-vm $(date) ==="
+                  crictl rmi --prune 2>/dev/null || true
+                  crictl rmp -a 2>/dev/null || true
+                  echo "Done."
+              volumeMounts:
+                - name: containerd-socket
+                  mountPath: /host/run/k3s
+                  readOnly: true
+          volumes:
+            - name: containerd-socket
+              hostPath:
+                path: /run/k3s
+                type: Directory

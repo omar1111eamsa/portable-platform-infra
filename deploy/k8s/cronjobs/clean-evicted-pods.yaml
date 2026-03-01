@@ -1,0 +1,30 @@
+# CronJob: supprime les pods evicted (status.phase=Failed)
+# Libère de l'espace dans etcd et garde "kubectl get pods" lisible
+# S'exécute toutes les 30 minutes
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: clean-evicted-pods
+  namespace: myapp
+spec:
+  schedule: "*/30 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: clean-evicted-pods
+          restartPolicy: OnFailure
+          containers:
+            - name: kubectl
+              image: bitnami/kubectl:latest
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  echo "=== Cleanup evicted pods $(date) ==="
+                  kubectl delete pods --field-selector=status.phase=Failed -n myapp --ignore-not-found=true
+                  kubectl delete pods --field-selector=status.phase=Succeeded -n myapp --ignore-not-found=true
+                  echo "Done."

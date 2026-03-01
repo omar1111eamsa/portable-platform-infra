@@ -28,3 +28,4 @@ resources:
   - kpi-dashboard/deployment.yaml
   - kpi-dashboard/service.yaml
   - kpi-dashboard/ingress.yaml
+  - ingress-ip.yaml

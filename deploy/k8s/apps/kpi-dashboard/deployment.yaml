@@ -6,7 +6,7 @@ metadata:
   labels:
     app: kpi-dashboard
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: kpi-dashboard
@@ -15,12 +15,30 @@ spec:
       labels:
         app: kpi-dashboard
     spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: kpi-dashboard
       imagePullSecrets:
         - name: ghcr-secret
       containers:
         - name: kpi-dashboard
           image: ghcr.io/myapp/backend-kpi-dashboard-notifications:test-ci-kpi
           imagePullPolicy: Always
+          env:
+            - name: SPRING_CLOUD_CONSUL_HOST
+              value: consul
+            - name: SPRING_CLOUD_CONSUL_PORT
+              value: "8500"
+            - name: SPRING_CLOUD_CONSUL_DISCOVERY_ENABLED
+              value: "true"
+            - name: SPRING_CLOUD_CONSUL_DISCOVERY_REGISTER
+              value: "true"
+            - name: SPRING_CLOUD_CONSUL_DISCOVERY_SERVICE_NAME
+              value: kpi-service
           ports:
             - containerPort: 8084
           resources:

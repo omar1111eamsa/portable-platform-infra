@@ -1,0 +1,33 @@
+# Ingress pour accès direct par IP (http://203.0.113.10) sans hostname
+# Complète les Ingress par host (api.localhost, app.localhost)
+# À utiliser quand les VMs sont réinitialisées et qu'on accède par IP
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-ip
+  namespace: myapp
+  labels:
+    app: ingress-ip
+  annotations:
+    # Traefik: match requests to IP or any host
+    traefik.ingress.kubernetes.io/router.priority: "1"
+spec:
+  ingressClassName: traefik
+  rules:
+    # Règle sans host = match toutes les requêtes (IP directe, etc.)
+    - http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 8888
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 3000
