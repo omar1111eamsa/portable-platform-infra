@@ -10,3 +10,9 @@ resources:
   - frontend/deployment.yaml
   - frontend/service.yaml
   - frontend/ingress.yaml
+  - user-management/deployment.yaml
+  - user-management/service.yaml
+  - user-management/ingress.yaml
+  - payment-service/deployment.yaml
+  - payment-service/service.yaml
+  - payment-service/ingress.yaml
