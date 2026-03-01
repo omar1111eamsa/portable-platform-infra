@@ -19,7 +19,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: api-gateway
-          image: ghcr.io/myapp/backend-api-gateway:test-ci-pipeline
+          image: ghcr.io/myapp/backend-api-gateway:7502155128e5dbd55dece3273cbc5ed2b77344cb
           imagePullPolicy: Always
           ports:
             - containerPort: 8888
