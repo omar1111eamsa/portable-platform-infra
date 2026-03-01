@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: crm-client
+  namespace: myapp
+  labels:
+    app: crm-client
+spec:
+  selector:
+    app: crm-client
+  ports:
+    - port: 8083
+      targetPort: 8888
+      name: http
+  type: ClusterIP

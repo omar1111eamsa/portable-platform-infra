@@ -16,3 +16,15 @@ resources:
   - payment-service/deployment.yaml
   - payment-service/service.yaml
   - payment-service/ingress.yaml
+  - crm-client/deployment.yaml
+  - crm-client/service.yaml
+  - crm-client/ingress.yaml
+  - predictions-intake/deployment.yaml
+  - predictions-intake/service.yaml
+  - predictions-intake/ingress.yaml
+  - chatbot/deployment.yaml
+  - chatbot/service.yaml
+  - chatbot/ingress.yaml
+  - kpi-dashboard/deployment.yaml
+  - kpi-dashboard/service.yaml
+  - kpi-dashboard/ingress.yaml

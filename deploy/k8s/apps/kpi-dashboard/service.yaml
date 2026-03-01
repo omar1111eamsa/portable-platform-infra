@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kpi-dashboard
+  namespace: myapp
+  labels:
+    app: kpi-dashboard
+spec:
+  selector:
+    app: kpi-dashboard
+  ports:
+    - port: 8084
+      targetPort: 8084
+      name: http
+  type: ClusterIP

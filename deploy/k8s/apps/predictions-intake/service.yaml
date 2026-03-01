@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: predictions-intake
+  namespace: myapp
+  labels:
+    app: predictions-intake
+spec:
+  selector:
+    app: predictions-intake
+  ports:
+    - port: 8082
+      targetPort: 8082
+      name: http
+  type: ClusterIP

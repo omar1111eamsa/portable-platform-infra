@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kpi-dashboard
+  namespace: myapp
+  labels:
+    app: kpi-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kpi-dashboard
+  template:
+    metadata:
+      labels:
+        app: kpi-dashboard
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: kpi-dashboard
+          image: ghcr.io/myapp/backend-kpi-dashboard-notifications:test-ci-kpi
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8084
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8084
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8084
+            initialDelaySeconds: 30
+            periodSeconds: 5
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000

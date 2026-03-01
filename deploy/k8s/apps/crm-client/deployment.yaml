@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crm-client
+  namespace: myapp
+  labels:
+    app: crm-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crm-client
+  template:
+    metadata:
+      labels:
+        app: crm-client
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: crm-client
+          image: ghcr.io/myapp/backend-crm-client:test-ci-crm
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8083
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8083
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8083
+            initialDelaySeconds: 30
+            periodSeconds: 5
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
