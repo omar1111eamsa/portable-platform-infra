@@ -85,6 +85,16 @@ spec:
                 secretKeyRef:
                   name: google-oauth-credentials
                   key: FRONTEND_URL
+            - name: SPRING_MAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mail-credentials
+                  key: SPRING_MAIL_USERNAME
+            - name: SPRING_MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mail-credentials
+                  key: SPRING_MAIL_PASSWORD
           resources:
             requests:
               memory: "384Mi"
