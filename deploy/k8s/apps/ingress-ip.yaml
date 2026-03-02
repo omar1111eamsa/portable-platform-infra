@@ -1,19 +1,20 @@
 # Ingress pour accès direct par IP (http://203.0.113.10) et ngrok
 # Complète les Ingress par host (api.localhost, app.localhost)
+# IMPORTANT: ingress-ip-api doit avoir priorité > ingress-ip-frontend pour que /api, /login, /oauth2
+# matchent avant le catch-all /
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-ip
+  name: ingress-ip-api
   namespace: myapp
   labels:
     app: ingress-ip
   annotations:
-    # Traefik: priorité haute pour que /api et /login matchent avant /
-    traefik.ingress.kubernetes.io/router.priority: "100"
+    traefik.ingress.kubernetes.io/router.priority: "200"
 spec:
   ingressClassName: traefik
   rules:
-    # Host ngrok (Google OAuth nécessite un domaine, pas une IP)
     - host: "example.ngrok-free.app"
       http:
         paths:
@@ -38,14 +39,6 @@ spec:
                 name: api-gateway
                 port:
                   number: 8888
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: frontend
-                port:
-                  number: 3000
-    # Sans host = accès par IP (203.0.113.10)
     - http:
         paths:
           - path: /api
@@ -69,6 +62,31 @@ spec:
                 name: api-gateway
                 port:
                   number: 8888
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-ip-frontend
+  namespace: myapp
+  labels:
+    app: ingress-ip
+  annotations:
+    traefik.ingress.kubernetes.io/router.priority: "100"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: "example.ngrok-free.app"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 3000
+    - http:
+        paths:
           - path: /
             pathType: Prefix
             backend:
