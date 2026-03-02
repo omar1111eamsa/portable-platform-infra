@@ -37,24 +37,33 @@ spec:
               value: /
           resources:
             requests:
-              memory: "256Mi"
+              memory: "384Mi"
               cpu: "200m"
             limits:
-              memory: "512Mi"
+              memory: "768Mi"
               cpu: "500m"
+          startupProbe:
+            exec:
+              command:
+                - rabbitmq-diagnostics
+                - check_running
+            initialDelaySeconds: 45
+            periodSeconds: 15
+            timeoutSeconds: 30
+            failureThreshold: 24
           livenessProbe:
             exec:
               command:
                 - rabbitmq-diagnostics
                 - check_running
-            initialDelaySeconds: 60
-            periodSeconds: 15
+            initialDelaySeconds: 0
+            periodSeconds: 30
             timeoutSeconds: 30
           readinessProbe:
             exec:
               command:
                 - rabbitmq-diagnostics
                 - check_running
-            initialDelaySeconds: 45
-            periodSeconds: 10
+            initialDelaySeconds: 0
+            periodSeconds: 15
             timeoutSeconds: 30

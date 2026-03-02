@@ -57,25 +57,43 @@ spec:
                 secretKeyRef:
                   name: postgres-credentials
                   key: POSTGRES_PASSWORD
+            - name: SPRING_RABBITMQ_HOST
+              value: rabbitmq
+            - name: SPRING_RABBITMQ_PORT
+              value: "5672"
+            - name: SPRING_RABBITMQ_USERNAME
+              value: guest
+            - name: SPRING_RABBITMQ_PASSWORD
+              value: guest
           resources:
             requests:
-              memory: "256Mi"
+              memory: "384Mi"
               cpu: "100m"
             limits:
-              memory: "512Mi"
+              memory: "768Mi"
               cpu: "500m"
-          livenessProbe:
+          startupProbe:
             httpGet:
               path: /actuator/health/liveness
               port: 8081
             initialDelaySeconds: 60
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 36
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8081
+            initialDelaySeconds: 0
+            periodSeconds: 15
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
               port: 8081
-            initialDelaySeconds: 30
-            periodSeconds: 5
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 5
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

@@ -33,22 +33,33 @@ spec:
               name: dns
           resources:
             requests:
-              memory: "128Mi"
+              memory: "384Mi"
               cpu: "100m"
             limits:
-              memory: "256Mi"
-              cpu: "300m"
-          livenessProbe:
-            exec:
-              command:
-                - consul
-                - info
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
+              memory: "768Mi"
+              cpu: "500m"
+          startupProbe:
             exec:
               command:
                 - consul
                 - info
             initialDelaySeconds: 10
             periodSeconds: 5
+            timeoutSeconds: 10
+            failureThreshold: 30
+          livenessProbe:
+            exec:
+              command:
+                - consul
+                - info
+            initialDelaySeconds: 0
+            periodSeconds: 15
+            timeoutSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - consul
+                - info
+            initialDelaySeconds: 0
+            periodSeconds: 5
+            timeoutSeconds: 10
