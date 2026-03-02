@@ -1,6 +1,5 @@
-# Ingress pour accès direct par IP (http://203.0.113.10) sans hostname
+# Ingress pour accès direct par IP (http://203.0.113.10) et ngrok
 # Complète les Ingress par host (api.localhost, app.localhost)
-# À utiliser quand les VMs sont réinitialisées et qu'on accède par IP
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -9,12 +8,44 @@ metadata:
   labels:
     app: ingress-ip
   annotations:
-    # Traefik: match requests to IP or any host
-    traefik.ingress.kubernetes.io/router.priority: "1"
+    # Traefik: priorité haute pour que /api et /login matchent avant /
+    traefik.ingress.kubernetes.io/router.priority: "100"
 spec:
   ingressClassName: traefik
   rules:
-    # Règle sans host = match toutes les requêtes (IP directe, etc.)
+    # Host ngrok (Google OAuth nécessite un domaine, pas une IP)
+    - host: "example.ngrok-free.app"
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 8888
+          - path: /login
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 8888
+          - path: /oauth2
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 8888
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 3000
+    # Sans host = accès par IP (203.0.113.10)
     - http:
         paths:
           - path: /api
@@ -25,6 +56,13 @@ spec:
                 port:
                   number: 8888
           - path: /login
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 8888
+          - path: /oauth2
             pathType: Prefix
             backend:
               service:
