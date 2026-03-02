@@ -6,7 +6,7 @@ metadata:
   labels:
     app: payment-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: payment-service
@@ -45,7 +45,7 @@ spec:
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_REGISTER
               value: "true"
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://postgres:5432/userdb
+              value: jdbc:postgresql://postgres:5432/payment_db
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -60,25 +60,55 @@ spec:
               value: rabbitmq
             - name: SPRING_RABBITMQ_PORT
               value: "5672"
+            - name: SPRING_RABBITMQ_USERNAME
+              value: guest
+            - name: SPRING_RABBITMQ_PASSWORD
+              value: guest
+            - name: SPRING_RABBITMQ_SSL_ENABLED
+              value: "false"
+            - name: RABBITMQ_VHOST
+              value: /
+            - name: RABBITMQ_ADDRESSES
+              value: amqp://guest:guest@rabbitmq:5672/
+            - name: STRIPE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stripe-credentials
+                  key: STRIPE_API_KEY
+            - name: STRIPE_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: stripe-credentials
+                  key: STRIPE_WEBHOOK_SECRET
           resources:
             requests:
-              memory: "256Mi"
+              memory: "384Mi"
               cpu: "100m"
             limits:
-              memory: "512Mi"
+              memory: "768Mi"
               cpu: "500m"
-          livenessProbe:
+          startupProbe:
             httpGet:
               path: /actuator/health/liveness
               port: 8082
             initialDelaySeconds: 60
-            periodSeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 36
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8082
+            initialDelaySeconds: 0
+            periodSeconds: 15
+            timeoutSeconds: 10
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
               port: 8082
-            initialDelaySeconds: 30
-            periodSeconds: 5
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 10
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

@@ -21,6 +21,11 @@ kubectl create secret docker-registry ghcr-secret \
 
 # Postgres : par défaut dans postgres/secret.yaml (postgres/postgres)
 # Pour prod : remplacer par Sealed Secrets ou Vault
+
+# Stripe (payment-service)
+kubectl create secret generic stripe-credentials -n myapp \
+  --from-literal=STRIPE_API_KEY=sk_test_xxx \
+  --from-literal=STRIPE_WEBHOOK_SECRET=whsec_xxx
 ```
 
 ### 3. Namespace

@@ -46,11 +46,11 @@ docker compose up -d --build
 
 ---
 
-Exposed Services
+### Exposed Services
 
-API Gateway: http://localhost:8888
-
-User Service: http://localhost:8081
-
-Consul UI: http://localhost:8500
+| Service    | URL                  |
+|------------|----------------------|
+| API Gateway| http://localhost:8888 |
+| User Service | http://localhost:8081 |
+| Consul UI  | http://localhost:8500 |
 

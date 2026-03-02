@@ -2,6 +2,7 @@
 .env
 .env.local
 .env.*.local
+*.env
 
 # Logs
 *.log
@@ -12,6 +13,7 @@ target/
 **/target/
 dist/
 build/
+out/
 
 # IDE
 .idea/
@@ -19,10 +21,33 @@ build/
 *.iml
 *.swp
 *.swo
+*~
 
 # OS
 .DS_Store
 Thumbs.db
+
+# LaTeX (deploy/docs)
+*.aux
+*.bbl
+*.blg
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# Python / Ansible
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ansible/
+
+# Terraform (if used later)
+.terraform/
+*.tfstate
+*.tfstate.*
 
 # Misc
 *.bak

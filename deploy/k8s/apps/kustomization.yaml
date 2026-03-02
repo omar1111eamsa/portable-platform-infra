@@ -13,6 +13,7 @@ resources:
   - user-management/deployment.yaml
   - user-management/service.yaml
   - user-management/ingress.yaml
+  # stripe-credentials: créer manuellement (kubectl create secret generic stripe-credentials ...)
   - payment-service/deployment.yaml
   - payment-service/service.yaml
   - payment-service/ingress.yaml

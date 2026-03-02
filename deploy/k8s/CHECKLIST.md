@@ -38,10 +38,10 @@
 
 | Variable | Problème | Action | Statut |
 |----------|----------|--------|--------|
-| **STRIPE_API_KEY** | Non configuré | Créer Secret Stripe, injecter | ☐ |
-| **STRIPE_WEBHOOK_SECRET** | Non configuré | Idem | ☐ |
+| **STRIPE_API_KEY** | Non configuré | `kubectl create secret generic stripe-credentials -n myapp --from-literal=STRIPE_API_KEY=sk_xxx --from-literal=STRIPE_WEBHOOK_SECRET=whsec_xxx` | ☐ |
+| **STRIPE_WEBHOOK_SECRET** | Non configuré | Voir ci-dessus | ☐ |
 | **stripe.success.url** / **stripe.cancel.url** | Hardcodés localhost:8082 | Passer en env (URLs frontend) | ☐ |
-| **RABBITMQ_USERNAME** / **RABBITMQ_PASSWORD** | Non passés en k8s | Ajouter env (guest/guest pour RabbitMQ cluster) | ☐ |
+| **RABBITMQ_USERNAME** / **RABBITMQ_PASSWORD** | Déjà en k8s (guest/guest) | — | ✓ |
 
 ### api-gateway
 
@@ -83,6 +83,15 @@
 
 7. ☐ HTTPS (certificats + config Traefik)
 8. ☐ Domaine personnalisé au lieu de l’IP
+
+---
+
+## ImagePullBackOff
+
+Si user-management ou kpi-dashboard sont en ImagePullBackOff :
+- Vérifier que les images existent sur ghcr.io (tags `test-ci-user-management`, `test-ci-kpi`)
+- Lancer le CI de chaque repo pour pousser les images
+- Ou mettre à jour le deployment avec un tag existant (ex. `latest`, hash de commit)
 
 ---
 
