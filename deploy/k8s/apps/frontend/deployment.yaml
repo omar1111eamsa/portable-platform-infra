@@ -22,10 +22,7 @@ spec:
           labelSelector:
             matchLabels:
               app: frontend
-      tolerations:
-        - key: node.kubernetes.io/disk-pressure
-          operator: Exists
-          effect: NoSchedule
+      # Pas de toleration disk-pressure : ne pas scheduler sur nœuds avec disk pressure (évite évictions en boucle)
       imagePullSecrets:
         - name: ghcr-secret
       containers:

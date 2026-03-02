@@ -65,6 +65,26 @@ spec:
               value: guest
             - name: SPRING_RABBITMQ_PASSWORD
               value: guest
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: google-oauth-credentials
+                  key: GOOGLE_CLIENT_ID
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: google-oauth-credentials
+                  key: GOOGLE_CLIENT_SECRET
+            - name: GOOGLE_REDIRECT_URI
+              valueFrom:
+                secretKeyRef:
+                  name: google-oauth-credentials
+                  key: GOOGLE_REDIRECT_URI
+            - name: FRONTEND_URL
+              valueFrom:
+                secretKeyRef:
+                  name: google-oauth-credentials
+                  key: FRONTEND_URL
           resources:
             requests:
               memory: "384Mi"
