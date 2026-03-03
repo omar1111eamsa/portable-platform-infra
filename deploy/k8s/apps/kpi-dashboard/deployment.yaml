@@ -6,7 +6,7 @@ metadata:
   labels:
     app: kpi-dashboard
 spec:
-  replicas: 0  # scaled down - image test-ci-kpi not available
+  replicas: 0  # image absent + projet ne compile pas (erreurs EventProcessorService, DTOs)
   selector:
     matchLabels:
       app: kpi-dashboard
@@ -29,6 +29,26 @@ spec:
           image: ghcr.io/myapp/backend-kpi-dashboard-notifications:test-ci-kpi
           imagePullPolicy: Always
           env:
+            - name: KPI_DB_URL
+              value: "jdbc:postgresql://postgres:5432/kpi_db"
+            - name: KPI_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: POSTGRES_USER
+            - name: KPI_DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: POSTGRES_PASSWORD
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_PORT
+              value: "5672"
+            - name: RABBITMQ_USER
+              value: guest
+            - name: RABBITMQ_PASS
+              value: guest
             - name: SPRING_CLOUD_CONSUL_HOST
               value: consul
             - name: SPRING_CLOUD_CONSUL_PORT
@@ -48,17 +68,24 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
-          livenessProbe:
+          startupProbe:
             httpGet:
-              path: /actuator/health/liveness
+              path: /actuator/health
               port: 8084
             initialDelaySeconds: 60
             periodSeconds: 10
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8084
+            initialDelaySeconds: 10
+            periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /actuator/health/readiness
+              path: /actuator/health
               port: 8084
-            initialDelaySeconds: 30
+            initialDelaySeconds: 10
             periodSeconds: 5
       securityContext:
         runAsNonRoot: true

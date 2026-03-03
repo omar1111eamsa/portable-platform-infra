@@ -6,6 +6,14 @@
 
 ## 1. Côté DevOps (ta responsabilité)
 
+### ArgoCD auto-deploy (GH_PAT)
+
+| Action | Détail | Statut |
+|--------|--------|--------|
+| **GH_PAT** | PAT GitHub (scope `repo`) pour que les CI puissent pousser dans portable-platform-infra. À ajouter dans chaque repo (Front-end, Backend-User-management, etc.) : Settings → Secrets → GH_PAT | ☐ |
+
+→ Voir [ARGOCD-AUTODEPLOY.md](../argocd/ARGOCD-AUTODEPLOY.md) pour le détail.
+
 ### Secrets à créer manuellement
 
 | Secret | Commande / Action | Statut |
