@@ -73,21 +73,18 @@ spec:
               memory: "512Mi"
               cpu: "500m"
           startupProbe:
-            httpGet:
-              path: /actuator/health
+            tcpSocket:
               port: 8083
-            initialDelaySeconds: 60
+            initialDelaySeconds: 30
             periodSeconds: 10
             failureThreshold: 30
           livenessProbe:
-            httpGet:
-              path: /actuator/health
+            tcpSocket:
               port: 8083
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
-            httpGet:
-              path: /actuator/health
+            tcpSocket:
               port: 8083
             initialDelaySeconds: 10
             periodSeconds: 5
