@@ -43,27 +43,18 @@ spec:
               memory: "768Mi"
               cpu: "500m"
           startupProbe:
-            exec:
-              command:
-                - rabbitmq-diagnostics
-                - check_running
-            initialDelaySeconds: 45
-            periodSeconds: 15
-            timeoutSeconds: 30
-            failureThreshold: 24
+            tcpSocket:
+              port: 5672
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 30
           livenessProbe:
-            exec:
-              command:
-                - rabbitmq-diagnostics
-                - check_running
-            initialDelaySeconds: 0
+            tcpSocket:
+              port: 5672
+            initialDelaySeconds: 10
             periodSeconds: 30
-            timeoutSeconds: 30
           readinessProbe:
-            exec:
-              command:
-                - rabbitmq-diagnostics
-                - check_running
-            initialDelaySeconds: 0
-            periodSeconds: 15
-            timeoutSeconds: 30
+            tcpSocket:
+              port: 5672
+            initialDelaySeconds: 10
+            periodSeconds: 10
