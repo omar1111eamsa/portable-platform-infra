@@ -26,7 +26,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: chatbot
-          image: ghcr.io/myapp/backend-chatbot:6c5ba2b
+          image: ghcr.io/myapp/backend-chatbot:555848d
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
