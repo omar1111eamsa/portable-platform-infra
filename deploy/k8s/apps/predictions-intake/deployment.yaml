@@ -6,7 +6,7 @@ metadata:
   labels:
     app: predictions-intake
 spec:
-  replicas: 0  # scaled down until Consul connection fixed
+  replicas: 1
   selector:
     matchLabels:
       app: predictions-intake
@@ -29,6 +29,26 @@ spec:
           image: ghcr.io/myapp/backend-predictions-intake-service:3678d69
           imagePullPolicy: Always
           env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://postgres:5432/prediction_db"
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: POSTGRES_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: POSTGRES_PASSWORD
+            - name: REDIS_HOST
+              value: redis
+            - name: REDIS_PORT
+              value: "6379"
+            - name: USER_SERVICE_URL
+              value: "http://user-management:8081"
+            - name: METAMODEL_ENABLED
+              value: "false"
             - name: SPRING_CLOUD_CONSUL_HOST
               value: consul
             - name: SPRING_CLOUD_CONSUL_PORT
@@ -48,17 +68,24 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
-          livenessProbe:
+          startupProbe:
             httpGet:
-              path: /actuator/health/liveness
+              path: /actuator/health
               port: 8082
             initialDelaySeconds: 60
             periodSeconds: 10
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            initialDelaySeconds: 10
+            periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /actuator/health/readiness
+              path: /actuator/health
               port: 8082
-            initialDelaySeconds: 30
+            initialDelaySeconds: 10
             periodSeconds: 5
       securityContext:
         runAsNonRoot: true

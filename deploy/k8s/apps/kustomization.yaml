@@ -12,6 +12,7 @@ resources:
   - frontend/ingress.yaml
   - user-management/deployment.yaml
   - user-management/service.yaml
+  - user-management/user-service.yaml
   - user-management/ingress.yaml
   - user-management/secret.yaml
   # stripe-credentials: créer manuellement (kubectl create secret generic stripe-credentials ...)
