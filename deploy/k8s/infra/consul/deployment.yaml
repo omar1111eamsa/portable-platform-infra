@@ -6,7 +6,7 @@ metadata:
   labels:
     app: consul
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: consul
@@ -21,7 +21,8 @@ spec:
           args:
             - agent
             - -server
-            - -bootstrap-expect=1
+            - -bootstrap-expect=2
+            - -retry-join=consul.myapp.svc.cluster.local
             - -ui
             - -client=0.0.0.0
             - -data-dir=/consul/data
