@@ -14,6 +14,7 @@ resources:
   - frontend/ingress.yaml
   # Backend services (alphabétique)
   # chatbot-credentials: créer manuellement (kubectl create secret generic chatbot-credentials -n myapp --from-literal=LLM_API_KEY=sk-or-xxx ...)
+  - chatbot/middleware.yaml
   - chatbot/ingressroute.yaml
   - chatbot/deployment.yaml
   - chatbot/service.yaml
