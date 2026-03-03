@@ -20,6 +20,7 @@
 |--------|-------------------|--------|
 | **ghcr-secret** | `kubectl create secret docker-registry ghcr-secret -n myapp --docker-server=ghcr.io --docker-username=TON_GITHUB_USERNAME --docker-password=TON_GITHUB_PAT` | ☐ |
 | **postgres-credentials** | En prod : remplacer postgres/postgres par un mot de passe fort (ou Sealed Secrets / Vault) | ☐ |
+| **chatbot-credentials** | `kubectl create secret generic chatbot-credentials -n myapp --from-literal=LLM_API_KEY=sk-or-VOTRE_CLE_OPENROUTER --dry-run=client -o yaml \| kubectl apply -f -` — Voir `apps/chatbot/SECRET-SETUP.md` | ☐ |
 
 ### Configuration à mettre à jour si changement
 
