@@ -1,4 +1,4 @@
-# IngressRoute (Traefik CRD) — chatbot avec stripPrefix
+# IngressRoute (Traefik CRD) — /chatbot via API Gateway (StripPrefix côté gateway)
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
@@ -12,8 +12,5 @@ spec:
       kind: Rule
       priority: 300
       services:
-        - name: chatbot
-          port: 8000
-      middlewares:
-        - name: chatbot-strip-prefix
-          namespace: myapp
+        - name: api-gateway
+          port: 8888
