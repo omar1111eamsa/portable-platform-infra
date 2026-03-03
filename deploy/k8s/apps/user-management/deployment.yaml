@@ -97,10 +97,12 @@ spec:
                   key: SPRING_MAIL_PASSWORD
             - name: SKIP_EMAIL_SEND
               value: "true"
+            - name: SPRING_MAIN_LAZY_INITIALIZATION
+              value: "true"
           resources:
             requests:
               memory: "384Mi"
-              cpu: "100m"
+              cpu: "200m"
             limits:
               memory: "768Mi"
               cpu: "500m"
@@ -108,10 +110,10 @@ spec:
             httpGet:
               path: /actuator/health/liveness
               port: 8081
-            initialDelaySeconds: 60
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 36
+            initialDelaySeconds: 180
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 60
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
