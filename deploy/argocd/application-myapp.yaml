@@ -15,6 +15,26 @@ spec:
       jsonPointers:
         - /spec/template/spec/containers/0/startupProbe
         - /spec/template/spec/containers/0/resources
+    - group: apps
+      kind: Deployment
+      name: predictions-intake
+      jsonPointers:
+        - /spec/replicas
+    - group: apps
+      kind: Deployment
+      name: crm-client
+      jsonPointers:
+        - /spec/replicas
+    - group: apps
+      kind: Deployment
+      name: chatbot
+      jsonPointers:
+        - /spec/replicas
+    - group: apps
+      kind: Deployment
+      name: kpi-dashboard
+      jsonPointers:
+        - /spec/replicas
   source:
     repoURL: https://github.com/MyApp/portable-platform-infra.git
     targetRevision: test-argocd
