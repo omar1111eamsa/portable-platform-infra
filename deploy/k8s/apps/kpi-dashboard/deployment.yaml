@@ -6,7 +6,7 @@ metadata:
   labels:
     app: kpi-dashboard
 spec:
-  replicas: 2
+  replicas: 0  # scaled down - image test-ci-kpi not available
   selector:
     matchLabels:
       app: kpi-dashboard

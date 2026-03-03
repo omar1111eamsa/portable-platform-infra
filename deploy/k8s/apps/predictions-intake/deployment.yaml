@@ -6,7 +6,7 @@ metadata:
   labels:
     app: predictions-intake
 spec:
-  replicas: 2
+  replicas: 0  # scaled down until Consul connection fixed
   selector:
     matchLabels:
       app: predictions-intake
