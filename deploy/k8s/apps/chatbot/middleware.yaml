@@ -1,0 +1,10 @@
+# Strip /chatbot prefix so backend receives /chat, /health, etc.
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: chatbot-strip-prefix
+  namespace: myapp
+spec:
+  stripPrefix:
+    prefixes:
+      - /chatbot

@@ -1,0 +1,19 @@
+# IngressRoute (Traefik CRD) — chatbot avec stripPrefix
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: chatbot-ngrok
+  namespace: myapp
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`example.ngrok-free.app`) && PathPrefix(`/chatbot`)
+      kind: Rule
+      priority: 300
+      services:
+        - name: chatbot
+          port: 8000
+      middlewares:
+        - name: chatbot-strip-prefix
+          namespace: myapp
