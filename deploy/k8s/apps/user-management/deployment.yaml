@@ -95,6 +95,8 @@ spec:
                 secretKeyRef:
                   name: mail-credentials
                   key: SPRING_MAIL_PASSWORD
+            - name: SKIP_EMAIL_SEND
+              value: "true"
           resources:
             requests:
               memory: "384Mi"
