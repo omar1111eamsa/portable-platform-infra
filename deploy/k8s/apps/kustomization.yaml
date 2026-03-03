@@ -1,37 +1,42 @@
+# Apps Kustomization — ordre : gateway/frontend → services backend (alphabétique) → ingress
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 namespace: myapp
 
 resources:
+  # Gateway & Frontend
   - api-gateway/deployment.yaml
   - api-gateway/service.yaml
   - api-gateway/ingress.yaml
   - frontend/deployment.yaml
   - frontend/service.yaml
   - frontend/ingress.yaml
-  - user-management/deployment.yaml
-  - user-management/service.yaml
-  - user-management/user-service.yaml
-  - user-management/ingress.yaml
-  - user-management/secret.yaml
-  # stripe-credentials: créer manuellement (kubectl create secret generic stripe-credentials ...)
-  - payment-service/deployment.yaml
-  - payment-service/service.yaml
-  - payment-service/ingress.yaml
-  - crm-client/deployment.yaml
-  - crm-client/service.yaml
-  - crm-client/ingress.yaml
-  - predictions-intake/deployment.yaml
-  - predictions-intake/service.yaml
-  - predictions-intake/ingress.yaml
+  # Backend services (alphabétique)
   - chatbot/secret.yaml
   - chatbot/middleware.yaml
   - chatbot/ingressroute.yaml
   - chatbot/deployment.yaml
   - chatbot/service.yaml
   - chatbot/ingress.yaml
+  - crm-client/deployment.yaml
+  - crm-client/service.yaml
+  - crm-client/ingress.yaml
   - kpi-dashboard/deployment.yaml
   - kpi-dashboard/service.yaml
   - kpi-dashboard/ingress.yaml
+  - payment-service/deployment.yaml
+  - payment-service/service.yaml
+  - payment-service/ingress.yaml
+  - predictions-intake/deployment.yaml
+  - predictions-intake/service.yaml
+  - predictions-intake/ingress.yaml
+  - user-management/deployment.yaml
+  - user-management/service.yaml
+  - user-management/user-service.yaml
+  - user-management/ingress.yaml
+  - user-management/secret.yaml
+  # Ingress ngrok / IP
   - ingress-ip.yaml
+
+# stripe-credentials: kubectl create secret generic stripe-credentials -n myapp ...

@@ -27,7 +27,7 @@ portable-platform-infra/
 │   │   └── README.md
 │   ├── local/                 # Docker Compose (local dev)
 │   ├── prod/                  # Docker Compose (production)
-│   ├── docs/                  # Architecture documentation (.tex, etc.)
+│   ├── docs/                  # Index documentation (voir deploy/docs/INDEX.md)
 │   └── argocd/                # ArgoCD application (optional)
 ├── .github/workflows/         # CI/CD pipelines
 ├── .env.example
