@@ -7,6 +7,14 @@ metadata:
   namespace: argocd
 spec:
   project: default
+  # Prevent ArgoCD from reverting user-management startupProbe (Spring Boot needs ~4min)
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      name: user-management
+      jsonPointers:
+        - /spec/template/spec/containers/0/startupProbe
+        - /spec/template/spec/containers/0/resources
   source:
     repoURL: https://github.com/MyApp/portable-platform-infra.git
     targetRevision: test-argocd
@@ -21,3 +29,4 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - PruneLast=true
+      - RespectIgnoreDifferences=true
