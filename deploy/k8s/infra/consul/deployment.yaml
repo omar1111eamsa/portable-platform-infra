@@ -6,7 +6,7 @@ metadata:
   labels:
     app: consul
 spec:
-  replicas: 2
+  replicas: 1  # 2 replicas caused "No cluster leader"; single node for dev/test
   selector:
     matchLabels:
       app: consul
@@ -21,7 +21,7 @@ spec:
           args:
             - agent
             - -server
-            - -bootstrap-expect=2
+            - -bootstrap-expect=1
             - -retry-join=consul.myapp.svc.cluster.local
             - -ui
             - -client=0.0.0.0

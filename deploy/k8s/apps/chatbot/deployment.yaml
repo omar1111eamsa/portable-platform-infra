@@ -6,7 +6,7 @@ metadata:
   labels:
     app: chatbot
 spec:
-  replicas: 0  # scaled down until fixed
+  replicas: 1
   selector:
     matchLabels:
       app: chatbot
@@ -28,6 +28,12 @@ spec:
         - name: chatbot
           image: ghcr.io/myapp/backend-chatbot:555848d
           imagePullPolicy: Always
+          env:
+            - name: LLM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: chatbot-credentials
+                  key: LLM_API_KEY
           ports:
             - containerPort: 8000
           resources:

@@ -25,6 +25,7 @@ resources:
   - predictions-intake/deployment.yaml
   - predictions-intake/service.yaml
   - predictions-intake/ingress.yaml
+  - chatbot/secret.yaml
   - chatbot/deployment.yaml
   - chatbot/service.yaml
   - chatbot/ingress.yaml
