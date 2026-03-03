@@ -6,7 +6,7 @@ metadata:
   labels:
     app: crm-client
 spec:
-  replicas: 0  # scaled down until fixed
+  replicas: 1
   selector:
     matchLabels:
       app: crm-client
@@ -29,6 +29,30 @@ spec:
           image: ghcr.io/myapp/backend-crm-client:28bf3d4
           imagePullPolicy: Always
           env:
+            - name: DB_URL
+              value: "jdbc:postgresql://postgres:5432/crm_db"
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: POSTGRES_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: POSTGRES_PASSWORD
+            - name: SPRING_RABBITMQ_HOST
+              value: rabbitmq
+            - name: SPRING_RABBITMQ_PORT
+              value: "5672"
+            - name: SPRING_RABBITMQ_USERNAME
+              value: guest
+            - name: SPRING_RABBITMQ_PASSWORD
+              value: guest
+            - name: USER_MANAGEMENT_SERVICE_URL
+              value: "http://user-management:8081"
+            - name: PAYMENT_SERVICE_URL
+              value: "http://payment-service:8083"
             - name: SPRING_CLOUD_CONSUL_HOST
               value: consul
             - name: SPRING_CLOUD_CONSUL_PORT
@@ -48,17 +72,24 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
-          livenessProbe:
+          startupProbe:
             httpGet:
-              path: /actuator/health/liveness
+              path: /actuator/health
               port: 8083
             initialDelaySeconds: 60
             periodSeconds: 10
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            initialDelaySeconds: 10
+            periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /actuator/health/readiness
+              path: /actuator/health
               port: 8083
-            initialDelaySeconds: 30
+            initialDelaySeconds: 10
             periodSeconds: 5
       securityContext:
         runAsNonRoot: true
