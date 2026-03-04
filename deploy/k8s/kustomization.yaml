@@ -1,5 +1,5 @@
 # Root Kustomization — pour ArgoCD
-# Ordre : base (namespace) → infra → apps
+# Ordre : base (namespace) → infra → apps → cronjobs → argocd
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
@@ -8,3 +8,4 @@ resources:
   - infra
   - apps
   - cronjobs
+  - argocd
