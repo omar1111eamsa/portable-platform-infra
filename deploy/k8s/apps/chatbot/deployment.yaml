@@ -34,6 +34,8 @@ spec:
                 secretKeyRef:
                   name: chatbot-credentials
                   key: LLM_API_KEY
+            - name: DB_PATH
+              value: /data/chatbot.db
           ports:
             - containerPort: 8000
           resources:
@@ -55,6 +57,14 @@ spec:
               port: 8000
             initialDelaySeconds: 10
             periodSeconds: 5
+          volumeMounts:
+            - name: chatbot-data
+              mountPath: /data
+      volumes:
+        - name: chatbot-data
+          persistentVolumeClaim:
+            claimName: chatbot-data-pvc
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
+        fsGroup: 1000
