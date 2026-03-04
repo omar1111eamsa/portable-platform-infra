@@ -7,16 +7,10 @@
 
 ## Prérequis: configurer ArgoCD pour le reverse proxy
 
-Exécuter une fois avant de déployer l'Ingress:
+Exécuter **une fois** (déjà fait si l'Ingress a été appliqué manuellement):
 
 ```bash
-# Activer le mode insecure (TLS terminé côté Ingress)
-kubectl patch configmap argocd-cmd-params-cm -n argocd --type merge -p '{"data":{"server.insecure":"true"}}'
-
-# Configurer le base path /argocd
-kubectl patch configmap argocd-cmd-params-cm -n argocd --type merge -p '{"data":{"server.basehref":"/argocd"}}'
-
-# Redémarrer le serveur ArgoCD
+kubectl patch configmap argocd-cmd-params-cm -n argocd --type merge -p '{"data":{"server.insecure":"true","server.basehref":"/argocd","server.rootpath":"/argocd"}}'
 kubectl rollout restart deployment argocd-server -n argocd
 ```
 
