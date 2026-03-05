@@ -15,6 +15,8 @@ spec:
       labels:
         app: consul
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: backend-vm
       containers:
         - name: consul
           image: hashicorp/consul:1.17

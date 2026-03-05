@@ -1,8 +1,11 @@
 #!/bin/bash
-# Fix cluster: clean evicted pods, scale deployments to 1, trigger clean-disk, show status.
-# Run with tunnel up: export KUBECONFIG=~/.kube/myapp-k3s.yaml && ./fix-cluster.sh
+# Fix cluster: apply manifests, clean evicted pods, scale to 1, trigger clean-disk, show status.
+# Run with tunnel up: export KUBECONFIG=~/.kube/myapp-k3s.yaml && ./fix-cluster.sh [--apply]
+# --apply: apply k8s manifests from deploy/k8s/ (e.g. after nodeSelector changes)
 set -e
 NS="${NAMESPACE:-myapp}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 
 check() {
   if ! kubectl get nodes &>/dev/null; then
@@ -13,6 +16,12 @@ check() {
 
 echo "Checking cluster connectivity..."
 check
+
+if [[ "${1:-}" == "--apply" ]]; then
+  echo "Applying k8s manifests (base, infra, apps, cronjobs)..."
+  kubectl apply -k "${REPO_ROOT}/deploy/k8s/" 2>/dev/null || true
+  sleep 5
+fi
 
 echo "Deleting evicted/failed pods in $NS..."
 kubectl get pods -n "$NS" --no-headers 2>/dev/null | awk '$3=="Evicted" || $3=="Failed" || $3=="ContainerStatusUnknown" {print $1}' | while read -r p; do

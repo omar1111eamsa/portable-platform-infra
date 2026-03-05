@@ -15,6 +15,8 @@ spec:
       labels:
         app: predictions-intake
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: frontend-vm
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname

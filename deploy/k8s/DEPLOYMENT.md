@@ -8,6 +8,7 @@
 - 2 nœuds : `backend-vm` (10.0.0.11), `frontend-vm` (10.0.0.12)
 - Le master k3s sur backend-vm, worker sur frontend-vm
 - Noms des nœuds exacts : `backend-vm`, `frontend-vm`
+- **Répartition des services** : chaque déploiement a un `nodeSelector` pour utiliser les deux VMs — backend-vm (infra + api-gateway, user-management, payment-service) ; frontend-vm (frontend, chatbot, predictions-intake, crm-client, kpi-dashboard, metamodel)
 
 ### 1b. Accès kubectl depuis ta machine (backend-vm sans IP externe)
 - Tunnel IAP : `deploy/k8s/scripts/start-kubectl-tunnel.sh --ensure-firewall --background`  
