@@ -44,7 +44,7 @@ spec:
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_REGISTER
               value: "true"
             - name: USER_SERVICE_URI
-              value: "http://user-management:8081"
+              value: "http://user-service:8081"
             - name: SPRING_REDIS_HOST
               value: redis
             - name: SPRING_REDIS_PORT
