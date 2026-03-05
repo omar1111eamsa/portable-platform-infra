@@ -1,72 +1,54 @@
 #!/bin/bash
-# Démarrer le tunnel vers le cluster k3s via gcloud IAP (backend-vm n'a pas d'IP externe).
-# Usage: ./start-kubectl-tunnel.sh [--background] [--ensure-firewall] [--check-vm]
-# Prérequis: gcloud configuré, KUBECONFIG=~/.kube/myapp-k3s.yaml (127.0.0.1:16443)
-#
-# Une fois le tunnel actif: export KUBECONFIG=~/.kube/myapp-k3s.yaml && kubectl get nodes
-# Si TLS handshake timeout: sur backend-vm, k3s doit être démarré et écouter sur 0.0.0.0:6443
-#   (Ansible k3s-server utilise --bind-address 0.0.0.0). Règle firewall allow-iap-6443 requise.
-
+# Tunnel kubectl vers le cluster k3s via SSH (port-forward 6443).
+# Usage: ./start-kubectl-tunnel.sh [--background] [--check-vm]
+# Prérequis: SSH configuré (ProxyJump via frontend-vm), KUBECONFIG=~/.kube/myapp-k3s.yaml
 set -e
-LOCAL_PORT=16443
+
+LOCAL_PORT="${LOCAL_PORT:-16443}"
 REMOTE_PORT=6443
-VM="${VM:-backend-vm}"
-PROJECT="${GCP_PROJECT:-quick-keel-483320-b9}"
-ZONE="${GCP_ZONE:-europe-west1-b}"
 
-# Option: créer la règle firewall IAP pour le port 6443 (une fois par projet)
-if [[ "${1:-}" == "--ensure-firewall" ]]; then
-  shift
-  if ! gcloud compute firewall-rules describe allow-iap-6443 --project="${PROJECT}" &>/dev/null; then
-    echo "Creating firewall rule allow-iap-6443 (IAP -> tcp:6443)..."
-    gcloud compute firewall-rules create allow-iap-6443 \
-      --project="${PROJECT}" --direction=INGRESS --action=allow \
-      --rules=tcp:6443 --source-ranges=35.235.240.0/20 \
-      --description="Allow IAP TCP forwarding to k3s API (6443)"
-  else
-    echo "Firewall rule allow-iap-6443 already exists."
-  fi
-fi
+# SSH: jump via frontend (IP publique) → backend (réseau interne)
+JUMP_HOST="${JUMP_HOST:-203.0.113.10}"
+BACKEND_HOST="${BACKEND_HOST:-10.0.0.11}"
+SSH_USER="${SSH_USER:-hodeconlimited}"
+SSH_KEY="${SSH_KEY:-$HOME/.ssh/myapp_vms}"
+SSH_OPTS=(-o "StrictHostKeyChecking=no" -o "ConnectTimeout=10")
 
-# Option: via gcloud CLI, vérifier/démarrer k3s sur backend-vm (IAP SSH)
+[[ -n "$SSH_KEY" && -f "$SSH_KEY" ]] && SSH_OPTS+=(-i "$SSH_KEY")
+
+# ProxyJump: -J user@jump
+PROXY_JUMP="-J ${SSH_USER}@${JUMP_HOST}"
+
+# Option: vérifier/démarrer k3s sur backend-vm
 if [[ "${1:-}" == "--check-vm" ]]; then
   shift
-  echo "Running on ${VM} via gcloud compute ssh (IAP)..."
-  gcloud compute ssh "${VM}" --project="${PROJECT}" --zone="${ZONE}" --command="
-    echo '--- k3s service ---'
+  echo "Checking k3s on backend via SSH..."
+  ssh "${SSH_OPTS[@]}" $PROXY_JUMP "${SSH_USER}@${BACKEND_HOST}" "
     sudo systemctl start k3s 2>/dev/null || true
+    echo '--- k3s status ---'
     sudo systemctl is-active k3s 2>/dev/null || echo inactive
     echo '--- port 6443 ---'
-    sudo ss -tlnp | grep 6443 || echo 'nothing listening on 6443'
+    sudo ss -tlnp 2>/dev/null | grep 6443 || echo 'nothing on 6443'
   "
-  echo "If k3s is active and 6443 is listening, start the tunnel and try kubectl."
+  echo "If k3s is active, start the tunnel and try: export KUBECONFIG=~/.kube/myapp-k3s.yaml && kubectl get nodes"
   exit 0
 fi
 
 # Arrêter un tunnel existant
-pkill -f "start-iap-tunnel ${VM} ${REMOTE_PORT}" 2>/dev/null || true
-pkill -f "gcloud compute ssh ${VM}.*${LOCAL_PORT}" 2>/dev/null || true
-pkill -f "ssh.*${LOCAL_PORT}:.*${REMOTE_PORT}" 2>/dev/null || true
+pkill -f "ssh.*${LOCAL_PORT}:127.0.0.1:${REMOTE_PORT}" 2>/dev/null || true
+pkill -f "ssh.*-L ${LOCAL_PORT}:.*6443" 2>/dev/null || true
 sleep 1
 
-echo "Starting IAP tunnel 127.0.0.1:${LOCAL_PORT} -> ${VM}:${REMOTE_PORT} ..."
-# Disable connection check so tunnel stays up (k3s API uses TLS, check would fail)
-IAP_EXTRA=(--iap-tunnel-disable-connection-check)
+echo "Starting SSH tunnel 127.0.0.1:${LOCAL_PORT} -> ${BACKEND_HOST}:${REMOTE_PORT} (via ${JUMP_HOST})..."
 
 if [[ "${1:-}" == "--background" ]]; then
-  nohup gcloud compute start-iap-tunnel "${VM}" "${REMOTE_PORT}" \
-    --local-host-port="127.0.0.1:${LOCAL_PORT}" \
-    --project="${PROJECT}" \
-    --zone="${ZONE}" \
-    "${IAP_EXTRA[@]}" \
+  nohup ssh -f -N -L "127.0.0.1:${LOCAL_PORT}:127.0.0.1:${REMOTE_PORT}" \
+    "${SSH_OPTS[@]}" $PROXY_JUMP "${SSH_USER}@${BACKEND_HOST}" \
     </dev/null >>/tmp/kubectl-tunnel.log 2>&1 &
-  echo "Tunnel starting in background (log: /tmp/kubectl-tunnel.log). Wait ~15s then: export KUBECONFIG=~/.kube/myapp-k3s.yaml && kubectl get nodes"
+  echo "Tunnel running in background. Wait ~5s then: export KUBECONFIG=~/.kube/myapp-k3s.yaml && kubectl get nodes"
   exit 0
 fi
 
 # Foreground
-exec gcloud compute start-iap-tunnel "${VM}" "${REMOTE_PORT}" \
-  --local-host-port="127.0.0.1:${LOCAL_PORT}" \
-  --project="${PROJECT}" \
-  --zone="${ZONE}" \
-  "${IAP_EXTRA[@]}"
+exec ssh -N -L "127.0.0.1:${LOCAL_PORT}:127.0.0.1:${REMOTE_PORT}" \
+  "${SSH_OPTS[@]}" $PROXY_JUMP "${SSH_USER}@${BACKEND_HOST}"

@@ -1,0 +1,24 @@
+---
+# Playbook — Setup cluster MyApp (k3s + ngrok)
+# Usage: ansible-playbook -i inventory.yml playbook.yml
+#
+# Prérequis:
+#   - Accès SSH à frontend-vm (203.0.113.10) et backend-vm (10.0.0.11 via ProxyJump)
+#   - ~/.ssh/myapp_vms
+#
+# Après exécution: lancer le tunnel (scripts/start-kubectl-tunnel.sh), puis kubectl apply
+
+- name: Install k3s server on backend
+  hosts: k3s_server
+  roles:
+    - k3s-server
+
+- name: Install k3s agent on frontend
+  hosts: k3s_agents
+  roles:
+    - k3s-agent
+
+- name: Install ngrok on frontend (jumphost avec IP publique)
+  hosts: k3s_agents
+  roles:
+    - ngrok

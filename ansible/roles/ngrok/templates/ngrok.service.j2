@@ -1,0 +1,12 @@
+[Unit]
+Description=ngrok tunnel
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/ngrok http --config /root/.config/ngrok/ngrok.yml {{ ngrok_port }}
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -15,10 +15,10 @@ Tous les déploiements sont en `replicas: 0` pour vider les serveurs. Remettre �
 - **Répartition des services** : chaque déploiement a un `nodeSelector` — **backend-vm** : postgres, redis, api-gateway, user-management, payment-service ; **frontend-vm** : consul, rabbitmq, frontend, chatbot, predictions-intake, crm-client, kpi-dashboard, metamodel
 
 ### 1b. Accès kubectl depuis ta machine (backend-vm sans IP externe)
-- Tunnel IAP : `deploy/k8s/scripts/start-kubectl-tunnel.sh --ensure-firewall --background`  
+- Tunnel SSH : `deploy/k8s/scripts/start-kubectl-tunnel.sh --background`  
   Puis : `export KUBECONFIG=~/.kube/myapp-k3s.yaml && kubectl get nodes`
-- Détails et dépannage : [scripts/README-TUNNEL.md](scripts/README-TUNNEL.md)  
-- Si **TLS handshake timeout** : sur backend-vm (ex. via SSH GCP Console), vérifier que k3s tourne et écoute sur `0.0.0.0:6443` (Ansible `k3s-server` utilise `--bind-address 0.0.0.0`).
+- Guide complet : [SETUP.md](../SETUP.md)
+- Si **TLS handshake timeout** : `./start-kubectl-tunnel.sh --check-vm` (vérifie k3s sur backend via SSH).
 
 ### 2. Secrets à créer manuellement
 

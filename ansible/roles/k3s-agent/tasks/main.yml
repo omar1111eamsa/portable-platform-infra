@@ -1,0 +1,38 @@
+---
+# Rôle k3s-agent — Joindre le cluster k3s
+# Token et URL du serveur viennent de hostvars['backend-vm'] après le play k3s_server
+
+- name: Resolve server IP
+  ansible.builtin.set_fact:
+    k3s_server_ip: "{{ hostvars[groups['k3s_server'][0]].ansible_host | default('10.0.0.11') }}"
+    k3s_token: "{{ hostvars[groups['k3s_server'][0]]['k3s_node_token'] }}"
+
+- name: Install curl
+  ansible.builtin.apt:
+    name: curl
+    state: present
+  become: true
+
+- name: Download k3s install script
+  ansible.builtin.get_url:
+    url: https://get.k3s.io
+    dest: /tmp/install-k3s.sh
+    mode: "0755"
+  become: true
+
+- name: Install k3s agent
+  ansible.builtin.shell: |
+    INSTALL_K3S_VERSION={{ hostvars[groups['k3s_server'][0]]['k3s_version'] | default('v1.28.5+k3s1') }} \
+    K3S_URL=https://{{ k3s_server_ip }}:6443 \
+    K3S_TOKEN={{ k3s_token }} \
+    /tmp/install-k3s.sh agent
+  args:
+    creates: /etc/systemd/system/k3s-agent.service
+  become: true
+
+- name: Start k3s-agent
+  ansible.builtin.service:
+    name: k3s-agent
+    state: started
+    enabled: true
+  become: true

@@ -65,10 +65,10 @@ spec:
             - containerPort: 8084
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "100m"
+              memory: "320Mi"
+              cpu: "150m"
             limits:
-              memory: "512Mi"
+              memory: "640Mi"
               cpu: "500m"
           startupProbe:
             tcpSocket:
