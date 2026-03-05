@@ -2,6 +2,7 @@
 
 | Document | Description |
 |----------|-------------|
+| [ARCHITECTURE-K8S.md](ARCHITECTURE-K8S.md) | Architecture cluster et rôle de chaque fichier K8s |
 | [TESTERS-GUIDE.md](../TESTERS-GUIDE.md) | Guide testeurs : architecture, APIs, cURL, pentest |
 | [k8s/README.md](../k8s/README.md) | Kubernetes : structure, kustomize |
 | [k8s/DEPLOYMENT.md](../k8s/DEPLOYMENT.md) | Procédure de déploiement |
