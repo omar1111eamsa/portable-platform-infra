@@ -58,6 +58,17 @@ export KUBECONFIG=~/.kube/myapp-k3s.yaml && kubectl get nodes
 
 Sans `--background`, le tunnel reste en premier plan (terminal bloqué).
 
+## Corriger le cluster (évictions, scaling)
+
+Une fois le tunnel actif et `kubectl get nodes` fonctionnel :
+
+```bash
+export KUBECONFIG=~/.kube/myapp-k3s.yaml
+./fix-cluster.sh
+```
+
+Ce script supprime les pods Evicted, remet tous les déploiements à 1 replica, lance les jobs clean-disk et affiche le statut.
+
 ## Dépannage
 
 - **Connection refused (127.0.0.1:16443)**  

@@ -14,6 +14,19 @@ kubectl patch configmap argocd-cmd-params-cm -n argocd --type merge -p '{"data":
 kubectl rollout restart deployment argocd-server -n argocd
 ```
 
+## Si argocd-server est en CrashLoopBackOff (probes trop courtes)
+
+Exécuter une fois pour augmenter les délais des probes (liveness/readiness):
+
+```bash
+kubectl patch deployment argocd-server -n argocd --type='json' -p='[
+  {"op": "replace", "path": "/spec/template/spec/containers/0/livenessProbe/initialDelaySeconds", "value": 60},
+  {"op": "replace", "path": "/spec/template/spec/containers/0/readinessProbe/initialDelaySeconds", "value": 30}
+]'
+```
+
+Puis attendre ~1 min que le pod repasse en Running.
+
 ## Mot de passe admin
 
 ```bash
