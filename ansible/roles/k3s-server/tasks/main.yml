@@ -48,8 +48,9 @@
     mode: "0755"
   become: true
 
+# --bind-address 0.0.0.0 so IAP TCP forwarding (and other hosts) can reach the API
 - name: Install k3s systemd service (skip binary download)
-  ansible.builtin.shell: INSTALL_K3S_SKIP_DOWNLOAD=true /tmp/install-k3s.sh server --write-kubeconfig-mode 644
+  ansible.builtin.shell: INSTALL_K3S_SKIP_DOWNLOAD=true /tmp/install-k3s.sh server --write-kubeconfig-mode 644 --bind-address 0.0.0.0
   args:
     creates: /etc/systemd/system/k3s.service
   become: true

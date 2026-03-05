@@ -9,6 +9,12 @@
 - Le master k3s sur backend-vm, worker sur frontend-vm
 - Noms des nœuds exacts : `backend-vm`, `frontend-vm`
 
+### 1b. Accès kubectl depuis ta machine (backend-vm sans IP externe)
+- Tunnel IAP : `deploy/k8s/scripts/start-kubectl-tunnel.sh --ensure-firewall --background`  
+  Puis : `export KUBECONFIG=~/.kube/myapp-k3s.yaml && kubectl get nodes`
+- Détails et dépannage : [scripts/README-TUNNEL.md](scripts/README-TUNNEL.md)  
+- Si **TLS handshake timeout** : sur backend-vm (ex. via SSH GCP Console), vérifier que k3s tourne et écoute sur `0.0.0.0:6443` (Ansible `k3s-server` utilise `--bind-address 0.0.0.0`).
+
 ### 2. Secrets à créer manuellement
 
 ```bash
