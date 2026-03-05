@@ -16,13 +16,12 @@ Ce document décrit l’architecture globale du cluster et le rôle de chaque fi
 
 ```
 Internet (ngrok) → Traefik Ingress
-  ├── /api, /login, /oauth2  → api-gateway:8888
-  ├── /chatbot               → IngressRoute → stripPrefix → chatbot:8000
-  ├── /argocd                → argocd-server:80 (namespace argocd)
-  └── /                      → frontend:3000
+  ├── /api, /login, /oauth2, /chatbot  → api-gateway:8888 (JWT requis pour /chatbot)
+  ├── /argocd                          → argocd-server:80 (namespace argocd)
+  └── /                                → frontend:3000
 
-api-gateway → Consul (service discovery) → user-service, crmservice, payment-service,
-             prediction-intake-service, kpi-service
+api-gateway → user-service (validate-token), chatbot:8000 (/chatbot), Consul → crmservice,
+             payment-service, prediction-intake-service, kpi-service
 ```
 
 ---
@@ -90,7 +89,7 @@ Namespace : `myapp`. Tous les services sont en ClusterIP.
 
 ### 3.3 Apps (`apps/`)
 
-Namespace : `myapp`. Chaque service a typiquement : Deployment, Service, Ingress (host `*.localhost`). Le chatbot a en plus : Middleware, IngressRoute, PVC.
+Namespace : `myapp`. Chaque service a typiquement : Deployment, Service, Ingress (host `*.localhost`). Le chatbot a en plus : IngressRoute (route vers api-gateway), PVC.
 
 #### API Gateway
 
@@ -112,8 +111,7 @@ Namespace : `myapp`. Chaque service a typiquement : Deployment, Service, Ingress
 
 | Fichier | Rôle |
 |---------|------|
-| **chatbot/middleware.yaml** | Middleware Traefik **StripPrefix** : enlève `/chatbot` avant d’envoyer au backend. |
-| **chatbot/ingressroute.yaml** | IngressRoute (CRD Traefik) : host ngrok + PathPrefix `/chatbot` → service chatbot:8000 + middleware strip. |
+| **chatbot/ingressroute.yaml** | IngressRoute : `/chatbot` → api-gateway:8888 (auth JWT côté gateway). |
 | **chatbot/pvc.yaml** | PVC 1Gi pour la base SQLite (`/data/chatbot.db`). |
 | **chatbot/deployment.yaml** | 1 replica, image GHCR, env LLM_API_KEY (secret), DB_PATH=/data/chatbot.db, volumeMount sur `/data`, fsGroup 1000. |
 | **chatbot/service.yaml** | ClusterIP 8000. |
@@ -167,7 +165,7 @@ Namespace : `myapp`. Chaque service a typiquement : Deployment, Service, Ingress
 |---------|------|
 | **ingress-ip.yaml** | Deux Ingress pour accès par IP et domaine ngrok : **ingress-ip-api** (priorité 200) : `/api`, `/login`, `/oauth2` → api-gateway. **ingress-ip-frontend** (priorité 100) : `/` → frontend. Host : `example.ngrok-free.app` + règle sans host (IP). |
 
-Le chemin `/chatbot` est géré par l’IngressRoute Traefik (chatbot), pas par ce fichier.
+Le chemin `/chatbot` est aussi défini dans **ingress-ip.yaml** (route vers api-gateway) et dans **chatbot/ingressroute.yaml**.
 
 ---
 
@@ -207,8 +205,7 @@ Prérequis côté ArgoCD : `server.insecure`, `server.basehref=/argocd`, `server
 | **Deployment** | Tous les services applicatifs + infra (postgres, redis, consul, rabbitmq). |
 | **Service** | ClusterIP pour chaque deployment. |
 | **Ingress** | Traefik, par host (*.localhost) + ingress-ip (ngrok / IP). |
-| **IngressRoute** | Traefik CRD : chatbot avec stripPrefix. |
-| **Middleware** | Traefik CRD : stripPrefix pour /chatbot. |
+| **IngressRoute** | Traefik CRD : chatbot → api-gateway. |
 | **CronJob** | Nettoyage disque (backend/frontend), suppression pods evicted. |
 | **ServiceAccount / Role / RoleBinding** | Pour le CronJob clean-evicted-pods. |
 
@@ -228,7 +225,7 @@ Voir `deploy/k8s/CHECKLIST.md` et `deploy/k8s/apps/chatbot/SECRET-SETUP.md` pour
 
 1. **base** : namespace `myapp`.
 2. **infra** : postgres (secret, PVC, deployment, service), redis, consul, rabbitmq.
-3. **apps** : gateway, frontend, chatbot (middleware, ingressroute, pvc, deployment, service, ingress), puis les autres services, puis **ingress-ip.yaml**.
+3. **apps** : gateway, frontend, chatbot (ingressroute, pvc, deployment, service, ingress), puis les autres services, puis **ingress-ip.yaml**.
 4. **cronjobs** : CronJobs + RBAC.
 5. **argocd** : Ingress ArgoCD (namespace argocd).
 

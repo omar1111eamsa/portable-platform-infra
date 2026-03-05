@@ -105,4 +105,4 @@ kubectl delete pods -n myapp --field-selector=status.phase=Failed
 
 1. Créer `apps/<nom-service>/deployment.yaml`, `service.yaml`
 2. Ajouter les resources dans `apps/kustomization.yaml`
-3. Respecter les conventions (voir ARCHITECTURE.md)
+3. Respecter les conventions (voir [ARCHITECTURE-K8S.md](../docs/ARCHITECTURE-K8S.md))

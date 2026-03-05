@@ -1,26 +1,26 @@
 # Local Backend Deployment
 
-This directory contains the **Docker Compose setup** used to run the backend stack locally
-by orchestrating multiple independent service repositories.
+This directory contains the **Docker Compose setup** used to run the backend stack locally by orchestrating multiple independent service repositories.
 
-Docker Compose builds application services from source and runs official infrastructure
-images to reproduce a production-like environment on a developer machine.
+Docker Compose builds application services from source and runs official infrastructure images to reproduce a production-like environment on a developer machine.
 
 ---
 
-## Required Repository Structure
+## Required repository structure
 
-Docker Compose relies on **relative build paths**.
-Repositories must be structured exactly as follows:
+Docker Compose relies on **relative build paths**. Repositories must be structured as follows:
 
+```
 BACKEND/
-├── API-GATEWAY/
-│ └── dockerfile
-├── USER-SERVICE/
-│ └── dockerfile
-├── PORTABLE-PLATFORM/
-│ └── deploy/
-│ └── docker-compose.yml
+├── API-GATEWAY/          # Backend-api-gateway repo
+│   └── dockerfile
+├── USER-SERVICE/         # Backend-User-management-and-subscripption repo
+│   └── dockerfile
+├── PORTABLE-PLATFORM/   # This repo
+│   └── deploy/
+│       └── local/
+│           └── docker-compose.yml
+```
 
 ---
 
