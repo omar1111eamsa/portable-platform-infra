@@ -1,11 +1,12 @@
 # Root Kustomization — pour ArgoCD
-# Ordre : base (namespace) → infra → apps → cronjobs → argocd
+# Mode maintenance : uniquement base + cronjobs (clean-disk, clean-evicted) + argocd
+# Pour réactiver apps/infra : remettre infra et apps dans resources puis push
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
   - base
-  - infra
-  - apps
-  - cronjobs
+  # - infra   # désactivé : maintenance
+  # - apps    # désactivé : maintenance
+  - cronjobs  # clean-disk-backend, clean-disk-frontend, clean-evicted-pods
   - argocd
