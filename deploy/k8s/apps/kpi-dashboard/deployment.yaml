@@ -26,7 +26,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: kpi-dashboard
-          image: ghcr.io/myapp/backend-kpi-dashboard-notifications:6879444
+          image: ghcr.io/myapp/backend-kpi-dashboard-notifications:4c511f3
           imagePullPolicy: Always
           env:
             - name: KPI_DB_URL
