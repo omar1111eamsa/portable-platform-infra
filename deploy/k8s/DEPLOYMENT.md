@@ -4,6 +4,10 @@
 
 ## Prérequis avant `kubectl apply`
 
+### 0. Réplicas temporairement à 0
+
+Tous les déploiements sont en `replicas: 0` pour vider les serveurs. Remettre à `1` dans les manifests après le nettoyage, puis `kubectl apply -k deploy/k8s/` ou sync ArgoCD.
+
 ### 1. Cluster k3s
 - 2 nœuds : `backend-vm` (10.0.0.11), `frontend-vm` (10.0.0.12)
 - Le master k3s sur backend-vm, worker sur frontend-vm

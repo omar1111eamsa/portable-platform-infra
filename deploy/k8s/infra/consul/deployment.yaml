@@ -6,7 +6,7 @@ metadata:
   labels:
     app: consul
 spec:
-  replicas: 1  # 2 replicas caused "No cluster leader"; single node for dev/test
+  replicas: 0  # remis à 1 après vidage des serveurs
   selector:
     matchLabels:
       app: consul
