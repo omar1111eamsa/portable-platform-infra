@@ -10,8 +10,8 @@ all:
       hosts:
         backend-vm:
           ansible_host: 10.0.0.11
-          ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -i ~/.ssh/myapp_vms hodeconlimited@203.0.113.10"'
+          ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -i ~/.ssh/myapp_vms hodeconlimited@203.0.113.11"'
     k3s_agents:
       hosts:
         frontend-vm:
-          ansible_host: 203.0.113.10  # IP publique (accès direct)
+          ansible_host: 203.0.113.11  # IP publique (accès direct)

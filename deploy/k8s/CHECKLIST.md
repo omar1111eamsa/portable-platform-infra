@@ -26,7 +26,7 @@
 
 | Élément | Fichier | Statut |
 |--------|---------|--------|
-| IP publique (203.0.113.10) | `apps/api-gateway/deployment.yaml` (FRONTEND_ORIGIN, SPRING_APPLICATION_JSON) | ☐ |
+| IP publique (203.0.113.11) | `apps/api-gateway/deployment.yaml` (FRONTEND_ORIGIN, SPRING_APPLICATION_JSON) | ☐ |
 | Noms des nœuds | Prérequis : `backend-vm`, `frontend-vm` | ☐ |
 
 ---

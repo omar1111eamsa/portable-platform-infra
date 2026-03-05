@@ -8,7 +8,7 @@ LOCAL_PORT="${LOCAL_PORT:-16443}"
 REMOTE_PORT=6443
 
 # SSH: jump via frontend (IP publique) → backend (réseau interne)
-JUMP_HOST="${JUMP_HOST:-203.0.113.10}"
+JUMP_HOST="${JUMP_HOST:-203.0.113.11}"
 BACKEND_HOST="${BACKEND_HOST:-10.0.0.11}"
 SSH_USER="${SSH_USER:-hodeconlimited}"
 SSH_KEY="${SSH_KEY:-$HOME/.ssh/myapp_vms}"

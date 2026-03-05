@@ -1,4 +1,4 @@
-# Ingress pour accès direct par IP (http://203.0.113.10) et ngrok
+# Ingress pour accès direct par IP (http://203.0.113.11) et ngrok
 # Complète les Ingress par host (api.localhost, app.localhost)
 # IMPORTANT: ingress-ip-api doit avoir priorité > ingress-ip-frontend pour que /api, /login, /oauth2, /chatbot
 # matchent avant le catch-all /

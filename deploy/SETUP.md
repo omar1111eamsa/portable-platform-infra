@@ -9,7 +9,7 @@ Ce guide permet de déployer le cluster k3s depuis zéro (VMs réinitialisées) 
 | Composant   | VM            | Rôle                                    |
 |-------------|---------------|-----------------------------------------|
 | backend-vm  | 10.0.0.11     | k3s server (master), pas d’IP externe   |
-| frontend-vm | 203.0.113.10 | k3s agent (worker), ngrok, IP publique  |
+| frontend-vm | 203.0.113.11 | k3s agent (worker), ngrok, IP publique  |
 
 **Accès SSH** : `frontend-vm` a l’IP publique → ProxyJump pour atteindre `backend-vm`.
 
@@ -17,7 +17,7 @@ Ce guide permet de déployer le cluster k3s depuis zéro (VMs réinitialisées) 
 
 ## Prérequis
 
-- SSH configuré : clé `~/.ssh/myapp_vms`, accès à `hodeconlimited@203.0.113.10`
+- SSH configuré : clé `~/.ssh/myapp_vms`, accès à `hodeconlimited@203.0.113.11`
 - Ansible installé
 - `kubectl` et `kustomize` (optionnel, fournis par k3s)
 - Compte ngrok + authtoken
@@ -71,7 +71,7 @@ ansible-playbook -i inventory.yml playbook.yml
 Récupérer le kubeconfig du serveur :
 
 ```bash
-ssh -i ~/.ssh/myapp_vms -J hodeconlimited@203.0.113.10 hodeconlimited@10.0.0.11 \
+ssh -i ~/.ssh/myapp_vms -J hodeconlimited@203.0.113.11 hodeconlimited@10.0.0.11 \
   "sudo cat /etc/rancher/k3s/k3s.yaml" | sed 's/127.0.0.1/127.0.0.1/' | sed 's/6443/16443/' > ~/.kube/myapp-k3s.yaml
 ```
 
@@ -107,13 +107,13 @@ Dans `deploy/k8s/kustomization.yaml`, décommenter `infra` et `apps`, et mettre 
 Si ngrok n’est pas démarré ou que le domaine doit être forcé :
 
 ```bash
-./apply-with-ngrok-domain.sh --domain votre-subdomain.ngrok-free.app
+./apply-with-ngrok-domain.sh --domain example.ngrok-free.app
 ```
 
 ### 7. Secret Google OAuth (pour Sign in with Google)
 
 ```bash
-NGROK_DOMAIN="votre-subdomain.ngrok-free.app"  # ou celui affiché par apply-with-ngrok-domain.sh
+NGROK_DOMAIN="example.ngrok-free.app"  # ou celui affiché par apply-with-ngrok-domain.sh
 kubectl create secret generic google-oauth-credentials -n myapp \
   --from-literal=GOOGLE_CLIENT_ID=xxx \
   --from-literal=GOOGLE_CLIENT_SECRET=xxx \
@@ -131,7 +131,7 @@ cd ansible
 ansible-playbook -i inventory.yml playbook.yml
 
 # 2. Kubeconfig
-ssh -i ~/.ssh/myapp_vms -J hodeconlimited@203.0.113.10 hodeconlimited@10.0.0.11 \
+ssh -i ~/.ssh/myapp_vms -J hodeconlimited@203.0.113.11 hodeconlimited@10.0.0.11 \
   "sudo cat /etc/rancher/k3s/k3s.yaml" | sed 's/6443/16443/' > ~/.kube/myapp-k3s.yaml
 
 # 3. Tunnel

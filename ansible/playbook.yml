@@ -3,7 +3,7 @@
 # Usage: ansible-playbook -i inventory.yml playbook.yml
 #
 # Prérequis:
-#   - Accès SSH à frontend-vm (203.0.113.10) et backend-vm (10.0.0.11 via ProxyJump)
+#   - Accès SSH à frontend-vm (203.0.113.11) et backend-vm (10.0.0.11 via ProxyJump)
 #   - ~/.ssh/myapp_vms
 #
 # Après exécution: lancer le tunnel (scripts/start-kubectl-tunnel.sh), puis kubectl apply

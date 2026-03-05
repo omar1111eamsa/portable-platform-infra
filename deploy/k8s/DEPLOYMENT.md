@@ -101,8 +101,8 @@ kubectl apply -k deploy/k8s/
 ```bash
 kubectl get pods -n myapp
 kubectl get ingress -n myapp
-curl -s http://203.0.113.10/
-curl -s http://203.0.113.10/api/actuator/health
+curl -s http://203.0.113.11/
+curl -s http://203.0.113.11/api/actuator/health
 ```
 
 ### Vérifier OAuth2 Google (Sign in with Google)
@@ -124,6 +124,6 @@ Pour un test complet dans le navigateur : https://$NGROK_HOST/auth/login → cli
 
 ## Réseau et CORS
 
-- **Accès par IP** : `http://203.0.113.10` → Ingress `ingress-ip` route `/api` vers api-gateway, `/` vers frontend
-- **CORS** : api-gateway accepte les origines `app.localhost`, `203.0.113.10`, `localhost:3000` (config via `SPRING_APPLICATION_JSON`)
+- **Accès par IP** : `http://203.0.113.11` → Ingress `ingress-ip` route `/api` vers api-gateway, `/` vers frontend
+- **CORS** : api-gateway accepte les origines `app.localhost`, `203.0.113.11`, `localhost:3000` (config via `SPRING_APPLICATION_JSON`)
 - Si l'IP publique change : mettre à jour `SPRING_APPLICATION_JSON` et `FRONTEND_ORIGIN` dans `apps/api-gateway/deployment.yaml`

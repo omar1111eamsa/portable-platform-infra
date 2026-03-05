@@ -2,14 +2,14 @@
 
 ## Option 1 : Accès direct par IP (aucune config)
 
-**Frontend (IP publique frontend-vm) :** http://203.0.113.10/
+**Frontend (IP publique frontend-vm) :** http://203.0.113.11/
 
 | Service | URL |
 |---------|-----|
-| **Frontend** | http://203.0.113.10/ |
-| **API** | http://203.0.113.10/api/ |
-| **Auth** | http://203.0.113.10/auth/ |
-| **Swagger** | http://203.0.113.10/swagger-ui.html |
+| **Frontend** | http://203.0.113.11/ |
+| **API** | http://203.0.113.11/api/ |
+| **Auth** | http://203.0.113.11/auth/ |
+| **Swagger** | http://203.0.113.11/swagger-ui.html |
 
 ---
 
@@ -18,7 +18,7 @@
 Ajouter dans `/etc/hosts` (Linux/Mac) ou `C:\Windows\System32\drivers\etc\hosts` (Windows) :
 
 ```
-203.0.113.10 api.localhost app.localhost payment.localhost users.localhost crm.localhost chatbot.localhost predictions.localhost kpi.localhost
+203.0.113.11 api.localhost app.localhost payment.localhost users.localhost crm.localhost chatbot.localhost predictions.localhost kpi.localhost
 ```
 
 **URLs :**
@@ -38,7 +38,7 @@ Ajouter dans `/etc/hosts` (Linux/Mac) ou `C:\Windows\System32\drivers\etc\hosts`
 
 ## Prérequis
 
-- **Ports ouverts** : 80 (et 443 si HTTPS) sur la VM frontend (203.0.113.10)
+- **Ports ouverts** : 80 (et 443 si HTTPS) sur la VM frontend (203.0.113.11)
 - Le cluster k3s doit être déployé et les services Running
 
 ### Ouvrir le firewall GCP (si nécessaire)
@@ -59,8 +59,8 @@ gcloud compute firewall-rules create allow-http-https \
 
 ```bash
 # Test frontend
-curl -s -o /dev/null -w "%{http_code}" http://203.0.113.10/
+curl -s -o /dev/null -w "%{http_code}" http://203.0.113.11/
 
 # Test API
-curl -s http://203.0.113.10/api/actuator/health
+curl -s http://203.0.113.11/api/actuator/health
 ```

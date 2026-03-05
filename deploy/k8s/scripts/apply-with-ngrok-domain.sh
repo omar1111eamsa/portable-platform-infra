@@ -10,7 +10,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 
 # Même config SSH que start-kubectl-tunnel.sh
 # Frontend = hôte avec ngrok (IP publique)
-FRONTEND_HOST="${FRONTEND_HOST:-203.0.113.10}"
+FRONTEND_HOST="${FRONTEND_HOST:-203.0.113.11}"
 SSH_USER="${SSH_USER:-hodeconlimited}"
 SSH_KEY="${SSH_KEY:-$HOME/.ssh/myapp_vms}"
 [[ -n "$SSH_KEY" && -f "$SSH_KEY" ]] && SSH_OPTS=(-i "$SSH_KEY") || SSH_OPTS=()

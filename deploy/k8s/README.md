@@ -17,7 +17,7 @@ k8s/
 ├── apps/              # API Gateway, Frontend, User, Payment, CRM, etc.
 │   ├── api-gateway/
 │   ├── frontend/
-│   ├── ingress-ip.yaml  # Accès par IP (http://203.0.113.10)
+│   ├── ingress-ip.yaml  # Accès par IP (http://203.0.113.11)
 │   └── kustomization.yaml
 ├── cronjobs/          # Nettoyage disque (backend-vm, frontend-vm)
 ├── scripts/           # clean-node-disk.sh (manuel)
@@ -42,7 +42,7 @@ kubectl apply -k apps/
 ### Depuis le backend via SSH
 
 ```bash
-ssh -A -i ~/.ssh/myapp_vms -J hodeconlimited@203.0.113.10 hodeconlimited@10.0.0.11 \
+ssh -A -i ~/.ssh/myapp_vms -J hodeconlimited@203.0.113.11 hodeconlimited@10.0.0.11 \
   "sudo k3s kubectl apply -k -" < <(kubectl kustomize deploy/k8s/base)
 ```
 
@@ -79,7 +79,7 @@ Si des pods sont `Evicted` avec le motif `ephemeral-storage`, libérer de l'espa
 ```bash
 # Depuis ta machine (remplacer user et IP par tes identifiants)
 for node in 10.0.0.11 10.0.0.12; do
-  ssh -A -i ~/.ssh/myapp_vms -J hodeconlimited@203.0.113.10 hodeconlimited@$node \
+  ssh -A -i ~/.ssh/myapp_vms -J hodeconlimited@203.0.113.11 hodeconlimited@$node \
     'sudo bash -s' < deploy/k8s/scripts/clean-node-disk.sh
 done
 ```
