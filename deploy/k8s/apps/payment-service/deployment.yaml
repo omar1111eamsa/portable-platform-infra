@@ -84,10 +84,10 @@ spec:
                   key: STRIPE_WEBHOOK_SECRET
           resources:
             requests:
-              memory: "384Mi"
+              memory: "256Mi"
               cpu: "100m"
             limits:
-              memory: "768Mi"
+              memory: "512Mi"
               cpu: "500m"
           startupProbe:
             httpGet:

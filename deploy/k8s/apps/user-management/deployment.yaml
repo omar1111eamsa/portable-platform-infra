@@ -103,10 +103,10 @@ spec:
               value: "true"
           resources:
             requests:
-              memory: "384Mi"
+              memory: "256Mi"
               cpu: "200m"
             limits:
-              memory: "768Mi"
+              memory: "512Mi"
               cpu: "500m"
           startupProbe:
             httpGet:

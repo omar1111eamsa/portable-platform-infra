@@ -23,7 +23,7 @@ if [[ "${1:-}" == "--apply" ]]; then
   sleep 5
 fi
 
-echo "Deleting evicted/failed pods in $NS..."
+echo "Deleting evicted/failed pods in $NS (libère les références aux images)..."
 kubectl get pods -n "$NS" --no-headers 2>/dev/null | awk '$3=="Evicted" || $3=="Failed" || $3=="ContainerStatusUnknown" {print $1}' | while read -r p; do
   kubectl delete pod -n "$NS" "$p" --ignore-not-found --wait=false 2>/dev/null || true
 done
@@ -33,9 +33,14 @@ for d in $(kubectl get deployments -n "$NS" -o name 2>/dev/null); do
   kubectl scale -n "$NS" "$d" --replicas=1 2>/dev/null || true
 done
 
-echo "Triggering clean-disk jobs..."
+echo "Triggering clean-disk jobs on both VMs (supprime images inutilisées)..."
 kubectl create job -n "$NS" --from=cronjob/clean-disk-backend fix-disk-backend-$(date +%s) 2>/dev/null || true
 kubectl create job -n "$NS" --from=cronjob/clean-disk-frontend fix-disk-frontend-$(date +%s) 2>/dev/null || true
+echo "Attente 60s pour que le prune des images s'exécute..."
+sleep 60
+echo "Second passage de clean-disk (images libérées après suppression des pods évicted)..."
+kubectl create job -n "$NS" --from=cronjob/clean-disk-backend fix-disk-backend-2-$(date +%s) 2>/dev/null || true
+kubectl create job -n "$NS" --from=cronjob/clean-disk-frontend fix-disk-frontend-2-$(date +%s) 2>/dev/null || true
 
 echo "--- Deployment status ---"
 kubectl get deployments -n "$NS" -o custom-columns=NAME:.metadata.name,DESIRED:.spec.replicas,READY:.status.readyReplicas,UNAVAILABLE:.status.unavailableReplicas 2>/dev/null

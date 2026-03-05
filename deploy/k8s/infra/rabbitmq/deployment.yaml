@@ -17,7 +17,7 @@ spec:
         app: rabbitmq
     spec:
       nodeSelector:
-        kubernetes.io/hostname: backend-vm
+        kubernetes.io/hostname: frontend-vm
       tolerations:
         - key: node.kubernetes.io/disk-pressure
           operator: Exists
@@ -37,10 +37,10 @@ spec:
               value: /
           resources:
             requests:
-              memory: "384Mi"
+              memory: "256Mi"
               cpu: "200m"
             limits:
-              memory: "768Mi"
+              memory: "512Mi"
               cpu: "500m"
           startupProbe:
             tcpSocket:

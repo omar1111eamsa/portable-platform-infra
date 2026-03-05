@@ -16,7 +16,7 @@ spec:
         app: consul
     spec:
       nodeSelector:
-        kubernetes.io/hostname: backend-vm
+        kubernetes.io/hostname: frontend-vm
       containers:
         - name: consul
           image: hashicorp/consul:1.17
@@ -36,10 +36,10 @@ spec:
               name: dns
           resources:
             requests:
-              memory: "384Mi"
+              memory: "256Mi"
               cpu: "100m"
             limits:
-              memory: "768Mi"
+              memory: "512Mi"
               cpu: "500m"
           startupProbe:
             exec:
