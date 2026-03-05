@@ -25,6 +25,8 @@ resources:
   - kpi-dashboard/deployment.yaml
   - kpi-dashboard/service.yaml
   - kpi-dashboard/ingress.yaml
+  - metamodel-orchestration/deployment.yaml
+  - metamodel-orchestration/service.yaml
   - payment-service/deployment.yaml
   - payment-service/service.yaml
   - payment-service/ingress.yaml
