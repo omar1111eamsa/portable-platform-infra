@@ -1,6 +1,5 @@
 # Metamodel-orchestration = Apache Airflow API server (no gateway route; internal/cron use).
-# Memory-hungry: keep on backend-vm only; other heavy apps moved to frontend-vm to avoid evictions.
-# Scale to 1 only when needed: kubectl scale deployment metamodel-orchestration -n myapp --replicas=1
+# Scheduled on frontend-vm: backend-vm has DiskPressure (evicts pods); frontend has no disk pressure.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -9,7 +8,7 @@ metadata:
   labels:
     app: metamodel-orchestration
 spec:
-  replicas: 0  # do not set to 1 until backend-vm has no DiskPressure (see README)
+  replicas: 1
   revisionHistoryLimit: 2
   selector:
     matchLabels:
@@ -20,7 +19,7 @@ spec:
         app: metamodel-orchestration
     spec:
       nodeSelector:
-        kubernetes.io/hostname: backend-vm
+        kubernetes.io/hostname: frontend-vm
       tolerations:
         - key: node.kubernetes.io/disk-pressure
           operator: Exists

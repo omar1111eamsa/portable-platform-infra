@@ -2,17 +2,14 @@
 
 - **Image** : `Metamodel-orschestation-airflow` (Apache Airflow API server, port 8080).
 - **Pas exposé via l’API Gateway** : service interne (health `/health`, pas de route dans le gateway).
-- **RAM** : gourmand ; déployé uniquement sur **backend-vm**. api-gateway et payment-service ont été déplacés sur frontend-vm pour libérer de la RAM sur backend et éviter les evictions.
+- **Nœud** : **frontend-vm** (backend-vm a DiskPressure → éviction des pods ; frontend-vm n’a pas de pression disque).
 
-## Déploiement contrôlé
+## Déploiement
 
-- **replicas: 0** par défaut dans le manifest. Pour lancer le service :
-  ```bash
-  kubectl scale deployment metamodel-orchestration -n myapp --replicas=1
-  ```
-- Surveiller la RAM sur backend-vm : `kubectl top node backend-vm -n myapp`
+- replicas: 1 par défaut, nodeSelector: frontend-vm.
 - Pour arrêter : `kubectl scale deployment metamodel-orchestration -n myapp --replicas=0`
+- Surveiller : `kubectl top node frontend-vm` et `kubectl top pod -l app=metamodel-orchestration -n myapp`
 
 ## Ressources
 
-- Request: 384Mi, limit: 768Mi (pour borner la consommation et éviter de saturer le nœud).
+- Request: 384Mi, limit: 768Mi.
