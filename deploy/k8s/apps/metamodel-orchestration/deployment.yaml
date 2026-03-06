@@ -48,8 +48,8 @@ spec:
             runAsUser: 50000
       containers:
         - name: metamodel-orchestration
-          # Image: Metamodel-orschestation-airflow (Airflow API server on port 8080)
-          image: ghcr.io/myapp/metamodel-orschestation-airflow:3b6ed3d
+          # Image: Metamodel-orschestation-airflow (Airflow API server on port 8080) — same as init (latest SHA)
+          image: ghcr.io/myapp/metamodel-orschestation-airflow:cbeed25
           imagePullPolicy: Always
           command: ["python", "-m", "airflow", "api-server"]
           env:
