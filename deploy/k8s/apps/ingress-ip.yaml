@@ -1,6 +1,6 @@
 # Ingress pour accès direct par IP (http://203.0.113.11) et ngrok
 # Complète les Ingress par host (api.localhost, app.localhost)
-# IMPORTANT: ingress-ip-api doit avoir priorité > ingress-ip-frontend pour que /api, /login, /oauth2, /chatbot
+# IMPORTANT: ingress-ip-api doit avoir priorité > ingress-ip-frontend pour que /api, /login, /oauth2, /chatbot, /payment-service
 # matchent avant le catch-all /
 ---
 apiVersion: networking.k8s.io/v1
@@ -46,6 +46,13 @@ spec:
                 name: api-gateway
                 port:
                   number: 8888
+          - path: /payment-service
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 8888
     - http:
         paths:
           - path: /api
@@ -70,6 +77,13 @@ spec:
                 port:
                   number: 8888
           - path: /chatbot
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 8888
+          - path: /payment-service
             pathType: Prefix
             backend:
               service:
