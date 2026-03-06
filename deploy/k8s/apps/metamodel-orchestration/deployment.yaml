@@ -1,5 +1,6 @@
 # Metamodel-orchestration = Apache Airflow API server (no gateway route; internal/cron use).
-# Scheduled on frontend-vm: backend-vm has DiskPressure (evicts pods); frontend has no disk pressure.
+# Scheduled on frontend-vm. Set replicas to 1 only after DiskPressure is cleared on frontend-vm
+# (see deploy/k8s/apps/metamodel-orchestration/README.md).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -8,7 +9,7 @@ metadata:
   labels:
     app: metamodel-orchestration
 spec:
-  replicas: 1
+  replicas: 0
   revisionHistoryLimit: 2
   selector:
     matchLabels:
