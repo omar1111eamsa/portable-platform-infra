@@ -8,7 +8,7 @@ metadata:
   labels:
     app: metamodel-orchestration
 spec:
-  replicas: 1
+  replicas: 0
   revisionHistoryLimit: 2
   selector:
     matchLabels:
@@ -33,12 +33,34 @@ spec:
               app: metamodel-orchestration
       imagePullSecrets:
         - name: ghcr-secret
+      initContainers:
+        - name: airflow-db-init
+          image: ghcr.io/myapp/metamodel-orschestation-airflow:3b6ed3d
+          command: ["python", "-m", "airflow", "db", "migrate"]
+          env:
+            - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+              value: "sqlite:////opt/airflow/db/airflow.db"
+          volumeMounts:
+            - name: airflow-db
+              mountPath: /opt/airflow/db
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 50000
       containers:
         - name: metamodel-orchestration
           # Image: Metamodel-orschestation-airflow (Airflow API server on port 8080)
-          image: ghcr.io/myapp/metamodel-orschestation-airflow:test-ci-metamodel-airflow
+          image: ghcr.io/myapp/metamodel-orschestation-airflow:3b6ed3d
           imagePullPolicy: Always
-          command: ["airflow", "api-server"]
+          command: ["python", "-m", "airflow", "api-server"]
+          env:
+            - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+              value: "sqlite:////opt/airflow/db/airflow.db"
+          volumeMounts:
+            - name: entrypoint
+              mountPath: /entrypoint.sh
+              subPath: entrypoint.sh
+            - name: airflow-db
+              mountPath: /opt/airflow/db
           ports:
             - containerPort: 8080
           resources:
@@ -67,7 +89,14 @@ spec:
               port: 8080
             initialDelaySeconds: 30
             periodSeconds: 10
+      volumes:
+        - name: entrypoint
+          configMap:
+            name: metamodel-entrypoint
+            defaultMode: 0o755
+        - name: airflow-db
+          emptyDir: {}
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000
+        runAsUser: 50000  # airflow user in apache/airflow image
 

@@ -1,0 +1,20 @@
+# Override entrypoint so we run python -m airflow (avoids broken /home/airflow/.local/bin/airflow).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: metamodel-entrypoint
+  namespace: myapp
+data:
+  entrypoint.sh: |
+    #!/bin/bash
+    set -e
+    echo ">>> Initializing Airflow DB..."
+    python -m airflow db migrate
+    echo ">>> Importing Airflow connections..."
+    if [ -f /opt/airflow/config/airflow_conns.json ]; then
+      python -m airflow connections import /opt/airflow/config/airflow_conns.json 2>/dev/null || echo "⚠️  Failed to import connections"
+    else
+      echo "⚠️  No airflow_conns.json found at /opt/airflow/config/"
+    fi
+    echo ">>> Starting Airflow API server..."
+    exec "$@"
