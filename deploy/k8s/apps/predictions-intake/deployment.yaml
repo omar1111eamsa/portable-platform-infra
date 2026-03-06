@@ -6,7 +6,7 @@ metadata:
   labels:
     app: predictions-intake
 spec:
-  replicas: 0
+  replicas: 1
   selector:
     matchLabels:
       app: predictions-intake

@@ -1,0 +1,13 @@
+---
+# Étape 1 — k3s uniquement (sans ngrok)
+# Usage: ansible-playbook -i inventory.yml playbook-k3s-only.yml
+
+- name: Install k3s server on backend
+  hosts: k3s_server
+  roles:
+    - k3s-server
+
+- name: Install k3s agent on frontend
+  hosts: k3s_agents
+  roles:
+    - k3s-agent

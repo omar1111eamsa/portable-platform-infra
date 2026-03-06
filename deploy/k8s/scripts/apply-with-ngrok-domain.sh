@@ -35,9 +35,11 @@ else
 fi
 
 # Appliquer avec remplacement du domaine dans tous les manifests
+# Remplace tout domaine ngrok connu (évite de maintenir une liste)
 echo "Building kustomize and applying with NGROK_DOMAIN=$NGROK_DOMAIN..."
 kubectl kustomize "$K8S_DIR" 2>/dev/null || kustomize build "$K8S_DIR" 2>/dev/null | \
-  sed "s/c4b0-203-0-113-10\.ngrok-free\.app/${NGROK_DOMAIN}/g" | \
+  sed -e "s/c4b0-203-0-113-10\.ngrok-free\.app/${NGROK_DOMAIN}/g" \
+      -e "s/84b9-203-0-113-11\.ngrok-free\.app/${NGROK_DOMAIN}/g" | \
   kubectl apply -f -
 
 echo "Done. Frontend: https://${NGROK_DOMAIN}/  API: https://${NGROK_DOMAIN}/api"

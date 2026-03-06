@@ -1,8 +1,15 @@
+# Deploy Directory
+
+- **`k8s/`** — Kubernetes manifests (production, used by ArgoCD). See [k8s/README.md](k8s/README.md) and [SETUP.md](SETUP.md).
+- **`local/`** — Docker Compose for local development.
+- **`docs/`** — Architecture and indexes. See [docs/INDEX.md](docs/INDEX.md).
+- **`argocd/`** — ArgoCD Application definition (watches `test-argocd`).
+
+---
+
 # Local Backend Deployment
 
-This directory contains the **Docker Compose setup** used to run the backend stack locally by orchestrating multiple independent service repositories.
-
-Docker Compose builds application services from source and runs official infrastructure images to reproduce a production-like environment on a developer machine.
+Docker Compose builds application services from source and runs infrastructure images for local development.
 
 ---
 

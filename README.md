@@ -14,22 +14,20 @@ Each backend service (user-management, api-gateway, payment-service, etc.) lives
 
 ```
 portable-platform-infra/
-├── ansible/                    # Ansible roles (k3s server setup)
-│   └── roles/k3s-server/
-├── deploy/                     # Deployment definitions
-│   ├── k8s/                   # Kubernetes manifests (k3s)
+├── ansible/                    # Ansible (k3s server, agent, ngrok)
+│   ├── playbook.yml           # Full setup
+│   ├── playbook-k3s-only.yml  # k3s only
+│   └── roles/k3s-server, k3s-agent, ngrok
+├── deploy/
+│   ├── k8s/                   # Kubernetes manifests (k3s) — production
 │   │   ├── base/              # Namespace
 │   │   ├── infra/             # Postgres, Redis, Consul, RabbitMQ
 │   │   ├── apps/              # api-gateway, frontend, user-management, etc.
-│   │   ├── cronjobs/          # Disk cleanup, evicted pods cleanup
-│   │   ├── DEPLOYMENT.md
-│   │   ├── CHECKLIST.md
-│   │   └── README.md
-│   ├── local/                 # Docker Compose (local dev)
-│   ├── prod/                  # Docker Compose (production)
-│   ├── docs/                  # Index documentation (voir deploy/docs/INDEX.md)
-│   └── argocd/                # ArgoCD application (optional)
-├── .github/workflows/         # CI/CD pipelines
+│   │   ├── cronjobs/          # Disk cleanup, evicted pods
+│   │   └── argocd/            # ArgoCD Ingress
+│   ├── local/                 # Docker Compose (local dev only)
+│   ├── docs/                  # Architecture docs (INDEX.md)
+│   └── argocd/                # ArgoCD Application definition
 ├── .env.example
 └── README.md
 ```
@@ -38,23 +36,28 @@ portable-platform-infra/
 
 ## Responsibilities
 
-- **Kubernetes (k3s)** : manifests, Ingress, CronJobs
+- **Kubernetes (k3s)** : manifests, Ingress, CronJobs — production deployment
+- **ArgoCD** : GitOps, watches `test-argocd`, syncs on manifest changes
 - **Infrastructure** : PostgreSQL, Redis, Consul, RabbitMQ
-- **CI/CD** : deployment workflows
 - **Documentation** : architecture, deployment guide, checklist
 
 ---
 
-## Deployment (k8s)
+## Deployment (k8s + ArgoCD)
+
+**Production** : ArgoCD syncs automatically from branch `test-argocd`, path `deploy/k8s`.  
+See [deploy/argocd/ARGOCD-AUTODEPLOY.md](deploy/argocd/ARGOCD-AUTODEPLOY.md).
+
+**Manual apply** :
 
 ```bash
-# Prérequis : ghcr-secret, KUBECONFIG pointant vers le cluster
+# Prérequis : ghcr-secret, KUBECONFIG
 kubectl apply -k deploy/k8s/
+# Ou avec domaine ngrok :
+deploy/k8s/scripts/apply-with-ngrok-domain.sh
 ```
 
-See [deploy/k8s/DEPLOYMENT.md](deploy/k8s/DEPLOYMENT.md) for prerequisites and order.
-
-See [deploy/k8s/CHECKLIST.md](deploy/k8s/CHECKLIST.md) for missing configurations (DevOps + devs).
+See [deploy/k8s/DEPLOYMENT.md](deploy/k8s/DEPLOYMENT.md) and [deploy/SETUP.md](deploy/SETUP.md).
 
 ---
 

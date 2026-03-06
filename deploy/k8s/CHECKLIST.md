@@ -10,7 +10,7 @@
 
 | Action | Détail | Statut |
 |--------|--------|--------|
-| **GH_PAT** | PAT GitHub (scope `repo`) pour que les CI puissent pousser dans portable-platform-infra. À ajouter dans chaque repo (Front-end, Backend-User-management, etc.) : Settings → Secrets → GH_PAT | ☐ |
+| **GH_PAT** | PAT GitHub (scopes `repo` + `read:packages`) pour que les CI puissent pousser dans portable-platform-infra. À ajouter dans chaque repo : Settings → Secrets → GH_PAT | ☐ |
 
 → Voir [ARGOCD-AUTODEPLOY.md](../argocd/ARGOCD-AUTODEPLOY.md) pour le détail.
 
@@ -18,7 +18,7 @@
 
 | Secret | Commande / Action | Statut |
 |--------|-------------------|--------|
-| **ghcr-secret** | `kubectl create secret docker-registry ghcr-secret -n myapp --docker-server=ghcr.io --docker-username=TON_GITHUB_USERNAME --docker-password=TON_GITHUB_PAT` | ☐ |
+| **ghcr-secret** | `kubectl create secret docker-registry ghcr-secret -n myapp --docker-server=ghcr.io --docker-username=TON_GITHUB_USER --docker-password=TON_GITHUB_PAT` (PAT scopes: `repo`, `read:packages`) | ☐ |
 | **postgres-credentials** | En prod : remplacer postgres/postgres par un mot de passe fort (ou Sealed Secrets / Vault) | ☐ |
 | **chatbot-credentials** | `kubectl create secret generic chatbot-credentials -n myapp --from-literal=LLM_API_KEY=sk-or-VOTRE_CLE_OPENROUTER --dry-run=client -o yaml \| kubectl apply -f -` — Voir `apps/chatbot/SECRET-SETUP.md` | ☐ |
 

@@ -98,7 +98,11 @@ kubectl create secret docker-registry ghcr-secret -n myapp \
 
 Dans `deploy/k8s/kustomization.yaml`, décommenter `infra` et `apps`, et mettre `replicas: 1` dans les deployments.
 
-### 6. Appliquer les manifests avec le domaine ngrok
+### 6. ArgoCD (optionnel)
+
+ArgoCD sync automatiquement depuis la branche `test-argocd`. Voir [argocd/ARGOCD-AUTODEPLOY.md](argocd/ARGOCD-AUTODEPLOY.md).
+
+### 7. Appliquer les manifests avec le domaine ngrok
 
 ```bash
 ./apply-with-ngrok-domain.sh
@@ -110,7 +114,7 @@ Si ngrok n’est pas démarré ou que le domaine doit être forcé :
 ./apply-with-ngrok-domain.sh --domain example.ngrok-free.app
 ```
 
-### 7. Secret Google OAuth (pour Sign in with Google)
+### 8. Secret Google OAuth (pour Sign in with Google)
 
 ```bash
 NGROK_DOMAIN="example.ngrok-free.app"  # ou celui affiché par apply-with-ngrok-domain.sh

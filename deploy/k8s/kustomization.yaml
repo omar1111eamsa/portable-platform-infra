@@ -6,7 +6,7 @@ kind: Kustomization
 
 resources:
   - base
-  # - infra   # désactivé : maintenance
-  # - apps    # désactivé : maintenance
+  - infra
+  - apps
   - cronjobs  # clean-disk-backend, clean-disk-frontend, clean-evicted-pods
   - argocd

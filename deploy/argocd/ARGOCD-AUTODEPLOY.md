@@ -16,7 +16,7 @@ Step 2–4 requires a **GitHub Personal Access Token** with write access to `por
 
 1. Go to [GitHub Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens)
 2. Generate a new token (classic)
-3. Grant scope: **`repo`** (full control of private repositories)
+3. Grant scopes: **`repo`** (full control of private repositories) + **`read:packages`** (download GHCR images)
 4. Copy the token (you won’t see it again)
 
 ### 2. Add `GH_PAT` in each app repo

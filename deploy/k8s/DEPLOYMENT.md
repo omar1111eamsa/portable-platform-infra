@@ -9,7 +9,7 @@
 Tous les déploiements sont en `replicas: 0` pour vider les serveurs. Remettre à `1` dans les manifests après le nettoyage, puis `kubectl apply -k deploy/k8s/` ou sync ArgoCD.
 
 ### 1. Cluster k3s
-- 2 nœuds : `backend-vm` (10.0.0.11), `frontend-vm` (10.0.0.12)
+- 2 nœuds : `backend-vm` (10.0.0.11), `frontend-vm` (IP publique 203.0.113.11)
 - Le master k3s sur backend-vm, worker sur frontend-vm
 - Noms des nœuds exacts : `backend-vm`, `frontend-vm`
 - **Répartition des services** : chaque déploiement a un `nodeSelector` — **backend-vm** : postgres, redis, api-gateway, user-management, payment-service ; **frontend-vm** : consul, rabbitmq, frontend, chatbot, predictions-intake, crm-client, kpi-dashboard, metamodel

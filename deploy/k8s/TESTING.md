@@ -4,6 +4,9 @@
 
 **Frontend (IP publique frontend-vm) :** http://203.0.113.11/
 
+**Ngrok (recommandé pour OAuth/HTTPS) :** https://example.ngrok-free.app (header `ngrok-skip-browser-warning: 1`)  
+**ArgoCD :** https://example.ngrok-free.app/argocd
+
 | Service | URL |
 |---------|-----|
 | **Frontend** | http://203.0.113.11/ |
