@@ -72,20 +72,20 @@ spec:
               cpu: "500m"
           startupProbe:
             httpGet:
-              path: /health
+              path: /api/v2/monitor/health
               port: 8080
             initialDelaySeconds: 30
             periodSeconds: 10
             failureThreshold: 30
           livenessProbe:
             httpGet:
-              path: /health
+              path: /api/v2/monitor/health
               port: 8080
             initialDelaySeconds: 60
             periodSeconds: 15
           readinessProbe:
             httpGet:
-              path: /health
+              path: /api/v2/monitor/health
               port: 8080
             initialDelaySeconds: 30
             periodSeconds: 10
