@@ -2,20 +2,13 @@
 
 - **Image** : `Metamodel-orschestation-airflow` (Apache Airflow API server, port 8080).
 - **Pas exposé via l’API Gateway** : service interne (health `/health`).
-- **Nœud** : **frontend-vm** (nodeSelector). replicas: **0** par défaut tant que DiskPressure sur les nœuds.
+- **Nœud** : **backend-vm** (postgres, user-management + metamodel ; frontend-vm garde le reste pour éviter DiskPressure).
 
-## Activer le déploiement (après libération disque)
+## Si le pod est évincé (DiskPressure)
 
-Les pods sont évincés si le nœud a **DiskPressure**. Avant de passer à replicas 1 :
-
-1. **Libérer le disque sur frontend-vm** (SSH sur la VM) :
-   ```bash
-   sudo crictl rmi --prune
-   sudo crictl rmp -a
-   ```
-2. Vérifier que le nœud n’a plus de pression : `kubectl describe node frontend-vm | grep -A5 Conditions`
-3. Activer : `kubectl scale deployment metamodel-orchestration -n myapp --replicas=1`
-4. Ou mettre `replicas: 1` dans ce manifest et pousser (ArgoCD appliquera).
+1. Libérer le disque sur le nœud concerné (SSH) : `sudo crictl rmi --prune` puis `sudo crictl rmp -a`
+2. Vérifier : `kubectl describe node backend-vm | grep -A5 Conditions`
+3. Réactiver si besoin : `kubectl scale deployment metamodel-orchestration -n myapp --replicas=1`
 
 ## Arrêter
 

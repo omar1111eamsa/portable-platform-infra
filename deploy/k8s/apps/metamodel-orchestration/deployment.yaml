@@ -1,6 +1,5 @@
 # Metamodel-orchestration = Apache Airflow API server (no gateway route; internal/cron use).
-# Scheduled on frontend-vm. Set replicas to 1 only after DiskPressure is cleared on frontend-vm
-# (see deploy/k8s/apps/metamodel-orchestration/README.md).
+# Scheduled on backend-vm (lighter load; frontend-vm had DiskPressure). If backend gets DiskPressure, set replicas 0 and free disk (see README).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -9,7 +8,7 @@ metadata:
   labels:
     app: metamodel-orchestration
 spec:
-  replicas: 0
+  replicas: 1
   revisionHistoryLimit: 2
   selector:
     matchLabels:
@@ -20,7 +19,7 @@ spec:
         app: metamodel-orchestration
     spec:
       nodeSelector:
-        kubernetes.io/hostname: frontend-vm
+        kubernetes.io/hostname: backend-vm
       tolerations:
         - key: node.kubernetes.io/disk-pressure
           operator: Exists
