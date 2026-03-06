@@ -124,6 +124,6 @@ Pour un test complet dans le navigateur : https://$NGROK_HOST/auth/login → cli
 
 ## Réseau et CORS
 
-- **Accès par IP** : `http://203.0.113.11` → Ingress `ingress-ip` route `/api` vers api-gateway, `/` vers frontend
+- **Accès par IP** : `http://203.0.113.11` → Ingress `ingress-ip` route `/api`, `/login`, `/oauth2`, `/chatbot`, `/payment-service` vers api-gateway, `/` vers frontend
 - **CORS** : api-gateway accepte les origines `app.localhost`, `203.0.113.11`, `localhost:3000` (config via `SPRING_APPLICATION_JSON`)
 - Si l'IP publique change : mettre à jour `SPRING_APPLICATION_JSON` et `FRONTEND_ORIGIN` dans `apps/api-gateway/deployment.yaml`

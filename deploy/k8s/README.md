@@ -32,7 +32,7 @@ k8s/
 # 1. Base (namespace)
 kubectl apply -k base/
 
-# 2. Infra (PostgreSQL, Redis, Consul)
+# 2. Infra (PostgreSQL + init-databases Job, Redis, Consul, RabbitMQ)
 kubectl apply -k infra/
 
 # 3. Apps (api-gateway, frontend)

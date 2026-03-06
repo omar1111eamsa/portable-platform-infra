@@ -16,7 +16,7 @@ Ce document décrit l’architecture globale du cluster et le rôle de chaque fi
 
 ```
 Internet (ngrok) → Traefik Ingress
-  ├── /api, /login, /oauth2, /chatbot  → api-gateway:8888 (JWT requis pour /chatbot)
+  ├── /api, /login, /oauth2, /chatbot, /payment-service  → api-gateway:8888 (JWT requis pour /chatbot)
   ├── /argocd                          → argocd-server:80 (namespace argocd)
   └── /                                → frontend:3000
 
@@ -111,7 +111,7 @@ Namespace : `myapp`. Chaque service a typiquement : Deployment, Service, Ingress
 
 | Fichier | Rôle |
 |---------|------|
-| **chatbot/ingressroute.yaml** | IngressRoute : `/chatbot` → api-gateway:8888 (auth JWT côté gateway). |
+| **chatbot/ingressroute.yaml** | Optionnel (nécessite CRD Traefik IngressRoute). Sinon `/chatbot` est servi par **ingress-ip-api**. |
 | **chatbot/pvc.yaml** | PVC 1Gi pour la base SQLite (`/data/chatbot.db`). |
 | **chatbot/deployment.yaml** | 1 replica, image GHCR, env LLM_API_KEY (secret), DB_PATH=/data/chatbot.db, volumeMount sur `/data`, fsGroup 1000. |
 | **chatbot/service.yaml** | ClusterIP 8000. |
@@ -163,9 +163,9 @@ Namespace : `myapp`. Chaque service a typiquement : Deployment, Service, Ingress
 
 | Fichier | Rôle |
 |---------|------|
-| **ingress-ip.yaml** | Deux Ingress pour accès par IP et domaine ngrok : **ingress-ip-api** (priorité 200) : `/api`, `/login`, `/oauth2` → api-gateway. **ingress-ip-frontend** (priorité 100) : `/` → frontend. Host : `example.ngrok-free.app` + règle sans host (IP). |
+| **ingress-ip.yaml** | Deux Ingress pour accès par IP et domaine ngrok : **ingress-ip-api** (priorité 200) : `/api`, `/login`, `/oauth2`, `/chatbot`, `/payment-service` → api-gateway. **ingress-ip-frontend** (priorité 100) : `/` → frontend. Host : `example.ngrok-free.app` + règle sans host (IP). |
 
-Le chemin `/chatbot` est aussi défini dans **ingress-ip.yaml** (route vers api-gateway) et dans **chatbot/ingressroute.yaml**.
+Le chemin `/chatbot` est défini dans **ingress-ip.yaml** (route vers api-gateway). Optionnel : **chatbot/ingressroute.yaml** si le CRD IngressRoute Traefik est installé.
 
 ---
 
