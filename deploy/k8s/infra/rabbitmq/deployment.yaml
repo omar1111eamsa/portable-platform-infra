@@ -17,7 +17,7 @@ spec:
         app: rabbitmq
     spec:
       nodeSelector:
-        kubernetes.io/hostname: frontend-vm
+        kubernetes.io/hostname: backend-vm
       tolerations:
         - key: node.kubernetes.io/disk-pressure
           operator: Exists

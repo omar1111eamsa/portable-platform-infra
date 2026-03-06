@@ -17,7 +17,7 @@ spec:
         app: crm-client
     spec:
       nodeSelector:
-        kubernetes.io/hostname: frontend-vm
+        kubernetes.io/hostname: backend-vm
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname

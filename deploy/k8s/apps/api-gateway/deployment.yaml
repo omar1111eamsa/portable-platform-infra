@@ -16,9 +16,8 @@ spec:
       labels:
         app: api-gateway
     spec:
-      # On frontend-vm to free backend-vm RAM for metamodel-orchestration (Airflow)
       nodeSelector:
-        kubernetes.io/hostname: frontend-vm
+        kubernetes.io/hostname: backend-vm
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
