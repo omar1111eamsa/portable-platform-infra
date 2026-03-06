@@ -1,3 +1,6 @@
+# Metamodel-orchestration = Apache Airflow API server (no gateway route; internal/cron use).
+# Memory-hungry: keep on backend-vm only; other heavy apps moved to frontend-vm to avoid evictions.
+# Scale to 1 only when needed: kubectl scale deployment metamodel-orchestration -n myapp --replicas=1
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,7 +9,7 @@ metadata:
   labels:
     app: metamodel-orchestration
 spec:
-  replicas: 0
+  replicas: 0  # set to 1 when needed; monitor backend-vm RAM
   revisionHistoryLimit: 2
   selector:
     matchLabels:
@@ -16,7 +19,6 @@ spec:
       labels:
         app: metamodel-orchestration
     spec:
-      # backend-vm: frontend-vm has DiskPressure, causing evictions
       nodeSelector:
         kubernetes.io/hostname: backend-vm
       tolerations:
@@ -34,17 +36,17 @@ spec:
         - name: ghcr-secret
       containers:
         - name: metamodel-orchestration
-          # Image pushed by Metamodel-orschestation-airflow CI (repo name has typo); use same name until CI is renamed
+          # Image: Metamodel-orschestation-airflow (Airflow API server on port 8080)
           image: ghcr.io/myapp/metamodel-orschestation-airflow:396ab55
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
           resources:
             requests:
-              memory: "320Mi"
+              memory: "384Mi"
               cpu: "150m"
             limits:
-              memory: "640Mi"
+              memory: "768Mi"
               cpu: "500m"
           startupProbe:
             httpGet:

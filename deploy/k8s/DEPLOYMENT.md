@@ -12,7 +12,7 @@ Tous les déploiements sont en `replicas: 0` pour vider les serveurs. Remettre �
 - 2 nœuds : `backend-vm` (10.0.0.11), `frontend-vm` (IP publique 203.0.113.11)
 - Le master k3s sur backend-vm, worker sur frontend-vm
 - Noms des nœuds exacts : `backend-vm`, `frontend-vm`
-- **Répartition des services** : chaque déploiement a un `nodeSelector` — **backend-vm** : postgres, api-gateway, user-management, payment-service, metamodel ; **frontend-vm** : redis, consul, rabbitmq, frontend, chatbot, predictions-intake, crm-client, kpi-dashboard
+- **Répartition des services** : chaque déploiement a un `nodeSelector` — **backend-vm** : postgres, user-management, metamodel-orchestration (replicas 0 par défaut) ; **frontend-vm** : redis, consul, rabbitmq, frontend, chatbot, predictions-intake, crm-client, kpi-dashboard, api-gateway, payment-service. (api-gateway et payment-service sur frontend pour libérer la RAM backend-vm pour metamodel.)
 
 ### 1b. Accès kubectl depuis ta machine (backend-vm sans IP externe)
 - Tunnel SSH : `deploy/k8s/scripts/start-kubectl-tunnel.sh --background`  
