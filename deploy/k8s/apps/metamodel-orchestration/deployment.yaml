@@ -36,7 +36,7 @@ spec:
       containers:
         - name: metamodel-orchestration
           # Image: Metamodel-orschestation-airflow (Airflow API server on port 8080)
-          image: ghcr.io/myapp/metamodel-orschestation-airflow:48df2f5
+          image: ghcr.io/myapp/metamodel-orschestation-airflow:25e312c
           imagePullPolicy: Always
           command: ["airflow", "api-server"]
           ports:
