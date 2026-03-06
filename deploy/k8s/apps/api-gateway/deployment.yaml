@@ -46,6 +46,7 @@ spec:
               value: "true"
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_REGISTER
               value: "true"
+            # K8s DNS (direct WebClient, not Consul) — service name: user-management
             - name: USER_SERVICE_URI
               value: "http://user-management:8081"
             - name: SPRING_REDIS_HOST
