@@ -60,29 +60,29 @@ Namespace : `myapp`. Tous les services sont en ClusterIP.
 | Fichier | Rôle |
 |---------|------|
 | **postgres/secret.yaml** | Secret `postgres-credentials` (user, password, etc.). |
-| **postgres/pvc.yaml** | PVC 5Gi (ReadWriteOnce, StorageClass par défaut, ex. local-path). |
-| **postgres/deployment.yaml** | 1 replica, image postgres:16-alpine, volume monté sur `/var/lib/postgresql/data`. |
+| **postgres/pvc.yaml** | PVC 5Gi (ReadWriteOnce, local-path). |
+| **postgres/deployment.yaml** | 1 replica, nodeSelector backend-vm, image postgres:16-alpine, volume sur `/var/lib/postgresql/data`. |
 | **postgres/service.yaml** | Service ClusterIP port 5432. |
 
 #### Redis
 
 | Fichier | Rôle |
 |---------|------|
-| **redis/deployment.yaml** | 2 replicas, image Redis. |
+| **redis/deployment.yaml** | 1 replica, nodeSelector **frontend-vm**, image Redis. |
 | **redis/service.yaml** | ClusterIP 6379. |
 
 #### Consul
 
 | Fichier | Rôle |
 |---------|------|
-| **consul/deployment.yaml** | 1 replica, bootstrap-expect=1 (pas de HA). Découverte de services pour l’API Gateway. |
+| **consul/deployment.yaml** | 1 replica, nodeSelector backend-vm, bootstrap-expect=1. Découverte de services pour l’API Gateway. |
 | **consul/service.yaml** | ClusterIP 8500 (HTTP), 8600 (DNS). |
 
 #### RabbitMQ
 
 | Fichier | Rôle |
 |---------|------|
-| **rabbitmq/deployment.yaml** | 2 replicas, message broker. |
+| **rabbitmq/deployment.yaml** | 1 replica, nodeSelector backend-vm, message broker. |
 | **rabbitmq/service.yaml** | ClusterIP 5672 (AMQP), 15672 (management UI). |
 
 ---
@@ -95,7 +95,7 @@ Namespace : `myapp`. Chaque service a typiquement : Deployment, Service, Ingress
 
 | Fichier | Rôle |
 |---------|------|
-| **api-gateway/deployment.yaml** | 2 replicas, image GHCR, port 8888, env (JWT, CORS, etc.), probes HTTP /health. |
+| **api-gateway/deployment.yaml** | 1 replica, nodeSelector backend-vm, image GHCR, port 8888, env (JWT, CORS, etc.), probes HTTP /health. |
 | **api-gateway/service.yaml** | ClusterIP 8888. |
 | **api-gateway/ingress.yaml** | Ingress Traefik pour `api.localhost` → api-gateway:8888. |
 
@@ -103,7 +103,7 @@ Namespace : `myapp`. Chaque service a typiquement : Deployment, Service, Ingress
 
 | Fichier | Rôle |
 |---------|------|
-| **frontend/deployment.yaml** | 2 replicas, image front-end, port 3000. |
+| **frontend/deployment.yaml** | 1 replica, nodeSelector backend-vm, image front-end, port 3000. |
 | **frontend/service.yaml** | ClusterIP 3000. |
 | **frontend/ingress.yaml** | Ingress pour `app.localhost` → frontend:3000. |
 
@@ -111,9 +111,9 @@ Namespace : `myapp`. Chaque service a typiquement : Deployment, Service, Ingress
 
 | Fichier | Rôle |
 |---------|------|
-| **chatbot/ingressroute.yaml** | Optionnel (nécessite CRD Traefik IngressRoute). Sinon `/chatbot` est servi par **ingress-ip-api**. |
-| **chatbot/pvc.yaml** | PVC 1Gi pour la base SQLite (`/data/chatbot.db`). |
-| **chatbot/deployment.yaml** | 1 replica, image GHCR, env LLM_API_KEY (secret), DB_PATH=/data/chatbot.db, volumeMount sur `/data`, fsGroup 1000. |
+| **chatbot/ingressroute.yaml** | Optionnel (CRD Traefik IngressRoute). Sinon `/chatbot` est servi par **ingress-ip-api**. |
+| **chatbot/pvc.yaml** | PVC 1Gi pour SQLite (`/data/chatbot.db`). **Node affinity** : PVC local-path sur frontend-vm. |
+| **chatbot/deployment.yaml** | 1 replica, nodeSelector **frontend-vm**, image GHCR, env LLM_API_KEY (secret), DB_PATH=/data/chatbot.db, volumeMount sur `/data`. |
 | **chatbot/service.yaml** | ClusterIP 8000. |
 | **chatbot/ingress.yaml** | Ingress pour `chatbot.localhost` → chatbot:8000 (usage local). |
 
@@ -121,7 +121,7 @@ Namespace : `myapp`. Chaque service a typiquement : Deployment, Service, Ingress
 
 | Fichier | Rôle |
 |---------|------|
-| **crm-client/deployment.yaml** | 2 replicas, image backend-crm-client, enregistrement Consul `crmservice`. |
+| **crm-client/deployment.yaml** | 1 replica, nodeSelector backend-vm, image backend-crm-client, Consul `crmservice`. |
 | **crm-client/service.yaml** | ClusterIP 8083. |
 | **crm-client/ingress.yaml** | Ingress `crm.localhost` → crm-client. |
 
@@ -129,7 +129,7 @@ Namespace : `myapp`. Chaque service a typiquement : Deployment, Service, Ingress
 
 | Fichier | Rôle |
 |---------|------|
-| **kpi-dashboard/deployment.yaml** | 1 replica, image backend-kpi-dashboard-notifications, Consul `kpi-service`. |
+| **kpi-dashboard/deployment.yaml** | 1 replica, nodeSelector backend-vm, image backend-kpi-dashboard-notifications, Consul `kpi-service`. |
 | **kpi-dashboard/service.yaml** | ClusterIP 8084. |
 | **kpi-dashboard/ingress.yaml** | Ingress `kpi.localhost`. |
 
@@ -137,7 +137,7 @@ Namespace : `myapp`. Chaque service a typiquement : Deployment, Service, Ingress
 
 | Fichier | Rôle |
 |---------|------|
-| **payment-service/deployment.yaml** | 2 replicas, Stripe, RabbitMQ, etc. |
+| **payment-service/deployment.yaml** | 1 replica, nodeSelector backend-vm, Stripe, RabbitMQ. |
 | **payment-service/service.yaml** | ClusterIP 8082/8083. |
 | **payment-service/ingress.yaml** | Ingress `payment.localhost`. |
 
@@ -145,7 +145,7 @@ Namespace : `myapp`. Chaque service a typiquement : Deployment, Service, Ingress
 
 | Fichier | Rôle |
 |---------|------|
-| **predictions-intake/deployment.yaml** | 2 replicas, Consul `prediction-intake-service`. |
+| **predictions-intake/deployment.yaml** | 1 replica, nodeSelector backend-vm, Consul `prediction-intake-service`. |
 | **predictions-intake/service.yaml** | ClusterIP 8082. |
 | **predictions-intake/ingress.yaml** | Ingress `predictions.localhost`. |
 
@@ -153,11 +153,17 @@ Namespace : `myapp`. Chaque service a typiquement : Deployment, Service, Ingress
 
 | Fichier | Rôle |
 |---------|------|
-| **user-management/deployment.yaml** | 2 replicas, Consul `user-service`, env depuis secret. |
-| **user-management/service.yaml** | ClusterIP 8081 (service principal). |
-| **user-management/user-service.yaml** | Service additionnel (alias / même sélecteur si besoin). |
+| **user-management/deployment.yaml** | 1 replica, nodeSelector **frontend-vm**, Consul `user-service`, env depuis secret. |
+| **user-management/service.yaml** | ClusterIP 8081. |
 | **user-management/ingress.yaml** | Ingress `users.localhost`. |
-| **user-management/secret.yaml** | Secret pour JWT, OAuth Google, etc. (référencé par le deployment). |
+| **user-management/secret.yaml** | Référencé par le deployment (OAuth Google, etc.). |
+
+#### Metamodel-orchestration (Airflow)
+
+| Fichier | Rôle |
+|---------|------|
+| **metamodel-orchestration/deployment.yaml** | **replicas 0** par défaut, nodeSelector frontend-vm, tolère DiskPressure. Métadonnées Airflow : **SQLite** (fichier dans le conteneur). Voir `apps/metamodel-orchestration/README.md` pour activer après libération disque. |
+| **metamodel-orchestration/service.yaml** | ClusterIP 8080 (service interne, non exposé par le gateway). |
 
 #### Ingress IP / ngrok (partagé)
 

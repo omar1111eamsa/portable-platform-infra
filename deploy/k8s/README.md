@@ -72,29 +72,22 @@ Configurer une Application ArgoCD pointant vers ce dépôt, path `deploy/k8s/`.
 
 Adapter les hosts dans les fichiers Ingress selon ton domaine.
 
-## Dépannage : Pression disque (ImagePullBackOff, Evicted)
+## Dépannage : Pression disque (Evicted, DiskPressure)
 
-Si des pods sont `Evicted` avec le motif `ephemeral-storage`, libérer de l'espace sur chaque nœud :
-
-```bash
-# Depuis ta machine (remplacer user et IP par tes identifiants)
-for node in 10.0.0.11 10.0.0.12; do
-  ssh -A -i ~/.ssh/myapp_vms -J hodeconlimited@203.0.113.11 hodeconlimited@$node \
-    'sudo bash -s' < deploy/k8s/scripts/clean-node-disk.sh
-done
-```
-
-Ou manuellement sur chaque VM :
+Si des pods sont **Evicted** (motif `ephemeral-storage` / `DiskPressure`), libérer l’espace sur le nœud concerné. **Sur chaque VM** (backend-vm, frontend-vm) :
 
 ```bash
-sudo bash deploy/k8s/scripts/clean-node-disk.sh
+# Nettoyage des images inutilisées (sans supprimer les pods en cours)
+sudo crictl rmi --prune
 ```
 
-Puis supprimer les pods éjectés et laisser les ReplicaSets recréer :
+Ne pas utiliser `crictl rmp -a` (tente de supprimer tous les pods). Optionnel : script `deploy/k8s/scripts/clean-node-disk.sh` si présent. Puis supprimer les pods évincés :
 
 ```bash
 kubectl delete pods -n myapp --field-selector=status.phase=Failed
 ```
+
+Voir aussi `apps/metamodel-orchestration/README.md` pour le metamodel (replicas 0 tant que DiskPressure).
 
 ## Sécurité
 

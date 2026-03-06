@@ -4,15 +4,12 @@
 
 ## Prérequis avant `kubectl apply`
 
-### 0. Réplicas temporairement à 0
-
-Tous les déploiements sont en `replicas: 0` pour vider les serveurs. Remettre à `1` dans les manifests après le nettoyage, puis `kubectl apply -k deploy/k8s/` ou sync ArgoCD.
-
 ### 1. Cluster k3s
 - 2 nœuds : `backend-vm` (10.0.0.11), `frontend-vm` (IP publique 203.0.113.11)
-- Le master k3s sur backend-vm, worker sur frontend-vm
-- Noms des nœuds exacts : `backend-vm`, `frontend-vm`
-- **Répartition des services** : **backend-vm** : postgres, user-management, redis, consul, rabbitmq, api-gateway, payment-service, frontend, chatbot, crm-client, kpi-dashboard, predictions-intake. **frontend-vm** : uniquement metamodel-orchestration (replicas 0 par défaut ; activer après libération disque — voir apps/metamodel-orchestration/README.md). Frontend-vm est ainsi vidée au maximum pour éviter DiskPressure et laisser la place à metamodel.
+- Master k3s sur backend-vm, worker sur frontend-vm. Noms exacts : `backend-vm`, `frontend-vm`
+- **Répartition actuelle (nodeSelector)** :
+  - **backend-vm** : postgres, consul, rabbitmq, api-gateway, frontend (app), payment-service, crm-client, kpi-dashboard, predictions-intake
+  - **frontend-vm** : redis, chatbot, user-management, metamodel-orchestration (replicas **0** par défaut ; activer après libération disque — voir `apps/metamodel-orchestration/README.md`)
 
 ### 1b. Accès kubectl depuis ta machine (backend-vm sans IP externe)
 - Tunnel SSH : `deploy/k8s/scripts/start-kubectl-tunnel.sh --background`  
@@ -67,7 +64,7 @@ Créé automatiquement par `base/`.
 kubectl apply -k deploy/k8s/base/
 
 # 2. Créer ghcr-secret (voir ci-dessus)
-# 3. Infra (postgres, redis, consul, rabbitmq) + init-databases Job (crée payment_db, crm_db, prediction_db, kpi_db)
+# 3. Infra (postgres, redis, consul, rabbitmq) + init-databases Job (crée payment_db, crm_db, prediction_db, kpi_db ; pas de base airflow)
 kubectl apply -k deploy/k8s/infra/
 
 # 4. Attendre que postgres, redis, consul, rabbitmq soient Ready

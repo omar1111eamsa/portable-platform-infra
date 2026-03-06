@@ -2,7 +2,8 @@
 
 - **Image** : `Metamodel-orschestation-airflow` (Apache Airflow API server, port 8080).
 - **Pas exposé via l’API Gateway** : service interne (health `/health`).
-- **Nœud** : **frontend-vm** (quand activé). replicas **0** tant que DiskPressure sur les nœuds.
+- **Métadonnées Airflow** : **SQLite** (`airflow.db` dans le conteneur, défaut airflow.cfg).
+- **Nœud** : **frontend-vm** (nodeSelector). Replicas **0** par défaut tant que DiskPressure sur le nœud.
 
 ## Si le pod est évincé (DiskPressure)
 
