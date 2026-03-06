@@ -6,9 +6,10 @@
 
 ## Si le pod est évincé (DiskPressure)
 
-1. Libérer le disque sur le nœud concerné (SSH) : `sudo crictl rmi --prune` puis `sudo crictl rmp -a`
-2. Vérifier : `kubectl describe node backend-vm | grep -A5 Conditions`
-3. Réactiver si besoin : `kubectl scale deployment metamodel-orchestration -n myapp --replicas=1`
+1. **Libérer le disque** (SSH sur le nœud) : **uniquement** `sudo crictl rmi --prune`  
+   (supprime les images inutilisées ; ne pas lancer `crictl rmp -a` — ça tente de supprimer tous les pods, y compris les running.)
+2. Vérifier : `kubectl describe node frontend-vm | grep -A5 Conditions`
+3. Réactiver : `kubectl scale deployment metamodel-orchestration -n myapp --replicas=1`
 
 ## Arrêter
 
