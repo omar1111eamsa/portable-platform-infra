@@ -17,7 +17,7 @@ spec:
         app: chatbot
     spec:
       nodeSelector:
-        kubernetes.io/hostname: backend-vm
+        kubernetes.io/hostname: frontend-vm
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
