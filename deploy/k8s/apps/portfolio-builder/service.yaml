@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: portfolio-builder
+  namespace: myapp
+  labels:
+    app: portfolio-builder
+spec:
+  selector:
+    app: portfolio-builder
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http
+  type: ClusterIP

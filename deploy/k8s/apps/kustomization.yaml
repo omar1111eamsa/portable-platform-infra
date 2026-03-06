@@ -31,6 +31,8 @@ resources:
   - payment-service/deployment.yaml
   - payment-service/service.yaml
   - payment-service/ingress.yaml
+  - portfolio-builder/deployment.yaml
+  - portfolio-builder/service.yaml
   - predictions-intake/deployment.yaml
   - predictions-intake/service.yaml
   - predictions-intake/ingress.yaml

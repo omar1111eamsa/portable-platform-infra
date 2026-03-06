@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portfolio-builder
+  namespace: myapp
+  labels:
+    app: portfolio-builder
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: portfolio-builder
+  template:
+    metadata:
+      labels:
+        app: portfolio-builder
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: backend-vm
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: portfolio-builder
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: portfolio-builder
+          image: ghcr.io/myapp/metamodel-portfolio-builder:latest
+          imagePullPolicy: Always
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:9092"
+            - name: PORTFOLIO_TOPIC_NAME
+              value: "portfolio_outcome"
+            - name: APP_MODE
+              value: "runtime"
+            - name: PORT
+              value: "8000"
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
