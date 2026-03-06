@@ -39,7 +39,7 @@ resources:
   - user-management/user-service.yaml
   - user-management/ingress.yaml
   - user-management/secret.yaml
-  # Ingress ngrok / IP
+  # Ingress dev.example.com / api.example.com / IP
   - ingress-ip.yaml
 
 # stripe-credentials: kubectl create secret generic stripe-credentials -n myapp ...

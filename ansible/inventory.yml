@@ -1,6 +1,10 @@
-# Inventaire — cluster MyApp k3s
-# backend-vm : master (réseau interne), frontend-vm : worker (IP publique)
-# Accès backend : ProxyJump via frontend
+# Inventory — MyApp k3s cluster (3 VMs)
+# backend-vm: k3s server (control-plane), internal IP 10.0.0.11 — access via ProxyJump
+# frontend-vm: k3s agent, public IP 203.0.113.11 (jumphost for SSH)
+# backend2:    k3s agent, internal IP 10.0.0.13 — access via ProxyJump
+#
+# DNS: dev.example.com, api.example.com → A record to 203.0.113.11
+---
 all:
   vars:
     ansible_user: hodeconlimited
@@ -14,4 +18,11 @@ all:
     k3s_agents:
       hosts:
         frontend-vm:
-          ansible_host: 203.0.113.11  # IP publique (accès direct)
+          ansible_host: 203.0.113.11
+        backend2:
+          ansible_host: 10.0.0.13
+          ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -i ~/.ssh/myapp_vms hodeconlimited@203.0.113.11"'
+    # Only frontend-vm has public IP; use for ngrok/jumphost
+    jumphost:
+      hosts:
+        frontend-vm:

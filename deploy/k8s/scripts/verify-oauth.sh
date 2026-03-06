@@ -1,15 +1,15 @@
 #!/bin/bash
-# Vérifie que le flux OAuth2 Google fonctionne via ngrok
-# Usage: ./verify-oauth.sh [NGROK_HOST]
-# Exemple: ./verify-oauth.sh example.ngrok-free.dev
+# Vérifie que le flux OAuth2 Google fonctionne (dev.example.com / api.example.com)
+# Usage: ./verify-oauth.sh [HOST]
+# Example: ./verify-oauth.sh api.example.com
 
 set -e
 
-NGROK_HOST="${1:-example.ngrok-free.dev}"
-BASE_URL="https://${NGROK_HOST}"
+API_HOST="${1:-api.example.com}"
+BASE_URL="https://${API_HOST}"
 SKIP_HEADER="ngrok-skip-browser-warning: 1"
 
-echo "=== Vérification OAuth2 via $BASE_URL ==="
+echo "=== OAuth2 check via $BASE_URL ==="
 
 # 1. /api/auth/oauth2/google → 302 → /oauth2/authorization/google
 echo ""

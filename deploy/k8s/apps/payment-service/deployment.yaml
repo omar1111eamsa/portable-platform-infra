@@ -83,6 +83,10 @@ spec:
                 secretKeyRef:
                   name: stripe-credentials
                   key: STRIPE_WEBHOOK_SECRET
+            - name: STRIPE_SUCCESS_URL
+              value: "https://dev.example.com/payment/success"
+            - name: STRIPE_CANCEL_URL
+              value: "https://dev.example.com/payment/cancel"
           resources:
             requests:
               memory: "256Mi"

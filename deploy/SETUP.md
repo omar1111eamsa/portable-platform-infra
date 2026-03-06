@@ -9,9 +9,10 @@ Ce guide permet de déployer le cluster k3s depuis zéro (VMs réinitialisées) 
 | Composant   | VM            | Rôle                                    |
 |-------------|---------------|-----------------------------------------|
 | backend-vm  | 10.0.0.11     | k3s server (master), pas d’IP externe   |
-| frontend-vm | 203.0.113.11 | k3s agent (worker), ngrok, IP publique  |
+| frontend-vm | 203.0.113.11   | k3s agent (worker), ngrok, IP publique  |
+| backend2    | 10.0.0.13     | k3s agent (worker), accès via ProxyJump |
 
-**Accès SSH** : `frontend-vm` a l’IP publique → ProxyJump pour atteindre `backend-vm`.
+**DNS** : dev.example.com, api.example.com → 203.0.113.11. **Accès SSH** : frontend-vm = jumphost ; backend-vm et backend2 via ProxyJump.
 
 ---
 
@@ -102,27 +103,20 @@ Dans `deploy/k8s/kustomization.yaml`, décommenter `infra` et `apps`, et mettre 
 
 ArgoCD sync automatiquement depuis la branche `test-argocd`. Voir [argocd/ARGOCD-AUTODEPLOY.md](argocd/ARGOCD-AUTODEPLOY.md).
 
-### 7. Appliquer les manifests avec le domaine ngrok
+### 7. Appliquer les manifests (dev.example.com / api.example.com)
 
 ```bash
-./apply-with-ngrok-domain.sh
-```
-
-Si ngrok n’est pas démarré ou que le domaine doit être forcé :
-
-```bash
-./apply-with-ngrok-domain.sh --domain example.ngrok-free.dev
+./apply-with-domain.sh
 ```
 
 ### 8. Secret Google OAuth (pour Sign in with Google)
 
 ```bash
-NGROK_DOMAIN="example.ngrok-free.dev"  # ou celui affiché par apply-with-ngrok-domain.sh
 kubectl create secret generic google-oauth-credentials -n myapp \
   --from-literal=GOOGLE_CLIENT_ID=xxx \
   --from-literal=GOOGLE_CLIENT_SECRET=xxx \
-  --from-literal=GOOGLE_REDIRECT_URI=https://${NGROK_DOMAIN}/login/oauth2/code/google \
-  --from-literal=FRONTEND_URL=https://${NGROK_DOMAIN}
+  --from-literal=GOOGLE_REDIRECT_URI=https://api.example.com/login/oauth2/code/google \
+  --from-literal=FRONTEND_URL=https://dev.example.com
 ```
 
 ---
@@ -147,7 +141,7 @@ export KUBECONFIG=~/.kube/myapp-k3s.yaml
 kubectl create secret docker-registry ghcr-secret -n myapp --docker-server=ghcr.io --docker-username=USER --docker-password=PAT
 
 # 5. Appliquer (après avoir décommenté infra+apps dans kustomization.yaml)
-./apply-with-ngrok-domain.sh
+./apply-with-domain.sh
 ```
 
 ---

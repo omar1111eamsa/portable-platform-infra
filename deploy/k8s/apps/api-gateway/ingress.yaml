@@ -10,6 +10,16 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
+    - host: api.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 8888
     - host: api.localhost
       http:
         paths:

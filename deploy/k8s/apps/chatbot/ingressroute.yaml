@@ -8,7 +8,7 @@ spec:
   entryPoints:
     - web
   routes:
-    - match: Host(`example.ngrok-free.dev`) && PathPrefix(`/chatbot`)
+    - match: Host(`dev.example.com`) && PathPrefix(`/chatbot`)
       kind: Rule
       priority: 300
       services:

@@ -67,14 +67,14 @@ Configurer une Application ArgoCD pointant vers ce dépôt, path `deploy/k8s/`.
 
 ## Ingress (k3s + Traefik)
 
-- API : `api.localhost` → api-gateway:8888
-- App : `app.localhost` → frontend:3000
-
-Adapter les hosts dans les fichiers Ingress selon ton domaine.
+- **api.example.com** → api-gateway:8888 (API, login, oauth2, chatbot, payment-service, internal)
+- **dev.example.com** → frontend:3000 (app) and same API paths
+- **dev.example.com/argocd** → ArgoCD UI
+- Local: `api.localhost`, `app.localhost`. By IP: `http://203.0.113.11` (no Host).
 
 ## Dépannage : Pression disque (Evicted, DiskPressure)
 
-Si des pods sont **Evicted** (motif `ephemeral-storage` / `DiskPressure`), libérer l’espace sur le nœud concerné. **Sur chaque VM** (backend-vm, frontend-vm) :
+Si des pods sont **Evicted** (motif `ephemeral-storage` / `DiskPressure`), libérer l’espace sur le nœud concerné. **Sur chaque VM** (backend-vm, frontend-vm, backend2) :
 
 ```bash
 # Nettoyage des images inutilisées (sans supprimer les pods en cours)

@@ -6,16 +6,16 @@ Ce document décrit l’architecture globale du cluster et le rôle de chaque fi
 
 ## 1. Vue d’ensemble
 
-- **Cluster** : k3s (2 nœuds : backend-vm, frontend-vm)
+- **Cluster** : k3s (3 nœuds : backend-vm, frontend-vm, backend2)
 - **Namespace principal** : `myapp`
 - **Ingress** : Traefik (intégré k3s)
 - **GitOps** : ArgoCD observe la branche `test-argocd`, path `deploy/k8s`
-- **Accès externe** : `https://example.ngrok-free.dev`
+- **Accès externe** : `https://dev.example.com` (frontend), `https://api.example.com` (API)
 
 ### Flux réseau (simplifié)
 
 ```
-Internet (ngrok) → Traefik Ingress
+Internet (dev.example.com / api.example.com) → Traefik Ingress
   ├── /api, /login, /oauth2, /chatbot, /payment-service  → api-gateway:8888 (JWT requis pour /chatbot)
   ├── /argocd                          → argocd-server:80 (namespace argocd)
   └── /                                → frontend:3000
@@ -165,11 +165,11 @@ Namespace : `myapp`. Chaque service a typiquement : Deployment, Service, Ingress
 | **metamodel-orchestration/deployment.yaml** | **replicas 0** par défaut, nodeSelector frontend-vm, tolère DiskPressure. Métadonnées Airflow : **SQLite** (fichier dans le conteneur). Voir `apps/metamodel-orchestration/README.md` pour activer après libération disque. |
 | **metamodel-orchestration/service.yaml** | ClusterIP 8080 (service interne, non exposé par le gateway). |
 
-#### Ingress IP / ngrok (partagé)
+#### Ingress (domaines + IP)
 
 | Fichier | Rôle |
 |---------|------|
-| **ingress-ip.yaml** | Deux Ingress pour accès par IP et domaine ngrok : **ingress-ip-api** (priorité 200) : `/api`, `/login`, `/oauth2`, `/chatbot`, `/payment-service` → api-gateway. **ingress-ip-frontend** (priorité 100) : `/` → frontend. Host : `example.ngrok-free.dev` + règle sans host (IP). |
+| **ingress-ip.yaml** | **ingress-ip-api** (priorité 200) : hosts `api.example.com`, `dev.example.com` + sans host (IP) → `/api`, `/login`, `/oauth2`, `/chatbot`, `/payment-service`, `/internal` → api-gateway. **ingress-ip-frontend** (priorité 100) : host `dev.example.com` + sans host → `/` → frontend. |
 
 Le chemin `/chatbot` est défini dans **ingress-ip.yaml** (route vers api-gateway). Optionnel : **chatbot/ingressroute.yaml** si le CRD IngressRoute Traefik est installé.
 
@@ -195,7 +195,7 @@ Namespace : **argocd** (ArgoCD est installé à part, ces manifests n’installe
 | Fichier | Rôle |
 |---------|------|
 | **argocd/kustomization.yaml** | Référence `ingress.yaml`, namespace `argocd`. |
-| **argocd/ingress.yaml** | Ingress Traefik : path `/argocd` (host ngrok ou sans host) → service `argocd-server:80` dans le namespace `argocd`. Permet d’accéder à l’UI ArgoCD via le même domaine. |
+| **argocd/ingress.yaml** | Ingress Traefik : path `/argocd` (host dev.example.com ou sans host) → service `argocd-server:80` dans le namespace `argocd`. Permet d’accéder à l’UI ArgoCD via le même domaine. |
 
 Prérequis côté ArgoCD : `server.insecure`, `server.basehref=/argocd`, `server.rootpath=/argocd` (ConfigMap argocd-cmd-params-cm).
 
@@ -210,7 +210,7 @@ Prérequis côté ArgoCD : `server.insecure`, `server.basehref=/argocd`, `server
 | **PersistentVolumeClaim** | postgres (5Gi), chatbot (1Gi). |
 | **Deployment** | Tous les services applicatifs + infra (postgres, redis, consul, rabbitmq). |
 | **Service** | ClusterIP pour chaque deployment. |
-| **Ingress** | Traefik, par host (*.localhost) + ingress-ip (ngrok / IP). |
+| **Ingress** | Traefik, par host (*.localhost) + ingress-ip (dev.example.com / api.example.com / IP). |
 | **IngressRoute** | Traefik CRD : chatbot → api-gateway. |
 | **CronJob** | Nettoyage disque (backend/frontend), suppression pods evicted. |
 | **ServiceAccount / Role / RoleBinding** | Pour le CronJob clean-evicted-pods. |

@@ -14,8 +14,8 @@ Each backend service (user-management, api-gateway, payment-service, etc.) lives
 
 ```
 portable-platform-infra/
-├── ansible/                    # Ansible (k3s server, agent, ngrok)
-│   ├── playbook.yml           # Full setup
+├── ansible/                    # Ansible (k3s on 3 VMs: backend-vm, frontend-vm, backend2)
+│   ├── playbook.yml           # Full setup (k3s + ngrok on jumphost)
 │   ├── playbook-k3s-only.yml  # k3s only
 │   └── roles/k3s-server, k3s-agent, ngrok
 ├── deploy/
@@ -43,6 +43,12 @@ portable-platform-infra/
 
 ---
 
+## Domains & access
+
+- **dev.example.com** — Frontend (app), ArgoCD (`/argocd`), and API paths (same host)
+- **api.example.com** — API gateway (backend API, login, OAuth2, chatbot, payment-service)
+- **DNS** : A records for both → `203.0.113.11` (frontend-vm). Cluster has 3 nodes: backend-vm, frontend-vm, backend2.
+
 ## Deployment (k8s + ArgoCD)
 
 **Production** : ArgoCD syncs automatically from branch `test-argocd`, path `deploy/k8s`.  
@@ -53,8 +59,8 @@ See [deploy/argocd/ARGOCD-AUTODEPLOY.md](deploy/argocd/ARGOCD-AUTODEPLOY.md).
 ```bash
 # Prérequis : ghcr-secret, KUBECONFIG
 kubectl apply -k deploy/k8s/
-# Ou avec domaine ngrok :
-deploy/k8s/scripts/apply-with-ngrok-domain.sh
+# Avec domaine fixe (dev.example.com / api.example.com) :
+deploy/k8s/scripts/apply-with-domain.sh
 ```
 
 See [deploy/k8s/DEPLOYMENT.md](deploy/k8s/DEPLOYMENT.md) and [deploy/SETUP.md](deploy/SETUP.md).

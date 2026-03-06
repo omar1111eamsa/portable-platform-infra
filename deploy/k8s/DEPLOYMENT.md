@@ -36,19 +36,19 @@ kubectl create secret generic stripe-credentials -n myapp \
   --from-literal=STRIPE_WEBHOOK_SECRET=whsec_xxx
 
 # Google OAuth (user-management) — REQUIS pour Sign in with Google
-# Remplace NGROK_HOST par ton host ngrok (ex: example.ngrok-free.dev)
+# Use api.example.com and dev.example.com (or your API/frontend host)
 kubectl create secret generic google-oauth-credentials -n myapp \
   --from-literal=GOOGLE_CLIENT_ID=ton-client-id.apps.googleusercontent.com \
   --from-literal=GOOGLE_CLIENT_SECRET=ton-client-secret \
-  --from-literal=GOOGLE_REDIRECT_URI=https://NGROK_HOST/login/oauth2/code/google \
-  --from-literal=FRONTEND_URL=https://NGROK_HOST
+  --from-literal=GOOGLE_REDIRECT_URI=https://api.example.com/login/oauth2/code/google \
+  --from-literal=FRONTEND_URL=https://dev.example.com
 
 # Pour mettre à jour le secret existant :
 # kubectl create secret generic google-oauth-credentials -n myapp \
 #   --from-literal=GOOGLE_CLIENT_ID=... \
 #   --from-literal=GOOGLE_CLIENT_SECRET=... \
-#   --from-literal=GOOGLE_REDIRECT_URI=https://example.ngrok-free.dev/login/oauth2/code/google \
-#   --from-literal=FRONTEND_URL=https://example.ngrok-free.dev \
+#   --from-literal=GOOGLE_REDIRECT_URI=https://api.example.com/login/oauth2/code/google \
+#   --from-literal=FRONTEND_URL=https://api.example.com \
 #   --dry-run=client -o yaml | kubectl apply -f -
 ```
 
@@ -86,7 +86,7 @@ kubectl apply -k deploy/k8s/
 
 ## Après réinitialisation des VMs
 
-1. Réinstaller k3s sur les 2 nœuds (backend-vm, frontend-vm)
+1. Réinstaller k3s sur les 3 nœuds (backend-vm, frontend-vm, backend2)
 2. Recréer le namespace et les secrets (ghcr-secret, postgres si besoin)
 3. `kubectl apply -k deploy/k8s/`
 4. Les PVC (postgres) survivent si le storage class conserve les volumes
@@ -105,19 +105,19 @@ curl -s http://203.0.113.11/api/actuator/health
 ### Vérifier OAuth2 Google (Sign in with Google)
 
 ```bash
-# Test via ngrok (remplace par ton host)
-NGROK_HOST="example.ngrok-free.dev"
+# Test OAuth (api.example.com)
+API_HOST="api.example.com"
 
 # 1. /api/auth/oauth2/google doit rediriger 302 vers /oauth2/authorization/google
-curl -sI -H "ngrok-skip-browser-warning: 1" "https://$NGROK_HOST/api/auth/oauth2/google"
-# Attendu: Location: https://$NGROK_HOST/oauth2/authorization/google
+curl -sI -H "ngrok-skip-browser-warning: 1" "https://$API_HOST/api/auth/oauth2/google"
+# Attendu: Location: https://$API_HOST/oauth2/authorization/google
 
 # 2. /oauth2/authorization/google doit rediriger 302 vers Google
-curl -sI -L -H "ngrok-skip-browser-warning: 1" "https://$NGROK_HOST/api/auth/oauth2/google" | head -20
+curl -sI -L -H "ngrok-skip-browser-warning: 1" "https://$API_HOST/api/auth/oauth2/google" | head -20
 # Attendu: Location: https://accounts.google.com/o/oauth2/...
 ```
 
-Pour un test complet dans le navigateur : https://$NGROK_HOST/auth/login → cliquer « Sign in with Google ».
+Pour un test complet dans le navigateur : https://$API_HOST/auth/login → cliquer « Sign in with Google ».
 
 ## Réseau et CORS
 

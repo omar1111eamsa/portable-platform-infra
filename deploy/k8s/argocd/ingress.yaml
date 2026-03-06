@@ -1,5 +1,5 @@
-# Ingress ArgoCD — accès UI via domaine ngrok
-# URL: https://example.ngrok-free.dev/argocd
+# Ingress ArgoCD — accès UI via dev.example.com
+# URL: https://dev.example.com/argocd
 # Prérequis: appliquer le patch ArgoCD (voir README.md)
 ---
 apiVersion: networking.k8s.io/v1
@@ -12,7 +12,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: "example.ngrok-free.dev"
+    - host: "dev.example.com"
       http:
         paths:
           - path: /argocd
