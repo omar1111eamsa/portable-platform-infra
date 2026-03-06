@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: scoring-engine
+  namespace: myapp
+  labels:
+    app: scoring-engine
+spec:
+  selector:
+    app: scoring-engine
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http
+  type: ClusterIP

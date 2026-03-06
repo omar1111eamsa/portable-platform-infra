@@ -33,6 +33,8 @@ resources:
   - payment-service/ingress.yaml
   - portfolio-builder/deployment.yaml
   - portfolio-builder/service.yaml
+  - scoring-engine/deployment.yaml
+  - scoring-engine/service.yaml
   - predictions-intake/deployment.yaml
   - predictions-intake/service.yaml
   - predictions-intake/ingress.yaml
