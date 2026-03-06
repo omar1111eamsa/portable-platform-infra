@@ -9,7 +9,7 @@ metadata:
   labels:
     app: metamodel-orchestration
 spec:
-  replicas: 1
+  replicas: 0  # do not set to 1 until backend-vm has no DiskPressure (see README)
   revisionHistoryLimit: 2
   selector:
     matchLabels:
