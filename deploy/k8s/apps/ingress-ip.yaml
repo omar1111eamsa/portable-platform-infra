@@ -15,7 +15,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: "example.ngrok-free.app"
+    - host: "example.ngrok-free.dev"
       http:
         paths:
           - path: /api
@@ -117,7 +117,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: "example.ngrok-free.app"
+    - host: "example.ngrok-free.dev"
       http:
         paths:
           - path: /

@@ -40,7 +40,7 @@
 | **JWT_SECRET** | Non configuré en k8s | Créer Secret, injecter via env | ☐ |
 | **GOOGLE_CLIENT_ID** | Non configuré | Créer app Google Cloud, ajouter au deployment | ☐ |
 | **GOOGLE_CLIENT_SECRET** | Non configuré | Idem | ☐ |
-| **GOOGLE_REDIRECT_URI** | Actuellement `localhost:8081` | Doit être `https://<ngrok-host>/login/oauth2/code/google` (ex: `https://example.ngrok-free.app/login/oauth2/code/google`). Doit correspondre à Google Cloud Console. | ☐ |
+| **GOOGLE_REDIRECT_URI** | Actuellement `localhost:8081` | Doit être `https://<ngrok-host>/login/oauth2/code/google` (ex: `https://example.ngrok-free.dev/login/oauth2/code/google`). Doit correspondre à Google Cloud Console. | ☐ |
 | **Redirect OAuth hardcodé** | `CustomOAuth2SuccessHandler.java` ligne 155 : `http://localhost:3000` | Remplacer par variable d'environnement `FRONTEND_URL` | ☐ |
 
 ### payment-service
@@ -69,7 +69,7 @@
 | Action | Statut |
 |--------|--------|
 | Créer projet OAuth2 | ☐ |
-| Ajouter URI de redirection : `https://<ngrok-host>/login/oauth2/code/google` (ex: `https://example.ngrok-free.app/login/oauth2/code/google`) | ☐ |
+| Ajouter URI de redirection : `https://<ngrok-host>/login/oauth2/code/google` (ex: `https://example.ngrok-free.dev/login/oauth2/code/google`) | ☐ |
 | Récupérer Client ID + Client Secret | ☐ |
 
 ---

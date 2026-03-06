@@ -111,13 +111,13 @@ ArgoCD sync automatiquement depuis la branche `test-argocd`. Voir [argocd/ARGOCD
 Si ngrok n’est pas démarré ou que le domaine doit être forcé :
 
 ```bash
-./apply-with-ngrok-domain.sh --domain example.ngrok-free.app
+./apply-with-ngrok-domain.sh --domain example.ngrok-free.dev
 ```
 
 ### 8. Secret Google OAuth (pour Sign in with Google)
 
 ```bash
-NGROK_DOMAIN="example.ngrok-free.app"  # ou celui affiché par apply-with-ngrok-domain.sh
+NGROK_DOMAIN="example.ngrok-free.dev"  # ou celui affiché par apply-with-ngrok-domain.sh
 kubectl create secret generic google-oauth-credentials -n myapp \
   --from-literal=GOOGLE_CLIENT_ID=xxx \
   --from-literal=GOOGLE_CLIENT_SECRET=xxx \

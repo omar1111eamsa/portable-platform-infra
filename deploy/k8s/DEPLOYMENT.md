@@ -36,7 +36,7 @@ kubectl create secret generic stripe-credentials -n myapp \
   --from-literal=STRIPE_WEBHOOK_SECRET=whsec_xxx
 
 # Google OAuth (user-management) — REQUIS pour Sign in with Google
-# Remplace NGROK_HOST par ton host ngrok (ex: example.ngrok-free.app)
+# Remplace NGROK_HOST par ton host ngrok (ex: example.ngrok-free.dev)
 kubectl create secret generic google-oauth-credentials -n myapp \
   --from-literal=GOOGLE_CLIENT_ID=ton-client-id.apps.googleusercontent.com \
   --from-literal=GOOGLE_CLIENT_SECRET=ton-client-secret \
@@ -47,8 +47,8 @@ kubectl create secret generic google-oauth-credentials -n myapp \
 # kubectl create secret generic google-oauth-credentials -n myapp \
 #   --from-literal=GOOGLE_CLIENT_ID=... \
 #   --from-literal=GOOGLE_CLIENT_SECRET=... \
-#   --from-literal=GOOGLE_REDIRECT_URI=https://example.ngrok-free.app/login/oauth2/code/google \
-#   --from-literal=FRONTEND_URL=https://example.ngrok-free.app \
+#   --from-literal=GOOGLE_REDIRECT_URI=https://example.ngrok-free.dev/login/oauth2/code/google \
+#   --from-literal=FRONTEND_URL=https://example.ngrok-free.dev \
 #   --dry-run=client -o yaml | kubectl apply -f -
 ```
 
@@ -106,7 +106,7 @@ curl -s http://203.0.113.11/api/actuator/health
 
 ```bash
 # Test via ngrok (remplace par ton host)
-NGROK_HOST="example.ngrok-free.app"
+NGROK_HOST="example.ngrok-free.dev"
 
 # 1. /api/auth/oauth2/google doit rediriger 302 vers /oauth2/authorization/google
 curl -sI -H "ngrok-skip-browser-warning: 1" "https://$NGROK_HOST/api/auth/oauth2/google"

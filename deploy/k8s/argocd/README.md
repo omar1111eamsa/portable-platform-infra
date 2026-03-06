@@ -2,7 +2,7 @@
 
 ## URL d'accès
 
-- **https://example.ngrok-free.app/argocd**
+- **https://example.ngrok-free.dev/argocd**
 - Header requis (ngrok): `ngrok-skip-browser-warning: 1`
 
 ## Prérequis: configurer ArgoCD pour le reverse proxy

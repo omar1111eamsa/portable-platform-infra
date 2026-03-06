@@ -1,11 +1,11 @@
 #!/bin/bash
 # Vérifie que le flux OAuth2 Google fonctionne via ngrok
 # Usage: ./verify-oauth.sh [NGROK_HOST]
-# Exemple: ./verify-oauth.sh example.ngrok-free.app
+# Exemple: ./verify-oauth.sh example.ngrok-free.dev
 
 set -e
 
-NGROK_HOST="${1:-example.ngrok-free.app}"
+NGROK_HOST="${1:-example.ngrok-free.dev}"
 BASE_URL="https://${NGROK_HOST}"
 SKIP_HEADER="ngrok-skip-browser-warning: 1"
 

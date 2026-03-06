@@ -10,7 +10,7 @@ Ce document décrit l’architecture globale du cluster et le rôle de chaque fi
 - **Namespace principal** : `myapp`
 - **Ingress** : Traefik (intégré k3s)
 - **GitOps** : ArgoCD observe la branche `test-argocd`, path `deploy/k8s`
-- **Accès externe** : `https://example.ngrok-free.app`
+- **Accès externe** : `https://example.ngrok-free.dev`
 
 ### Flux réseau (simplifié)
 
@@ -169,7 +169,7 @@ Namespace : `myapp`. Chaque service a typiquement : Deployment, Service, Ingress
 
 | Fichier | Rôle |
 |---------|------|
-| **ingress-ip.yaml** | Deux Ingress pour accès par IP et domaine ngrok : **ingress-ip-api** (priorité 200) : `/api`, `/login`, `/oauth2`, `/chatbot`, `/payment-service` → api-gateway. **ingress-ip-frontend** (priorité 100) : `/` → frontend. Host : `example.ngrok-free.app` + règle sans host (IP). |
+| **ingress-ip.yaml** | Deux Ingress pour accès par IP et domaine ngrok : **ingress-ip-api** (priorité 200) : `/api`, `/login`, `/oauth2`, `/chatbot`, `/payment-service` → api-gateway. **ingress-ip-frontend** (priorité 100) : `/` → frontend. Host : `example.ngrok-free.dev` + règle sans host (IP). |
 
 Le chemin `/chatbot` est défini dans **ingress-ip.yaml** (route vers api-gateway). Optionnel : **chatbot/ingressroute.yaml** si le CRD IngressRoute Traefik est installé.
 

@@ -16,7 +16,7 @@ SSH_KEY="${SSH_KEY:-$HOME/.ssh/myapp_vms}"
 [[ -n "$SSH_KEY" && -f "$SSH_KEY" ]] && SSH_OPTS=(-i "$SSH_KEY") || SSH_OPTS=()
 
 # Domaine par défaut (backup si fetch échoue)
-DEFAULT_DOMAIN="example.ngrok-free.app"
+DEFAULT_DOMAIN="example.ngrok-free.dev"
 
 if [[ "${1:-}" == "--domain" && -n "${2:-}" ]]; then
   NGROK_DOMAIN="$2"
