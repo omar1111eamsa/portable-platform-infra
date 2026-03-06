@@ -20,7 +20,7 @@
 |--------|-------------------|--------|
 | **ghcr-secret** | `kubectl create secret docker-registry ghcr-secret -n myapp --docker-server=ghcr.io --docker-username=TON_GITHUB_USER --docker-password=TON_GITHUB_PAT` (PAT scopes: `repo`, `read:packages`) | ☐ |
 | **postgres-credentials** | En prod : remplacer postgres/postgres par un mot de passe fort (ou Sealed Secrets / Vault) | ☐ |
-| **chatbot-credentials** | `kubectl create secret generic chatbot-credentials -n myapp --from-literal=LLM_API_KEY=sk-or-VOTRE_CLE_OPENROUTER --dry-run=client -o yaml \| kubectl apply -f -` — Voir `apps/chatbot/SECRET-SETUP.md` | ☐ |
+| **chatbot-credentials** | `kubectl create secret generic chatbot-credentials -n myapp --from-literal=LLM_API_KEY=sk-or-VOTRE_CLE_OPENROUTER` — Placeholder OK pour démarrer ; remplacer par la clé OpenRouter réelle. Voir `apps/chatbot/SECRET-SETUP.md` | ☐ |
 
 ### Configuration à mettre à jour si changement
 
@@ -48,7 +48,7 @@
 | Variable | Problème | Action | Statut |
 |----------|----------|--------|--------|
 | **STRIPE_API_KEY** | Non configuré | `kubectl create secret generic stripe-credentials -n myapp --from-literal=STRIPE_API_KEY=sk_xxx --from-literal=STRIPE_WEBHOOK_SECRET=whsec_xxx` | ☐ |
-| **STRIPE_WEBHOOK_SECRET** | Non configuré | Voir ci-dessus | ☐ |
+| **STRIPE_WEBHOOK_SECRET** | Non configuré | Placeholder OK pour démarrer ; remplacer par les vraies clés Stripe pour les paiements | ☐ |
 | **stripe.success.url** / **stripe.cancel.url** | Hardcodés localhost:8082 | Passer en env (URLs frontend) | ☐ |
 | **RABBITMQ_USERNAME** / **RABBITMQ_PASSWORD** | Déjà en k8s (guest/guest) | — | ✓ |
 

@@ -67,7 +67,7 @@ Créé automatiquement par `base/`.
 kubectl apply -k deploy/k8s/base/
 
 # 2. Créer ghcr-secret (voir ci-dessus)
-# 3. Infra (postgres, redis, consul, rabbitmq)
+# 3. Infra (postgres, redis, consul, rabbitmq) + init-databases Job (crée payment_db, crm_db, prediction_db, kpi_db)
 kubectl apply -k deploy/k8s/infra/
 
 # 4. Attendre que postgres, redis, consul, rabbitmq soient Ready

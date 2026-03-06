@@ -1,0 +1,35 @@
+# One-time Job to create missing Postgres databases for payment, crm, predictions, kpi.
+# Run: kubectl apply -f init-databases-job.yaml (or via kustomize)
+# Job is idempotent: CREATE DATABASE fails silently if DB already exists.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-init-databases
+  namespace: myapp
+  labels:
+    app: postgres
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 10
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: init
+          image: postgres:16-alpine
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              for db in payment_db crm_db prediction_db kpi_db; do
+                psql -v ON_ERROR_STOP=0 -h postgres -U postgres -tc "SELECT 1 FROM pg_database WHERE datname = '${db}'" | grep -q 1 || \
+                psql -v ON_ERROR_STOP=0 -h postgres -U postgres -c "CREATE DATABASE ${db};"
+              done
+              echo "Databases ready."
+          env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: POSTGRES_PASSWORD

@@ -15,8 +15,9 @@ spec:
       labels:
         app: metamodel-orchestration
     spec:
+      # backend-vm: frontend-vm has DiskPressure, causing evictions
       nodeSelector:
-        kubernetes.io/hostname: frontend-vm
+        kubernetes.io/hostname: backend-vm
       tolerations:
         - key: node.kubernetes.io/disk-pressure
           operator: Exists
@@ -44,6 +45,13 @@ spec:
             limits:
               memory: "640Mi"
               cpu: "500m"
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 30
           livenessProbe:
             httpGet:
               path: /health
