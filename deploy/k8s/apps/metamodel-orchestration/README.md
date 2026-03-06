@@ -2,7 +2,7 @@
 
 - **Image** : `Metamodel-orschestation-airflow` (Apache Airflow API server, port 8080).
 - **Pas exposé via l’API Gateway** : service interne (health `/health`).
-- **Nœud** : **backend-vm** (postgres, user-management + metamodel ; frontend-vm garde le reste pour éviter DiskPressure).
+- **Nœud** : **frontend-vm** (quand activé). replicas **0** tant que DiskPressure sur les nœuds.
 
 ## Si le pod est évincé (DiskPressure)
 
