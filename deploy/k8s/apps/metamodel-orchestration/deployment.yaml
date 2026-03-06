@@ -8,7 +8,7 @@ metadata:
   labels:
     app: metamodel-orchestration
 spec:
-  replicas: 0  # set to 1 only after freeing disk on target node (crictl rmi --prune on the VM)
+  replicas: 0
   revisionHistoryLimit: 2
   selector:
     matchLabels:
