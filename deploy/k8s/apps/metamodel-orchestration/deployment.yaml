@@ -46,6 +46,26 @@ spec:
           securityContext:
             runAsNonRoot: true
             runAsUser: 50000
+        - name: modules-sync
+          image: alpine/git:latest
+          env:
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-token
+                  key: token
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              rm -rf /modules/cq-scoring /modules/cq-portfolio
+              git clone --depth 1 "https://${GITHUB_TOKEN}@github.com/MyApp/Metamodel-scoring-engine.git" /modules/cq-scoring
+              git clone --depth 1 "https://${GITHUB_TOKEN}@github.com/MyApp/Metamodel-portfolio-builder.git" /modules/cq-portfolio
+              chown -R 50000:50000 /modules
+          volumeMounts:
+            - name: modules
+              mountPath: /modules
       containers:
         - name: metamodel-orchestration
           # Image: Metamodel-orschestation-airflow (Airflow API server on port 8080) — same as init (latest SHA)
@@ -55,12 +75,16 @@ spec:
           env:
             - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
               value: "sqlite:////opt/airflow/db/airflow.db"
+            - name: PYTHONPATH
+              value: "/opt/airflow/modules/cq-scoring:/opt/airflow/modules/cq-portfolio:/opt/airflow/modules/cq-portfolio/src"
           volumeMounts:
             - name: entrypoint
               mountPath: /entrypoint.sh
               subPath: entrypoint.sh
             - name: airflow-db
               mountPath: /opt/airflow/db
+            - name: modules
+              mountPath: /opt/airflow/modules
           ports:
             - containerPort: 8080
           resources:
@@ -96,6 +120,9 @@ spec:
             defaultMode: 0o755
         - name: airflow-db
           emptyDir: {}
+        - name: modules
+          persistentVolumeClaim:
+            claimName: metamodel-modules-pvc
       securityContext:
         runAsNonRoot: true
         runAsUser: 50000  # airflow user in apache/airflow image

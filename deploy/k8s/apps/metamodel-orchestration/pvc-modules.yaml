@@ -1,0 +1,14 @@
+# PVC for DAG modules (scoring, portfolio). Populated by init container via git clone.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: metamodel-modules-pvc
+  namespace: myapp
+  labels:
+    app: metamodel-orchestration
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
