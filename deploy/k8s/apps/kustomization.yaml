@@ -39,7 +39,7 @@ resources:
   - user-management/service.yaml
   - user-management/user-service.yaml
   - user-management/ingress.yaml
-  - user-management/secret.yaml
+  # mail-credentials: créer manuellement (voir DEPLOYMENT.md)
   # Ingress dev.example.com / dev.example.com / IP
   - ingress-ip.yaml
 

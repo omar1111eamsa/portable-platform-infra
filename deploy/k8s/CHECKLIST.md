@@ -21,6 +21,8 @@
 | **ghcr-secret** | `kubectl create secret docker-registry ghcr-secret -n myapp --docker-server=ghcr.io --docker-username=TON_GITHUB_USER --docker-password=TON_GITHUB_PAT` (PAT scopes: `repo`, `read:packages`) | ☐ |
 | **postgres-credentials** | En prod : remplacer postgres/postgres par un mot de passe fort (ou Sealed Secrets / Vault) | ☐ |
 | **chatbot-credentials** | `kubectl create secret generic chatbot-credentials -n myapp --from-literal=LLM_API_KEY=sk-or-VOTRE_CLE_OPENROUTER` — Placeholder OK pour démarrer ; remplacer par la clé OpenRouter réelle. Voir `apps/chatbot/SECRET-SETUP.md` | ☐ |
+| **mail-credentials** | `kubectl create secret generic mail-credentials -n myapp --from-literal=SPRING_MAIL_USERNAME=... --from-literal=SPRING_MAIL_PASSWORD=...` | ☐ |
+| **auth-credentials** | `kubectl create secret generic auth-credentials -n myapp --from-literal=JWT_SECRET=...` | ☐ |
 
 ### Configuration à mettre à jour si changement
 
@@ -56,7 +58,7 @@
 
 | Variable | Problème | Action | Statut |
 |----------|----------|--------|--------|
-| **JWT_SECRET** | Valeur par défaut hardcodée | Créer Secret, injecter (même valeur que user-management) | ☐ |
+| **JWT_SECRET** | Doit provenir d'un secret k8s partagé | Utiliser `auth-credentials/JWT_SECRET` (même valeur que user-management) | ☐ |
 
 ### Base de données
 

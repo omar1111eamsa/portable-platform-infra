@@ -53,9 +53,12 @@ spec:
               value: redis
             - name: SPRING_REDIS_PORT
               value: "6379"
-            # JWT secret must match user-management (same default as in user-management application.properties)
+            # JWT secret must match user-management
             - name: JWT_SECRET
-              value: "3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b"
+              valueFrom:
+                secretKeyRef:
+                  name: auth-credentials
+                  key: JWT_SECRET
             - name: FRONTEND_ORIGIN
               value: "http://app.localhost,http://api.localhost,http://203.0.113.11,http://localhost:3000,https://dev.example.com,http://dev.example.com"
             - name: SPRING_APPLICATION_JSON

@@ -43,6 +43,15 @@ kubectl create secret generic google-oauth-credentials -n myapp \
   --from-literal=GOOGLE_REDIRECT_URI=https://dev.example.com/login/oauth2/code/google \
   --from-literal=FRONTEND_URL=https://dev.example.com
 
+# Mail SMTP (user-management) — requis pour envoi d'emails
+kubectl create secret generic mail-credentials -n myapp \
+  --from-literal=SPRING_MAIL_USERNAME=ton-email@example.com \
+  --from-literal=SPRING_MAIL_PASSWORD=ton-mot-de-passe-app
+
+# JWT partagé (api-gateway + user-management)
+kubectl create secret generic auth-credentials -n myapp \
+  --from-literal=JWT_SECRET=remplacer-par-une-cle-hex-forte
+
 # Pour mettre à jour le secret existant :
 # kubectl create secret generic google-oauth-credentials -n myapp \
 #   --from-literal=GOOGLE_CLIENT_ID=... \
