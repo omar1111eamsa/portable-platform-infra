@@ -21,7 +21,7 @@
 Ajouter dans `/etc/hosts` (Linux/Mac) ou `C:\Windows\System32\drivers\etc\hosts` (Windows) :
 
 ```
-203.0.113.11 api.localhost app.localhost payment.localhost users.localhost crm.localhost chatbot.localhost predictions.localhost kpi.localhost
+203.0.113.11 api.localhost app.localhost dev.example.com
 ```
 
 **URLs :**
@@ -30,12 +30,8 @@ Ajouter dans `/etc/hosts` (Linux/Mac) ou `C:\Windows\System32\drivers\etc\hosts`
 |---------|-----|
 | Frontend | http://app.localhost |
 | API Gateway | http://api.localhost |
-| Payment | http://payment.localhost |
-| Users | http://users.localhost |
-| CRM | http://crm.localhost |
-| Chatbot | http://chatbot.localhost |
-| Predictions | http://predictions.localhost |
-| KPI Dashboard | http://kpi.localhost |
+| API via domaine | https://dev.example.com/api |
+| Chatbot via gateway | https://dev.example.com/chatbot |
 
 ---
 

@@ -18,27 +18,27 @@ resources:
   - chatbot/pvc.yaml
   - chatbot/deployment.yaml
   - chatbot/service.yaml
-  - chatbot/ingress.yaml
+  # - chatbot/ingress.yaml  # disabled: chatbot is exposed via gateway path /chatbot
   - crm-client/deployment.yaml
   - crm-client/service.yaml
-  - crm-client/ingress.yaml
+  # - crm-client/ingress.yaml  # disabled: internal access via API gateway only
   - kpi-dashboard/deployment.yaml
   - kpi-dashboard/service.yaml
-  - kpi-dashboard/ingress.yaml
+  # - kpi-dashboard/ingress.yaml  # disabled: internal access via API gateway only
   - metamodel-orchestration/pvc-modules.yaml
   - metamodel-orchestration/entrypoint-cm.yaml
   - metamodel-orchestration/deployment.yaml
   - metamodel-orchestration/service.yaml
   - payment-service/deployment.yaml
   - payment-service/service.yaml
-  - payment-service/ingress.yaml
+  # - payment-service/ingress.yaml  # disabled: exposed via gateway path /payment-service
   - predictions-intake/deployment.yaml
   - predictions-intake/service.yaml
-  - predictions-intake/ingress.yaml
+  # - predictions-intake/ingress.yaml  # disabled: internal access via API gateway only
   - user-management/deployment.yaml
   - user-management/service.yaml
   - user-management/user-service.yaml
-  - user-management/ingress.yaml
+  # - user-management/ingress.yaml  # disabled: internal access via API gateway only
   # mail-credentials: créer manuellement (voir DEPLOYMENT.md)
   # Ingress dev.example.com
   - ingress-ip.yaml
