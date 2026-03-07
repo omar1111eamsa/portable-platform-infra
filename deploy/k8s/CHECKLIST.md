@@ -24,6 +24,7 @@
 | **chatbot-credentials** | `kubectl create secret generic chatbot-credentials -n myapp --from-literal=LLM_API_KEY=sk-or-VOTRE_CLE_OPENROUTER` — Placeholder OK pour démarrer ; remplacer par la clé OpenRouter réelle. Voir `apps/chatbot/SECRET-SETUP.md` | ☐ |
 | **mail-credentials** | `kubectl create secret generic mail-credentials -n myapp --from-literal=SPRING_MAIL_USERNAME=... --from-literal=SPRING_MAIL_PASSWORD=...` | ☐ |
 | **auth-credentials** | `kubectl create secret generic auth-credentials -n myapp --from-literal=JWT_SECRET=...` | ☐ |
+| **metamodel-db-credentials** | `kubectl create secret generic metamodel-db-credentials -n myapp --from-literal=MYAPP_DB_URL=... --from-literal=AIRFLOW_CONN_POSTGRES_MYAPP=...` | ☐ |
 
 ### Configuration à mettre à jour si changement
 

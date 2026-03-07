@@ -65,6 +65,11 @@ kubectl create secret generic mail-credentials -n myapp \
 kubectl create secret generic auth-credentials -n myapp \
   --from-literal=JWT_SECRET=remplacer-par-une-cle-hex-forte
 
+# Metamodel DB URLs (Airflow DAG)
+kubectl create secret generic metamodel-db-credentials -n myapp \
+  --from-literal=MYAPP_DB_URL='postgresql://<POSTGRES_USER>:<POSTGRES_PASSWORD>@postgres:5432/prediction_db' \
+  --from-literal=AIRFLOW_CONN_POSTGRES_MYAPP='postgresql://<POSTGRES_USER>:<POSTGRES_PASSWORD>@postgres:5432/prediction_db'
+
 # Pour mettre à jour le secret existant :
 # kubectl create secret generic google-oauth-credentials -n myapp \
 #   --from-literal=GOOGLE_CLIENT_ID=... \
