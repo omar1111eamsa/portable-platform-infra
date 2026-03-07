@@ -74,6 +74,10 @@ spec:
           env:
             - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
               value: "sqlite:////opt/airflow/db/airflow.db"
+            - name: MYAPP_DB_URL
+              value: "postgresql://postgres:postgres@postgres:5432/prediction_db"
+            - name: AIRFLOW_CONN_POSTGRES_MYAPP
+              value: "postgresql://postgres:postgres@postgres:5432/prediction_db"
             - name: PYTHONPATH
               value: "/opt/airflow/modules/cq-scoring:/opt/airflow/modules/cq-portfolio:/opt/airflow/modules/cq-portfolio/src"
           volumeMounts:
