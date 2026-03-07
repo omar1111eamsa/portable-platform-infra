@@ -64,6 +64,11 @@ spec:
                 secretKeyRef:
                   name: rabbitmq-credentials
                   key: RABBITMQ_PASSWORD
+            - name: SPRING_RABBITMQ_ADDRESSES
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_ADDRESSES
             - name: USER_MANAGEMENT_SERVICE_URL
               value: "http://user-management.myapp.svc.cluster.local:8081"
             - name: PAYMENT_SERVICE_URL

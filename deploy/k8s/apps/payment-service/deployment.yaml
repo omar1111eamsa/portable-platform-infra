@@ -79,6 +79,11 @@ spec:
                 secretKeyRef:
                   name: rabbitmq-credentials
                   key: RABBITMQ_PASSWORD
+            - name: SPRING_RABBITMQ_ADDRESSES
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_ADDRESSES
             - name: SPRING_RABBITMQ_SSL_ENABLED
               value: "false"
             - name: RABBITMQ_VHOST

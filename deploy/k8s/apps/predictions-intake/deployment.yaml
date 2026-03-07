@@ -72,6 +72,11 @@ spec:
                 secretKeyRef:
                   name: rabbitmq-credentials
                   key: RABBITMQ_PASSWORD
+            - name: SPRING_RABBITMQ_ADDRESSES
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_ADDRESSES
             - name: PREDICTION_EVENTS_EXCHANGE
               value: "kpi.events"
             - name: PREDICTION_RECEIVED_ROUTING_KEY

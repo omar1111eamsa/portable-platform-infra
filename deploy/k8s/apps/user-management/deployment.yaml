@@ -75,6 +75,11 @@ spec:
                 secretKeyRef:
                   name: rabbitmq-credentials
                   key: RABBITMQ_PASSWORD
+            - name: SPRING_RABBITMQ_ADDRESSES
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_ADDRESSES
             - name: APP_RABBITMQ_SUBSCRIPTION_UPDATES_QUEUE
               value: "subscription_updates_queue"
             - name: APP_RABBITMQ_DIRECT_SUBMISSIONS_QUEUE
