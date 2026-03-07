@@ -3,7 +3,7 @@
 # frontend-vm: k3s agent, public IP 203.0.113.11 (jumphost for SSH)
 # backend2:    k3s agent, internal IP 10.0.0.13 — access via ProxyJump
 #
-# DNS: dev.example.com, api.example.com → A record to 203.0.113.11
+# DNS: dev.example.com → A record to 203.0.113.11
 ---
 all:
   vars:

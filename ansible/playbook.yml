@@ -3,7 +3,7 @@
 # Usage: ansible-playbook -i inventory.yml playbook.yml
 #
 # VMs: backend-vm (k3s server), frontend-vm (k3s agent), backend2 (k3s agent)
-# DNS: dev.example.com, api.example.com → 203.0.113.11
+# DNS: dev.example.com → 203.0.113.11
 #
 # After run: start tunnel (deploy/k8s/scripts/start-kubectl-tunnel.sh), then kubectl apply
 
