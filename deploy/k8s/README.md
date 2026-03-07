@@ -9,7 +9,7 @@ Compatible avec réinitialisation des VMs : ordre correct, PVC postgres, Ingress
 k8s/
 ├── base/              # Namespace myapp
 ├── infra/             # PostgreSQL, Redis, Consul, RabbitMQ
-│   ├── postgres/      # Secret, PVC, Deployment, Service
+│   ├── postgres/      # secret example, PVC, Deployment, Service
 │   ├── redis/         # Deployment, Service
 │   ├── consul/        # Deployment, Service
 │   ├── rabbitmq/      # Deployment, Service
@@ -17,7 +17,7 @@ k8s/
 ├── apps/              # API Gateway, Frontend, User, Payment, CRM, etc.
 │   ├── api-gateway/
 │   ├── frontend/
-│   ├── ingress-ip.yaml  # Accès par IP (http://203.0.113.11)
+│   ├── ingress-ip.yaml  # Routage host-based (dev.example.com)
 │   └── kustomization.yaml
 ├── cronjobs/          # Nettoyage disque (backend-vm, frontend-vm)
 ├── scripts/           # clean-node-disk.sh (manuel)
@@ -70,7 +70,7 @@ Configurer une Application ArgoCD pointant vers ce dépôt, path `deploy/k8s/`.
 - **dev.example.com** → api-gateway:8888 (API, login, oauth2, chatbot, payment-service, internal)
 - **dev.example.com** → frontend:3000 (app) and same API paths
 - **dev.example.com/argocd** → ArgoCD UI
-- Local: `api.localhost`, `app.localhost`. By IP: `http://203.0.113.11` (no Host).
+- Local: `api.localhost`, `app.localhost`.
 
 ## Dépannage : Pression disque (Evicted, DiskPressure)
 

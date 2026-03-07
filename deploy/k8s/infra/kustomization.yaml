@@ -4,7 +4,7 @@ kind: Kustomization
 namespace: myapp
 
 resources:
-  - postgres/secret.yaml
+  # postgres-credentials: créer manuellement (voir DEPLOYMENT.md)
   - postgres/pvc.yaml
   - postgres/deployment.yaml
   - postgres/service.yaml
@@ -13,5 +13,6 @@ resources:
   - redis/service.yaml
   - consul/deployment.yaml
   - consul/service.yaml
+  # rabbitmq-credentials: créer manuellement (voir DEPLOYMENT.md)
   - rabbitmq/deployment.yaml
   - rabbitmq/service.yaml

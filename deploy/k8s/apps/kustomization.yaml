@@ -40,7 +40,7 @@ resources:
   - user-management/user-service.yaml
   - user-management/ingress.yaml
   # mail-credentials: créer manuellement (voir DEPLOYMENT.md)
-  # Ingress dev.example.com / dev.example.com / IP
+  # Ingress dev.example.com
   - ingress-ip.yaml
 
 # stripe-credentials: kubectl create secret generic stripe-credentials -n myapp ...

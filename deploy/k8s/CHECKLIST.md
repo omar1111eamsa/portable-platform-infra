@@ -19,7 +19,8 @@
 | Secret | Commande / Action | Statut |
 |--------|-------------------|--------|
 | **ghcr-secret** | `kubectl create secret docker-registry ghcr-secret -n myapp --docker-server=ghcr.io --docker-username=TON_GITHUB_USER --docker-password=TON_GITHUB_PAT` (PAT scopes: `repo`, `read:packages`) | ☐ |
-| **postgres-credentials** | En prod : remplacer postgres/postgres par un mot de passe fort (ou Sealed Secrets / Vault) | ☐ |
+| **postgres-credentials** | `kubectl create secret generic postgres-credentials -n myapp --from-literal=POSTGRES_USER=... --from-literal=POSTGRES_PASSWORD=... --from-literal=POSTGRES_DB=userdb` | ☐ |
+| **rabbitmq-credentials** | `kubectl create secret generic rabbitmq-credentials -n myapp --from-literal=RABBITMQ_DEFAULT_USER=... --from-literal=RABBITMQ_DEFAULT_PASS=... --from-literal=RABBITMQ_DEFAULT_VHOST=/ --from-literal=RABBITMQ_USERNAME=... --from-literal=RABBITMQ_PASSWORD=... --from-literal=RABBITMQ_VHOST=/ --from-literal=RABBITMQ_ADDRESSES=amqp://...@rabbitmq:5672/` | ☐ |
 | **chatbot-credentials** | `kubectl create secret generic chatbot-credentials -n myapp --from-literal=LLM_API_KEY=sk-or-VOTRE_CLE_OPENROUTER` — Placeholder OK pour démarrer ; remplacer par la clé OpenRouter réelle. Voir `apps/chatbot/SECRET-SETUP.md` | ☐ |
 | **mail-credentials** | `kubectl create secret generic mail-credentials -n myapp --from-literal=SPRING_MAIL_USERNAME=... --from-literal=SPRING_MAIL_PASSWORD=...` | ☐ |
 | **auth-credentials** | `kubectl create secret generic auth-credentials -n myapp --from-literal=JWT_SECRET=...` | ☐ |
@@ -52,7 +53,7 @@
 | **STRIPE_API_KEY** | Non configuré | `kubectl create secret generic stripe-credentials -n myapp --from-literal=STRIPE_API_KEY=sk_xxx --from-literal=STRIPE_WEBHOOK_SECRET=whsec_xxx` | ☐ |
 | **STRIPE_WEBHOOK_SECRET** | Non configuré | Placeholder OK pour démarrer ; remplacer par les vraies clés Stripe pour les paiements | ☐ |
 | **stripe.success.url** / **stripe.cancel.url** | Hardcodés localhost:8082 | Passer en env (URLs frontend) | ☐ |
-| **RABBITMQ_USERNAME** / **RABBITMQ_PASSWORD** | Déjà en k8s (guest/guest) | — | ✓ |
+| **RABBITMQ_USERNAME** / **RABBITMQ_PASSWORD** | À sortir des manifests | Utiliser `rabbitmq-credentials` | ☐ |
 
 ### api-gateway
 

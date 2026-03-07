@@ -64,15 +64,27 @@ spec:
             - name: SPRING_RABBITMQ_PORT
               value: "5672"
             - name: SPRING_RABBITMQ_USERNAME
-              value: guest
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_USERNAME
             - name: SPRING_RABBITMQ_PASSWORD
-              value: guest
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_PASSWORD
             - name: SPRING_RABBITMQ_SSL_ENABLED
               value: "false"
             - name: RABBITMQ_VHOST
-              value: /
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_VHOST
             - name: RABBITMQ_ADDRESSES
-              value: amqp://guest:guest@rabbitmq:5672/
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_ADDRESSES
             - name: STRIPE_API_KEY
               valueFrom:
                 secretKeyRef:

@@ -27,8 +27,21 @@ kubectl create secret docker-registry ghcr-secret \
   --docker-username=TON_GITHUB_USERNAME \
   --docker-password=TON_GITHUB_PAT
 
-# Postgres : par défaut dans postgres/secret.yaml (postgres/postgres)
-# Pour prod : remplacer par Sealed Secrets ou Vault
+# Postgres (infra)
+kubectl create secret generic postgres-credentials -n myapp \
+  --from-literal=POSTGRES_USER=postgres \
+  --from-literal=POSTGRES_PASSWORD=remplacer-par-un-mot-de-passe-fort \
+  --from-literal=POSTGRES_DB=userdb
+
+# RabbitMQ (infra + apps)
+kubectl create secret generic rabbitmq-credentials -n myapp \
+  --from-literal=RABBITMQ_DEFAULT_USER=remplacer-user \
+  --from-literal=RABBITMQ_DEFAULT_PASS=remplacer-password \
+  --from-literal=RABBITMQ_DEFAULT_VHOST=/ \
+  --from-literal=RABBITMQ_USERNAME=remplacer-user \
+  --from-literal=RABBITMQ_PASSWORD=remplacer-password \
+  --from-literal=RABBITMQ_VHOST=/ \
+  --from-literal=RABBITMQ_ADDRESSES='amqp://remplacer-user:remplacer-password@rabbitmq:5672/'
 
 # Stripe (payment-service)
 kubectl create secret generic stripe-credentials -n myapp \
