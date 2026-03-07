@@ -1,11 +1,11 @@
 #!/bin/bash
-# Vérifie que le flux OAuth2 Google fonctionne (dev.example.com / api.example.com)
+# Vérifie que le flux OAuth2 Google fonctionne (dev.example.com / dev.example.com)
 # Usage: ./verify-oauth.sh [HOST]
-# Example: ./verify-oauth.sh api.example.com
+# Example: ./verify-oauth.sh dev.example.com
 
 set -e
 
-API_HOST="${1:-api.example.com}"
+API_HOST="${1:-dev.example.com}"
 BASE_URL="https://${API_HOST}"
 SKIP_HEADER="ngrok-skip-browser-warning: 1"
 

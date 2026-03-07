@@ -4,7 +4,7 @@
 
 **Frontend (IP publique frontend-vm) :** http://203.0.113.11/
 
-**HTTPS (recommandé pour OAuth) :** https://dev.example.com et https://api.example.com  
+**HTTPS (recommandé pour OAuth) :** https://dev.example.com et https://dev.example.com  
 **ArgoCD :** https://dev.example.com/argocd
 
 | Service | URL |

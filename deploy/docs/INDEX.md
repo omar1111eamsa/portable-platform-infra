@@ -13,4 +13,4 @@
 | [k8s/TESTING.md](../k8s/TESTING.md) | URLs pour testeurs, hosts |
 | [k8s/argocd/README.md](../k8s/argocd/README.md) | ArgoCD Ingress (URL, mot de passe admin) |
 | [argocd/ARGOCD-AUTODEPLOY.md](../argocd/ARGOCD-AUTODEPLOY.md) | ArgoCD auto-deploy (GH_PAT, branches) |
-| [k8s/OAUTH2-FIX.md](../k8s/OAUTH2-FIX.md) | OAuth2 Google (dev.example.com / api.example.com) — déploiement et vérification |
+| [k8s/OAUTH2-FIX.md](../k8s/OAUTH2-FIX.md) | OAuth2 Google (dev.example.com / dev.example.com) — déploiement et vérification |

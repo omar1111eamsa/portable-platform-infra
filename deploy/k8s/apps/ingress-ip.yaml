@@ -1,5 +1,4 @@
-# Ingress for dev.example.com (frontend) and api.example.com (API gateway)
-# Also allows access by IP (no Host) when pointing at node IP (e.g. 203.0.113.11)
+# Ingress for dev.example.com (frontend + API gateway)
 # ingress-ip-api priority > ingress-ip-frontend so /api, /login, etc. match before /
 ---
 apiVersion: networking.k8s.io/v1
@@ -14,97 +13,8 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: "api.example.com"
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: api-gateway
-                port:
-                  number: 8888
-          - path: /login
-            pathType: Prefix
-            backend:
-              service:
-                name: api-gateway
-                port:
-                  number: 8888
-          - path: /oauth2
-            pathType: Prefix
-            backend:
-              service:
-                name: api-gateway
-                port:
-                  number: 8888
-          - path: /chatbot
-            pathType: Prefix
-            backend:
-              service:
-                name: api-gateway
-                port:
-                  number: 8888
-          - path: /payment-service
-            pathType: Prefix
-            backend:
-              service:
-                name: api-gateway
-                port:
-                  number: 8888
-          - path: /internal
-            pathType: Prefix
-            backend:
-              service:
-                name: api-gateway
-                port:
-                  number: 8888
     - host: "dev.example.com"
       http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: api-gateway
-                port:
-                  number: 8888
-          - path: /login
-            pathType: Prefix
-            backend:
-              service:
-                name: api-gateway
-                port:
-                  number: 8888
-          - path: /oauth2
-            pathType: Prefix
-            backend:
-              service:
-                name: api-gateway
-                port:
-                  number: 8888
-          - path: /chatbot
-            pathType: Prefix
-            backend:
-              service:
-                name: api-gateway
-                port:
-                  number: 8888
-          - path: /payment-service
-            pathType: Prefix
-            backend:
-              service:
-                name: api-gateway
-                port:
-                  number: 8888
-          - path: /internal
-            pathType: Prefix
-            backend:
-              service:
-                name: api-gateway
-                port:
-                  number: 8888
-    - http:
         paths:
           - path: /api
             pathType: Prefix
@@ -163,15 +73,6 @@ spec:
   rules:
     - host: "dev.example.com"
       http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: frontend
-                port:
-                  number: 3000
-    - http:
         paths:
           - path: /
             pathType: Prefix

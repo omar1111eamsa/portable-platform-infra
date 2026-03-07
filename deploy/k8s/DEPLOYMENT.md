@@ -36,19 +36,19 @@ kubectl create secret generic stripe-credentials -n myapp \
   --from-literal=STRIPE_WEBHOOK_SECRET=whsec_xxx
 
 # Google OAuth (user-management) — REQUIS pour Sign in with Google
-# Use api.example.com and dev.example.com (or your API/frontend host)
+# Use dev.example.com and dev.example.com (or your API/frontend host)
 kubectl create secret generic google-oauth-credentials -n myapp \
   --from-literal=GOOGLE_CLIENT_ID=ton-client-id.apps.googleusercontent.com \
   --from-literal=GOOGLE_CLIENT_SECRET=ton-client-secret \
-  --from-literal=GOOGLE_REDIRECT_URI=https://api.example.com/login/oauth2/code/google \
+  --from-literal=GOOGLE_REDIRECT_URI=https://dev.example.com/login/oauth2/code/google \
   --from-literal=FRONTEND_URL=https://dev.example.com
 
 # Pour mettre à jour le secret existant :
 # kubectl create secret generic google-oauth-credentials -n myapp \
 #   --from-literal=GOOGLE_CLIENT_ID=... \
 #   --from-literal=GOOGLE_CLIENT_SECRET=... \
-#   --from-literal=GOOGLE_REDIRECT_URI=https://api.example.com/login/oauth2/code/google \
-#   --from-literal=FRONTEND_URL=https://api.example.com \
+#   --from-literal=GOOGLE_REDIRECT_URI=https://dev.example.com/login/oauth2/code/google \
+#   --from-literal=FRONTEND_URL=https://dev.example.com \
 #   --dry-run=client -o yaml | kubectl apply -f -
 ```
 
@@ -105,8 +105,8 @@ curl -s http://203.0.113.11/api/actuator/health
 ### Vérifier OAuth2 Google (Sign in with Google)
 
 ```bash
-# Test OAuth (api.example.com)
-API_HOST="api.example.com"
+# Test OAuth (dev.example.com)
+API_HOST="dev.example.com"
 
 # 1. /api/auth/oauth2/google doit rediriger 302 vers /oauth2/authorization/google
 curl -sI -H "ngrok-skip-browser-warning: 1" "https://$API_HOST/api/auth/oauth2/google"
