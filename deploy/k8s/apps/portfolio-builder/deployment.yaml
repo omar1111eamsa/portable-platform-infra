@@ -16,6 +16,7 @@ spec:
       labels:
         app: portfolio-builder
     spec:
+      automountServiceAccountToken: false
       nodeSelector:
         kubernetes.io/hostname: backend-vm
       topologySpreadConstraints:

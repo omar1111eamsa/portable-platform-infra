@@ -16,6 +16,7 @@ spec:
       labels:
         app: user-management
     spec:
+      automountServiceAccountToken: false
       nodeSelector:
         kubernetes.io/hostname: frontend-vm
       topologySpreadConstraints:

@@ -16,6 +16,7 @@ spec:
       labels:
         app: crm-client
     spec:
+      automountServiceAccountToken: false
       nodeSelector:
         kubernetes.io/hostname: backend-vm
       topologySpreadConstraints:

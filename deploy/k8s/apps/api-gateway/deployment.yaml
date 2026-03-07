@@ -16,6 +16,7 @@ spec:
       labels:
         app: api-gateway
     spec:
+      automountServiceAccountToken: false
       nodeSelector:
         kubernetes.io/hostname: backend-vm
       topologySpreadConstraints:

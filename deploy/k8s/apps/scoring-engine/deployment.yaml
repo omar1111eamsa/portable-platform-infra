@@ -16,6 +16,7 @@ spec:
       labels:
         app: scoring-engine
     spec:
+      automountServiceAccountToken: false
       nodeSelector:
         kubernetes.io/hostname: backend-vm
       topologySpreadConstraints:
