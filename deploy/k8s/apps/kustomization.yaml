@@ -8,10 +8,10 @@ resources:
   # Gateway & Frontend
   - api-gateway/deployment.yaml
   - api-gateway/service.yaml
-  - api-gateway/ingress.yaml
+  # - api-gateway/ingress.yaml  # disabled: gateway exposed via ingress-ip paths on dev.example.com
   - frontend/deployment.yaml
   - frontend/service.yaml
-  - frontend/ingress.yaml
+  # - frontend/ingress.yaml  # disabled: frontend exposed via ingress-ip on dev.example.com
   # Backend services (alphabétique)
   # chatbot-credentials: créer manuellement (kubectl create secret generic chatbot-credentials -n myapp --from-literal=LLM_API_KEY=sk-or-xxx ...)
   # - chatbot/ingressroute.yaml  # optional: requires Traefik IngressRoute CRD; /chatbot is served by ingress-ip-api

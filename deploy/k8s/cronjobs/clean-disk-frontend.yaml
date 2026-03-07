@@ -32,7 +32,6 @@ spec:
                   export CRI_RUNTIME_ENDPOINT=unix:///host/run/k3s/containerd/containerd.sock
                   echo "=== Cleanup frontend-vm $(date) ==="
                   crictl rmi --prune 2>/dev/null || true
-                  crictl rmp -a 2>/dev/null || true
                   echo "Done."
               volumeMounts:
                 - name: containerd-socket

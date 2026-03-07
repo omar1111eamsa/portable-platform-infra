@@ -11,9 +11,6 @@ echo ""
 echo "Suppression des images containerd non utilisées (k3s)..."
 k3s crictl rmi --prune 2>/dev/null || crictl rmi --prune 2>/dev/null || true
 
-echo "Suppression des conteneurs/pods arrêtés..."
-k3s crictl rmp -a 2>/dev/null || crictl rmp -a 2>/dev/null || true
-
 echo "Purge des logs journal..."
 journalctl --vacuum-size=50M 2>/dev/null || true
 

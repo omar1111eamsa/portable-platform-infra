@@ -16,21 +16,16 @@
 
 ---
 
-## Option 2 : Accès par hostnames (avec fichier hosts)
+## Option 2 : Accès par hostname (recommandé)
 
-Ajouter dans `/etc/hosts` (Linux/Mac) ou `C:\Windows\System32\drivers\etc\hosts` (Windows) :
-
-```
-203.0.113.11 api.localhost app.localhost dev.example.com
-```
+Configurer le DNS (ou fichier hosts) uniquement pour `dev.example.com` vers `203.0.113.11`.
 
 **URLs :**
 
 | Service | URL |
 |---------|-----|
-| Frontend | http://app.localhost |
-| API Gateway | http://api.localhost |
-| API via domaine | https://dev.example.com/api |
+| Frontend | https://dev.example.com |
+| API via gateway | https://dev.example.com/api |
 | Chatbot via gateway | https://dev.example.com/chatbot |
 
 ---
