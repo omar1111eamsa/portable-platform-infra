@@ -101,6 +101,11 @@ if kubectl -n myapp get deploy rabbitmq >/dev/null 2>&1; then
   else
     fail "RabbitMQ exchange kpi.events (topic) missing"
   fi
+  if echo "$EXCHANGES_OUT" | rg -q '^payment\.events\s+topic$'; then
+    ok "RabbitMQ exchange payment.events (topic) exists"
+  else
+    fail "RabbitMQ exchange payment.events (topic) missing"
+  fi
   if echo "$EXCHANGES_OUT" | rg -q '^direct_submissions_exchange\s+direct$'; then
     ok "RabbitMQ exchange direct_submissions_exchange (direct) exists"
   else

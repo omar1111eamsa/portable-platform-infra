@@ -17,10 +17,13 @@ data:
       ],
       "exchanges": [
         { "name": "direct_submissions_exchange", "vhost": "/", "type": "direct", "durable": true, "auto_delete": false, "internal": false, "arguments": {} },
+        { "name": "payment.events", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false, "internal": false, "arguments": {} },
         { "name": "kpi.events", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false, "internal": false, "arguments": {} }
       ],
       "bindings": [
         { "source": "direct_submissions_exchange", "vhost": "/", "destination": "direct_submissions_queue", "destination_type": "queue", "routing_key": "direct_submissions_rk", "arguments": {} },
+        { "source": "payment.events", "vhost": "/", "destination": "subscription_updates_queue", "destination_type": "queue", "routing_key": "subscription.updates", "arguments": {} },
+        { "source": "payment.events", "vhost": "/", "destination": "user_notifications_queue", "destination_type": "queue", "routing_key": "user.notifications", "arguments": {} },
         { "source": "kpi.events", "vhost": "/", "destination": "kpi.prediction.received", "destination_type": "queue", "routing_key": "prediction.received", "arguments": {} }
       ]
     }

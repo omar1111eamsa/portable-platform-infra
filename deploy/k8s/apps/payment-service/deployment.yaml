@@ -35,7 +35,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: payment-service
-          image: ghcr.io/myapp/backend-payment-service:6098488
+          image: ghcr.io/myapp/backend-payment-service:ea7b2fb
           imagePullPolicy: Always
           ports:
             - containerPort: 8083
@@ -95,6 +95,12 @@ spec:
               value: "subscription_updates_queue"
             - name: APP_RABBITMQ_USER_NOTIFICATIONS_QUEUE
               value: "user_notifications_queue"
+            - name: APP_RABBITMQ_EVENTS_EXCHANGE
+              value: "payment.events"
+            - name: APP_RABBITMQ_SUBSCRIPTION_UPDATES_ROUTING_KEY
+              value: "subscription.updates"
+            - name: APP_RABBITMQ_USER_NOTIFICATIONS_ROUTING_KEY
+              value: "user.notifications"
             - name: STRIPE_API_KEY
               valueFrom:
                 secretKeyRef:
