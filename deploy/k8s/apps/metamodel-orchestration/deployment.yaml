@@ -62,7 +62,6 @@ spec:
               rm -rf /modules/cq-scoring /modules/cq-portfolio
               git clone --depth 1 "https://${GITHUB_TOKEN}@github.com/MyApp/Metamodel-scoring-engine.git" /modules/cq-scoring
               git clone --depth 1 "https://${GITHUB_TOKEN}@github.com/MyApp/Metamodel-portfolio-builder.git" /modules/cq-portfolio
-              chown -R 50000:50000 /modules
           volumeMounts:
             - name: modules
               mountPath: /modules
