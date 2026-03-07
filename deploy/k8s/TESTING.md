@@ -1,32 +1,32 @@
 # URLs pour les testeurs — MyApp
 
-## Option 1 : Accès direct par IP (aucune config)
+## Option 1 : Accès via domaine (recommandé)
 
-**Frontend (IP publique frontend-vm) :** http://203.0.113.11/
+**Frontend :** https://dev.example.com/
 
-**HTTPS (recommandé pour OAuth) :** https://dev.example.com et https://dev.example.com  
+**HTTPS (recommandé pour OAuth) :** https://dev.example.com  
 **ArgoCD :** https://dev.example.com/argocd
 
 | Service | URL |
 |---------|-----|
-| **Frontend** | http://203.0.113.11/ |
-| **API** | http://203.0.113.11/api/ |
-| **Auth** | http://203.0.113.11/auth/ |
-| **Swagger** | http://203.0.113.11/swagger-ui.html |
+| **Frontend** | https://dev.example.com/ |
+| **API** | https://dev.example.com/api/ |
+| **Auth** | https://dev.example.com/auth/ |
+| **Swagger** | https://dev.example.com/swagger-ui.html |
 
 ---
 
-## Option 2 : Accès par hostname (recommandé)
+## Option 2 : Accès direct par IP (debug uniquement)
 
-Configurer le DNS (ou fichier hosts) uniquement pour `dev.example.com` vers `203.0.113.11`.
+Utiliser l'IP publique uniquement pour debug réseau (hors OAuth).
 
 **URLs :**
 
 | Service | URL |
 |---------|-----|
-| Frontend | https://dev.example.com |
-| API via gateway | https://dev.example.com/api |
-| Chatbot via gateway | https://dev.example.com/chatbot |
+| Frontend | http://203.0.113.11 |
+| API via gateway | http://203.0.113.11/api |
+| Chatbot via gateway | http://203.0.113.11/chatbot |
 
 ---
 
@@ -53,8 +53,8 @@ gcloud compute firewall-rules create allow-http-https \
 
 ```bash
 # Test frontend
-curl -s -o /dev/null -w "%{http_code}" http://203.0.113.11/
+curl -k -s -o /dev/null -w "%{http_code}" https://dev.example.com/
 
 # Test API
-curl -s http://203.0.113.11/api/actuator/health
+curl -k -s https://dev.example.com/api/actuator/health
 ```

@@ -5,11 +5,12 @@
 ## Prérequis avant `kubectl apply`
 
 ### 1. Cluster k3s
-- 2 nœuds : `backend-vm` (10.0.0.11), `frontend-vm` (IP publique 203.0.113.11)
-- Master k3s sur backend-vm, worker sur frontend-vm. Noms exacts : `backend-vm`, `frontend-vm`
+- 3 nœuds : `backend-vm` (10.0.0.11), `frontend-vm` (IP publique 203.0.113.11), `backend2` (10.0.0.13)
+- Master k3s sur backend-vm, workers sur frontend-vm et backend2. Noms exacts : `backend-vm`, `frontend-vm`, `backend2`
 - **Répartition actuelle (nodeSelector)** :
-  - **backend-vm** : postgres, consul, rabbitmq, api-gateway, frontend (app), payment-service, crm-client, kpi-dashboard, predictions-intake
-  - **frontend-vm** : redis, chatbot, user-management, metamodel-orchestration (replicas **0** par défaut ; activer après libération disque — voir `apps/metamodel-orchestration/README.md`)
+  - **backend-vm** : postgres, consul, rabbitmq, payment-service, predictions-intake
+  - **frontend-vm** : api-gateway, frontend, redis, chatbot, user-management, crm-client, kpi-dashboard
+  - **backend2** : metamodel-orchestration
 
 ### 1b. Accès kubectl depuis ta machine (backend-vm sans IP externe)
 - Tunnel SSH : `deploy/k8s/scripts/start-kubectl-tunnel.sh --background`  
@@ -49,7 +50,7 @@ kubectl create secret generic stripe-credentials -n myapp \
   --from-literal=STRIPE_WEBHOOK_SECRET=whsec_xxx
 
 # Google OAuth (user-management) — REQUIS pour Sign in with Google
-# Use dev.example.com and dev.example.com (or your API/frontend host)
+# Use dev.example.com (or your API/frontend host)
 kubectl create secret generic google-oauth-credentials -n myapp \
   --from-literal=GOOGLE_CLIENT_ID=ton-client-id.apps.googleusercontent.com \
   --from-literal=GOOGLE_CLIENT_SECRET=ton-client-secret \
@@ -125,8 +126,8 @@ kubectl apply -k deploy/k8s/
 ```bash
 kubectl get pods -n myapp
 kubectl get ingress -n myapp
-curl -s http://203.0.113.11/
-curl -s http://203.0.113.11/api/actuator/health
+curl -k -s https://dev.example.com/
+curl -k -s https://dev.example.com/api/actuator/health
 ```
 
 ### Vérifier OAuth2 Google (Sign in with Google)
@@ -148,6 +149,6 @@ Pour un test complet dans le navigateur : https://$API_HOST/auth/login → cliqu
 
 ## Réseau et CORS
 
-- **Accès par IP** : `http://203.0.113.11` → Ingress `ingress-ip` route `/api`, `/login`, `/oauth2`, `/chatbot`, `/payment-service` vers api-gateway, `/` vers frontend
-- **CORS** : api-gateway accepte les origines `app.localhost`, `203.0.113.11`, `localhost:3000` (config via `SPRING_APPLICATION_JSON`)
-- Si l'IP publique change : mettre à jour `SPRING_APPLICATION_JSON` et `FRONTEND_ORIGIN` dans `apps/api-gateway/deployment.yaml`
+- **Accès principal** : `https://dev.example.com` via `ingress-ip`.
+- **CORS** : api-gateway accepte les origines frontend configurées dans `apps/api-gateway/deployment.yaml` (`FRONTEND_ORIGIN`, `SPRING_APPLICATION_JSON`).
+- Si le domaine/IP change : mettre à jour DNS + `FRONTEND_ORIGIN` + `SPRING_APPLICATION_JSON`.

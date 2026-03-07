@@ -10,12 +10,12 @@ Ce document décrit l’architecture globale du cluster et le rôle de chaque fi
 - **Namespace principal** : `myapp`
 - **Ingress** : Traefik (intégré k3s)
 - **GitOps** : ArgoCD observe la branche `test-argocd`, path `deploy/k8s`
-- **Accès externe** : `https://dev.example.com` (frontend), `https://dev.example.com` (API)
+- **Accès externe** : `https://dev.example.com` (frontend + API)
 
 ### Flux réseau (simplifié)
 
 ```
-Internet (dev.example.com / dev.example.com) → Traefik Ingress
+Internet (dev.example.com) → Traefik Ingress
   ├── /api, /login, /oauth2, /chatbot, /payment-service  → api-gateway:8888 (JWT requis pour /chatbot)
   ├── /argocd                          → argocd-server:80 (namespace argocd)
   └── /                                → frontend:3000
@@ -89,13 +89,13 @@ Namespace : `myapp`. Tous les services sont en ClusterIP.
 
 ### 3.3 Apps (`apps/`)
 
-Namespace : `myapp`. Chaque service a typiquement : Deployment, Service, Ingress (host `*.localhost`). Le chatbot a en plus : IngressRoute (route vers api-gateway), PVC.
+Namespace : `myapp`. En production, le routage externe passe par `apps/ingress-ip.yaml` (host `dev.example.com`). Les ingress `*.localhost` sont réservés au local.
 
 #### API Gateway
 
 | Fichier | Rôle |
 |---------|------|
-| **api-gateway/deployment.yaml** | 1 replica, nodeSelector backend-vm, image GHCR, port 8888, env (JWT, CORS, etc.), probes HTTP /health. |
+| **api-gateway/deployment.yaml** | 1 replica, nodeSelector frontend-vm, image GHCR, port 8888, env (JWT, CORS, etc.), probes HTTP /health. |
 | **api-gateway/service.yaml** | ClusterIP 8888. |
 | **api-gateway/ingress.yaml** | Ingress Traefik pour `api.localhost` → api-gateway:8888. |
 
@@ -103,7 +103,7 @@ Namespace : `myapp`. Chaque service a typiquement : Deployment, Service, Ingress
 
 | Fichier | Rôle |
 |---------|------|
-| **frontend/deployment.yaml** | 1 replica, nodeSelector backend-vm, image front-end, port 3000. |
+| **frontend/deployment.yaml** | 1 replica, nodeSelector frontend-vm, image front-end, port 3000. |
 | **frontend/service.yaml** | ClusterIP 3000. |
 | **frontend/ingress.yaml** | Ingress pour `app.localhost` → frontend:3000. |
 
@@ -162,14 +162,14 @@ Namespace : `myapp`. Chaque service a typiquement : Deployment, Service, Ingress
 
 | Fichier | Rôle |
 |---------|------|
-| **metamodel-orchestration/deployment.yaml** | **replicas 0** par défaut, nodeSelector frontend-vm, tolère DiskPressure. Métadonnées Airflow : **SQLite** (fichier dans le conteneur). Voir `apps/metamodel-orchestration/README.md` pour activer après libération disque. |
+| **metamodel-orchestration/deployment.yaml** | 1 replica, nodeSelector backend2, tolère DiskPressure. Métadonnées Airflow : **SQLite** (fichier dans le conteneur). Voir `apps/metamodel-orchestration/README.md`. |
 | **metamodel-orchestration/service.yaml** | ClusterIP 8080 (service interne, non exposé par le gateway). |
 
 #### Ingress (domaines + IP)
 
 | Fichier | Rôle |
 |---------|------|
-| **ingress-ip.yaml** | **ingress-ip-api** (priorité 200) : hosts `dev.example.com`, `dev.example.com` + sans host (IP) → `/api`, `/login`, `/oauth2`, `/chatbot`, `/payment-service`, `/internal` → api-gateway. **ingress-ip-frontend** (priorité 100) : host `dev.example.com` + sans host → `/` → frontend. |
+| **ingress-ip.yaml** | **ingress-ip-api** (priorité 200) : host `dev.example.com` → `/api`, `/login`, `/oauth2`, `/chatbot`, `/payment-service` → api-gateway. **ingress-ip-frontend** (priorité 100) : host `dev.example.com` → `/` → frontend. |
 
 Le chemin `/chatbot` est défini dans **ingress-ip.yaml** (route vers api-gateway). Optionnel : **chatbot/ingressroute.yaml** si le CRD IngressRoute Traefik est installé.
 
@@ -210,7 +210,7 @@ Prérequis côté ArgoCD : `server.insecure`, `server.basehref=/argocd`, `server
 | **PersistentVolumeClaim** | postgres (5Gi), chatbot (1Gi). |
 | **Deployment** | Tous les services applicatifs + infra (postgres, redis, consul, rabbitmq). |
 | **Service** | ClusterIP pour chaque deployment. |
-| **Ingress** | Traefik, par host (*.localhost) + ingress-ip (dev.example.com / dev.example.com / IP). |
+| **Ingress** | Traefik, ingress principal `dev.example.com` via `ingress-ip.yaml` (+ ingress locaux `*.localhost` pour dev local). |
 | **IngressRoute** | Traefik CRD : chatbot → api-gateway. |
 | **CronJob** | Nettoyage disque (backend/frontend), suppression pods evicted. |
 | **ServiceAccount / Role / RoleBinding** | Pour le CronJob clean-evicted-pods. |

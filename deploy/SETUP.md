@@ -12,7 +12,7 @@ Ce guide permet de déployer le cluster k3s depuis zéro (VMs réinitialisées) 
 | frontend-vm | 203.0.113.11   | k3s agent (worker), IP publique  |
 | backend2    | 10.0.0.13     | k3s agent (worker), accès via ProxyJump |
 
-**DNS** : dev.example.com, dev.example.com → 203.0.113.11. **Accès SSH** : frontend-vm = jumphost ; backend-vm et backend2 via ProxyJump.
+**DNS** : dev.example.com → 203.0.113.11. **Accès SSH** : frontend-vm = jumphost ; backend-vm et backend2 via ProxyJump.
 
 ---
 
@@ -96,7 +96,7 @@ Dans `deploy/k8s/kustomization.yaml`, décommenter `infra` et `apps`, et mettre 
 
 ArgoCD sync automatiquement depuis la branche `test-argocd`. Voir [argocd/ARGOCD-AUTODEPLOY.md](argocd/ARGOCD-AUTODEPLOY.md).
 
-### 7. Appliquer les manifests (dev.example.com / dev.example.com)
+### 7. Appliquer les manifests (dev.example.com)
 
 ```bash
 ./apply-with-domain.sh

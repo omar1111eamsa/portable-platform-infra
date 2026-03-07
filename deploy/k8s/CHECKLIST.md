@@ -30,7 +30,7 @@
 
 | Élément | Fichier | Statut |
 |--------|---------|--------|
-| IP publique (203.0.113.11) | `apps/api-gateway/deployment.yaml` (FRONTEND_ORIGIN, SPRING_APPLICATION_JSON) | ☐ |
+| Domaine frontal (`dev.example.com`) | `apps/api-gateway/deployment.yaml` (FRONTEND_ORIGIN, SPRING_APPLICATION_JSON) | ☐ |
 | Noms des nœuds | Prérequis : `backend-vm`, `frontend-vm` | ☐ |
 
 ---
@@ -44,8 +44,8 @@
 | **JWT_SECRET** | Non configuré en k8s | Créer Secret, injecter via env | ☐ |
 | **GOOGLE_CLIENT_ID** | Non configuré | Créer app Google Cloud, ajouter au deployment | ☐ |
 | **GOOGLE_CLIENT_SECRET** | Non configuré | Idem | ☐ |
-| **GOOGLE_REDIRECT_URI** | Actuellement `localhost:8081` | Doit être `https://dev.example.com/login/oauth2/code/google`. Doit correspondre à Google Cloud Console. | ☐ |
-| **Redirect OAuth hardcodé** | `CustomOAuth2SuccessHandler.java` ligne 155 : `http://localhost:3000` | Remplacer par variable d'environnement `FRONTEND_URL` | ☐ |
+| **GOOGLE_REDIRECT_URI** | Vérifier la valeur du secret en cluster | Doit être `https://dev.example.com/login/oauth2/code/google` et correspondre à Google Cloud Console. | ☐ |
+| **FRONTEND_URL** | Vérifier la valeur du secret en cluster | Doit être `https://dev.example.com` pour les redirections OAuth. | ☐ |
 
 ### payment-service
 
@@ -84,7 +84,7 @@
 
 1. ☐ ghcr-secret
 2. ☐ Google OAuth (Client ID, Secret, Redirect URI)
-3. ☐ CustomOAuth2SuccessHandler — rendre FRONTEND_URL configurable
+3. ☐ Vérifier OAuth en bout en bout (`/api/auth/oauth2/google` -> Google)
 4. ☐ Stripe (clés + URLs success/cancel) si paiements utilisés
 
 ### Important (sécurité)

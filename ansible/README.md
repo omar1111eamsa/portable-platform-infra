@@ -8,7 +8,7 @@
 | frontend-vm| k3s agent  | 203.0.113.11 | Direct (jumphost)   |
 | backend2   | k3s agent  | 10.0.0.13   | SSH via ProxyJump   |
 
-**DNS:** `dev.example.com` and `api.example.com` → A record to **203.0.113.11**.
+**DNS:** `dev.example.com` → A record to **203.0.113.11**.
 
 ## Usage
 

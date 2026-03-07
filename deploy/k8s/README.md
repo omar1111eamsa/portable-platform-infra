@@ -54,6 +54,13 @@ kubectl apply -k deploy/k8s/
 Voir [DEPLOYMENT.md](DEPLOYMENT.md) pour les prérequis (ghcr-secret, noms de nœuds).
 Voir [CHECKLIST.md](CHECKLIST.md) pour la liste des configurations manquantes (DevOps + développeurs).
 
+### Préflight (avant release)
+
+```bash
+export KUBECONFIG=~/.kube/myapp-k3s.yaml
+./deploy/k8s/scripts/preflight-check.sh
+```
+
 ### ArgoCD
 
 Configurer une Application ArgoCD pointant vers ce dépôt, path `deploy/k8s/`.

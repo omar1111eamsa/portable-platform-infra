@@ -46,8 +46,7 @@ portable-platform-infra/
 ## Domains & access
 
 - **dev.example.com** — Frontend (app), ArgoCD (`/argocd`), and API paths (same host)
-- **api.example.com** — API gateway (backend API, login, OAuth2, chatbot, payment-service)
-- **DNS** : A records for both → `203.0.113.11` (frontend-vm). Cluster has 3 nodes: backend-vm, frontend-vm, backend2.
+- **DNS** : A record → `203.0.113.11` (frontend-vm). Cluster has 3 nodes: backend-vm, frontend-vm, backend2.
 
 ## Deployment (k8s + ArgoCD)
 
@@ -59,7 +58,7 @@ See [deploy/argocd/ARGOCD-AUTODEPLOY.md](deploy/argocd/ARGOCD-AUTODEPLOY.md).
 ```bash
 # Prérequis : ghcr-secret, KUBECONFIG
 kubectl apply -k deploy/k8s/
-# Avec domaine fixe (dev.example.com / api.example.com) :
+# Avec domaine fixe (dev.example.com) :
 deploy/k8s/scripts/apply-with-domain.sh
 ```
 
