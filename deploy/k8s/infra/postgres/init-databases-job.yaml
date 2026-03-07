@@ -9,7 +9,6 @@ metadata:
   labels:
     app: postgres
 spec:
-  ttlSecondsAfterFinished: 300
   backoffLimit: 10
   template:
     spec:
