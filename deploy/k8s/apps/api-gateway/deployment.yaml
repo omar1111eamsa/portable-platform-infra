@@ -61,9 +61,9 @@ spec:
                   name: auth-credentials
                   key: JWT_SECRET
             - name: FRONTEND_ORIGIN
-              value: "http://app.localhost,http://api.localhost,http://203.0.113.11,http://localhost:3000,https://dev.example.com,http://dev.example.com"
+              value: "https://dev.example.com,http://dev.example.com"
             - name: SPRING_APPLICATION_JSON
-              value: '{"spring":{"cloud":{"gateway":{"globalcors":{"add-to-simple-url-handler-mapping":true,"cors-configurations":{"[/**]":{"allowed-origins":["http://app.localhost","http://api.localhost","http://203.0.113.11","http://localhost:3000","https://dev.example.com","http://dev.example.com"],"allowed-headers":["*"],"allowed-methods":["GET","POST","PUT","DELETE","OPTIONS"],"allow-credentials":true}}}}}}}'
+              value: '{"spring":{"cloud":{"gateway":{"globalcors":{"add-to-simple-url-handler-mapping":true,"cors-configurations":{"[/**]":{"allowed-origins":["https://dev.example.com","http://dev.example.com"],"allowed-headers":["*"],"allowed-methods":["GET","POST","PUT","DELETE","OPTIONS"],"allow-credentials":true}}}}}}}'
           resources:
             requests:
               memory: "384Mi"
