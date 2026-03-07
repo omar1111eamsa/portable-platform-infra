@@ -49,6 +49,10 @@ spec:
               value: rabbitmq
             - name: RABBITMQ_PORT
               value: "5672"
+            - name: SPRING_RABBITMQ_HOST
+              value: rabbitmq
+            - name: SPRING_RABBITMQ_PORT
+              value: "5672"
             - name: RABBITMQ_USER
               valueFrom:
                 secretKeyRef:
@@ -59,6 +63,21 @@ spec:
                 secretKeyRef:
                   name: rabbitmq-credentials
                   key: RABBITMQ_PASSWORD
+            - name: SPRING_RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_USERNAME
+            - name: SPRING_RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_PASSWORD
+            - name: SPRING_RABBITMQ_VIRTUAL_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_VHOST
             - name: APP_RABBITMQ_PREDICTION_RECEIVED_QUEUE
               value: "kpi.prediction.received"
             - name: SPRING_CLOUD_CONSUL_HOST
