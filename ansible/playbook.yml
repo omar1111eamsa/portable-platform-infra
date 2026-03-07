@@ -1,8 +1,8 @@
 ---
-# Playbook — Setup cluster MyApp (k3s on 3 VMs, ngrok on jumphost)
+# Playbook — Setup cluster MyApp (k3s on 3 VMs)
 # Usage: ansible-playbook -i inventory.yml playbook.yml
 #
-# VMs: backend-vm (k3s server), frontend-vm (k3s agent + ngrok), backend2 (k3s agent)
+# VMs: backend-vm (k3s server), frontend-vm (k3s agent), backend2 (k3s agent)
 # DNS: dev.example.com, api.example.com → 203.0.113.11
 #
 # After run: start tunnel (deploy/k8s/scripts/start-kubectl-tunnel.sh), then kubectl apply
@@ -16,8 +16,3 @@
   hosts: k3s_agents
   roles:
     - k3s-agent
-
-- name: Install ngrok on jumphost (frontend-vm only)
-  hosts: jumphost
-  roles:
-    - ngrok

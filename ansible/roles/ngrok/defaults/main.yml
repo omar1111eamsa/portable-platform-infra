@@ -1,3 +1,0 @@
----
-ngrok_authtoken: ""  # Définir dans inventory ou group_vars pour auto-config
-ngrok_port: 80       # Port local (Traefik)

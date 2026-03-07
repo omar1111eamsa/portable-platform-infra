@@ -1,5 +1,5 @@
 ---
-# k3s only (no ngrok) — 3 VMs: backend-vm (server), frontend-vm + backend2 (agents)
+# k3s setup — 3 VMs: backend-vm (server), frontend-vm + backend2 (agents)
 # Usage: ansible-playbook -i inventory.yml playbook-k3s-only.yml
 
 - name: Install k3s server on backend-vm

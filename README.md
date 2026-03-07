@@ -15,9 +15,9 @@ Each backend service (user-management, api-gateway, payment-service, etc.) lives
 ```
 portable-platform-infra/
 ├── ansible/                    # Ansible (k3s on 3 VMs: backend-vm, frontend-vm, backend2)
-│   ├── playbook.yml           # Full setup (k3s + ngrok on jumphost)
-│   ├── playbook-k3s-only.yml  # k3s only
-│   └── roles/k3s-server, k3s-agent, ngrok
+│   ├── playbook.yml           # k3s setup
+│   ├── 
+│   └── roles/k3s-server, k3s-agent
 ├── deploy/
 │   ├── k8s/                   # Kubernetes manifests (k3s) — production
 │   │   ├── base/              # Namespace

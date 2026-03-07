@@ -136,11 +136,11 @@ curl -s http://203.0.113.11/api/actuator/health
 API_HOST="dev.example.com"
 
 # 1. /api/auth/oauth2/google doit rediriger 302 vers /oauth2/authorization/google
-curl -sI -H "ngrok-skip-browser-warning: 1" "https://$API_HOST/api/auth/oauth2/google"
+curl -sI "https://$API_HOST/api/auth/oauth2/google"
 # Attendu: Location: https://$API_HOST/oauth2/authorization/google
 
 # 2. /oauth2/authorization/google doit rediriger 302 vers Google
-curl -sI -L -H "ngrok-skip-browser-warning: 1" "https://$API_HOST/api/auth/oauth2/google" | head -20
+curl -sI -L "https://$API_HOST/api/auth/oauth2/google" | head -20
 # Attendu: Location: https://accounts.google.com/o/oauth2/...
 ```
 

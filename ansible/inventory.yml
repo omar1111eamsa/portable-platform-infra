@@ -22,7 +22,7 @@ all:
         backend2:
           ansible_host: 10.0.0.13
           ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -i ~/.ssh/myapp_vms hodeconlimited@203.0.113.11"'
-    # Only frontend-vm has public IP; use for ngrok/jumphost
+    # Only frontend-vm has public IP; use as jumphost
     jumphost:
       hosts:
         frontend-vm:

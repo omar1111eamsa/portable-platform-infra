@@ -3,7 +3,7 @@
 ## URL d'accès
 
 - **https://dev.example.com/argocd**
-- Si tunnel ngrok : header `ngrok-skip-browser-warning: 1` ; avec dev.example.com optionnel.
+- Aucun header supplementaire requis.
 
 ## Prérequis: configurer ArgoCD pour le reverse proxy
 

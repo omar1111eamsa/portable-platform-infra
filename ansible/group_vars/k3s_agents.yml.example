@@ -1,3 +1,0 @@
-# Copier en k3s_agents.yml et remplir ngrok_authtoken
-ngrok_authtoken: "votre_authtoken_ngrok"
-ngrok_port: 80

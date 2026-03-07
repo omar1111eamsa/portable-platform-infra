@@ -7,14 +7,13 @@ set -e
 
 API_HOST="${1:-dev.example.com}"
 BASE_URL="https://${API_HOST}"
-SKIP_HEADER="ngrok-skip-browser-warning: 1"
 
 echo "=== OAuth2 check via $BASE_URL ==="
 
 # 1. /api/auth/oauth2/google → 302 → /oauth2/authorization/google
 echo ""
 echo "1. GET /api/auth/oauth2/google (initiation)..."
-RESP=$(curl -sI -H "$SKIP_HEADER" "$BASE_URL/api/auth/oauth2/google")
+RESP=$(curl -sI "$BASE_URL/api/auth/oauth2/google")
 STATUS=$(echo "$RESP" | head -1)
 LOCATION=$(echo "$RESP" | grep -i "^Location:" | cut -d' ' -f2 | tr -d '\r')
 
@@ -35,7 +34,7 @@ fi
 # 2. /oauth2/authorization/google → 302 → Google
 echo ""
 echo "2. GET /oauth2/authorization/google (redirect vers Google)..."
-RESP2=$(curl -sI -L -H "$SKIP_HEADER" "$BASE_URL/oauth2/authorization/google" 2>/dev/null | head -30)
+RESP2=$(curl -sI -L "$BASE_URL/oauth2/authorization/google" 2>/dev/null | head -30)
 REDIRECT_TO_GOOGLE=$(echo "$RESP2" | grep -i "^Location:" | grep "accounts.google.com" | head -1)
 
 if [ -n "$REDIRECT_TO_GOOGLE" ]; then

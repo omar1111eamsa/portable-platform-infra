@@ -13,11 +13,8 @@
 ## Usage
 
 ```bash
-# Full setup (k3s + ngrok on frontend-vm only)
+# Setup cluster k3s
 ansible-playbook -i inventory.yml playbook.yml
-
-# k3s only (no ngrok)
-ansible-playbook -i inventory.yml playbook-k3s-only.yml
 ```
 
 **Prerequisites:** SSH key `~/.ssh/myapp_vms`, access to frontend-vm (203.0.113.11).  

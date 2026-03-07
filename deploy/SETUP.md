@@ -9,7 +9,7 @@ Ce guide permet de déployer le cluster k3s depuis zéro (VMs réinitialisées) 
 | Composant   | VM            | Rôle                                    |
 |-------------|---------------|-----------------------------------------|
 | backend-vm  | 10.0.0.11     | k3s server (master), pas d’IP externe   |
-| frontend-vm | 203.0.113.11   | k3s agent (worker), ngrok, IP publique  |
+| frontend-vm | 203.0.113.11   | k3s agent (worker), IP publique  |
 | backend2    | 10.0.0.13     | k3s agent (worker), accès via ProxyJump |
 
 **DNS** : dev.example.com, dev.example.com → 203.0.113.11. **Accès SSH** : frontend-vm = jumphost ; backend-vm et backend2 via ProxyJump.
@@ -21,8 +21,6 @@ Ce guide permet de déployer le cluster k3s depuis zéro (VMs réinitialisées) 
 - SSH configuré : clé `~/.ssh/myapp_vms`, accès à `hodeconlimited@203.0.113.11`
 - Ansible installé
 - `kubectl` et `kustomize` (optionnel, fournis par k3s)
-- Compte ngrok + authtoken
-
 ---
 
 ## Parcours minimal
@@ -59,11 +57,6 @@ users:
 
 ```bash
 cd ansible
-
-# Créer group_vars pour le token ngrok (requis)
-mkdir -p group_vars
-echo "ngrok_authtoken: votre_authtoken_ngrok" > group_vars/k3s_agents.yml
-# Ou: export NGROK_AUTHTOKEN=xxx; echo "ngrok_authtoken: $NGROK_AUTHTOKEN" > group_vars/k3s_agents.yml
 
 # Lancer le playbook
 ansible-playbook -i inventory.yml playbook.yml
@@ -154,7 +147,6 @@ kubectl create secret docker-registry ghcr-secret -n myapp --docker-server=ghcr.
 | `BACKEND_HOST` | idem          | IP backend (réseau interne)            |
 | `SSH_USER` | idem              | Utilisateur SSH                       |
 | `SSH_KEY`  | idem              | Clé privée SSH                        |
-| `ngrok_authtoken` | group_vars/k3s_agents.yml | Token ngrok                    |
 
 ---
 
