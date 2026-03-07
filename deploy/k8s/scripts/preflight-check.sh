@@ -89,15 +89,22 @@ fi
 if kubectl -n myapp get deploy rabbitmq >/dev/null 2>&1; then
   QUEUES_OUT="$(kubectl -n myapp exec deploy/rabbitmq -- rabbitmqctl list_queues name 2>/dev/null || true)"
   EXCHANGES_OUT="$(kubectl -n myapp exec deploy/rabbitmq -- rabbitmqctl list_exchanges name type 2>/dev/null || true)"
-  if echo "$QUEUES_OUT" | rg -q 'kpi\.prediction\.received'; then
-    ok "RabbitMQ queue kpi.prediction.received exists"
-  else
-    fail "RabbitMQ queue kpi.prediction.received missing"
-  fi
+  for q in kpi.prediction.received subscription_updates_queue user_notifications_queue direct_submissions_queue; do
+    if echo "$QUEUES_OUT" | rg -q "^${q}$"; then
+      ok "RabbitMQ queue ${q} exists"
+    else
+      fail "RabbitMQ queue ${q} missing"
+    fi
+  done
   if echo "$EXCHANGES_OUT" | rg -q '^kpi\.events\s+topic$'; then
     ok "RabbitMQ exchange kpi.events (topic) exists"
   else
     fail "RabbitMQ exchange kpi.events (topic) missing"
+  fi
+  if echo "$EXCHANGES_OUT" | rg -q '^direct_submissions_exchange\s+direct$'; then
+    ok "RabbitMQ exchange direct_submissions_exchange (direct) exists"
+  else
+    fail "RabbitMQ exchange direct_submissions_exchange (direct) missing"
   fi
 else
   warn "rabbitmq deployment not found; skipped broker topology checks"

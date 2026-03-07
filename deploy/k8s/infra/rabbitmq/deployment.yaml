@@ -49,6 +49,12 @@ spec:
                 secretKeyRef:
                   name: rabbitmq-credentials
                   key: RABBITMQ_DEFAULT_VHOST
+            - name: RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS
+              value: '-rabbitmq_management load_definitions "/etc/rabbitmq/definitions.json"'
+          volumeMounts:
+            - name: rabbitmq-definitions
+              mountPath: /etc/rabbitmq/definitions.json
+              subPath: definitions.json
           resources:
             requests:
               memory: "512Mi"
@@ -72,3 +78,7 @@ spec:
               port: 5672
             initialDelaySeconds: 10
             periodSeconds: 10
+      volumes:
+        - name: rabbitmq-definitions
+          configMap:
+            name: rabbitmq-definitions
