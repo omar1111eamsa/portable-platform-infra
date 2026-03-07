@@ -8,37 +8,28 @@ resources:
   # Gateway & Frontend
   - api-gateway/deployment.yaml
   - api-gateway/service.yaml
-  # - api-gateway/ingress.yaml  # disabled: gateway exposed via ingress-ip paths on dev.example.com
   - frontend/deployment.yaml
   - frontend/service.yaml
-  # - frontend/ingress.yaml  # disabled: frontend exposed via ingress-ip on dev.example.com
   # Backend services (alphabétique)
   # chatbot-credentials: créer manuellement (kubectl create secret generic chatbot-credentials -n myapp --from-literal=LLM_API_KEY=sk-or-xxx ...)
-  # - chatbot/ingressroute.yaml  # optional: requires Traefik IngressRoute CRD; /chatbot is served by ingress-ip-api
   - chatbot/pvc.yaml
   - chatbot/deployment.yaml
   - chatbot/service.yaml
-  # - chatbot/ingress.yaml  # disabled: chatbot is exposed via gateway path /chatbot
   - crm-client/deployment.yaml
   - crm-client/service.yaml
-  # - crm-client/ingress.yaml  # disabled: internal access via API gateway only
   - kpi-dashboard/deployment.yaml
   - kpi-dashboard/service.yaml
-  # - kpi-dashboard/ingress.yaml  # disabled: internal access via API gateway only
   - metamodel-orchestration/pvc-modules.yaml
   - metamodel-orchestration/entrypoint-cm.yaml
   - metamodel-orchestration/deployment.yaml
   - metamodel-orchestration/service.yaml
   - payment-service/deployment.yaml
   - payment-service/service.yaml
-  # - payment-service/ingress.yaml  # disabled: exposed via gateway path /payment-service
   - predictions-intake/deployment.yaml
   - predictions-intake/service.yaml
-  # - predictions-intake/ingress.yaml  # disabled: internal access via API gateway only
   - user-management/deployment.yaml
   - user-management/service.yaml
   - user-management/user-service.yaml
-  # - user-management/ingress.yaml  # disabled: internal access via API gateway only
   # mail-credentials: créer manuellement (voir DEPLOYMENT.md)
   # Ingress dev.example.com
   - ingress-ip.yaml
