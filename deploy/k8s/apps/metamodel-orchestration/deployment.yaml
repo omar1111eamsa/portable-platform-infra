@@ -60,8 +60,8 @@ spec:
             - |
               set -e
               rm -rf /modules/cq-scoring /modules/cq-portfolio
-              git clone --depth 1 "https://${GITHUB_TOKEN}@github.com/MyApp/Metamodel-scoring-engine.git" /modules/cq-scoring
-              git clone --depth 1 "https://${GITHUB_TOKEN}@github.com/MyApp/Metamodel-portfolio-builder.git" /modules/cq-portfolio
+              git -c http.extraHeader="Authorization: Bearer ${GITHUB_TOKEN}" clone --depth 1 https://github.com/MyApp/Metamodel-scoring-engine.git /modules/cq-scoring
+              git -c http.extraHeader="Authorization: Bearer ${GITHUB_TOKEN}" clone --depth 1 https://github.com/MyApp/Metamodel-portfolio-builder.git /modules/cq-portfolio
           volumeMounts:
             - name: modules
               mountPath: /modules
