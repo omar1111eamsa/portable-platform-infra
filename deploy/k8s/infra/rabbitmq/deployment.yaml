@@ -51,18 +51,6 @@ spec:
                   key: RABBITMQ_DEFAULT_VHOST
             - name: RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS
               value: '-rabbitmq_management load_definitions "/etc/rabbitmq/definitions.json"'
-          lifecycle:
-            postStart:
-              exec:
-                command:
-                  - /bin/sh
-                  - -ec
-                  - |
-                    until rabbitmq-diagnostics -q ping; do sleep 2; done
-                    rabbitmqctl add_user "$RABBITMQ_DEFAULT_USER" "$RABBITMQ_DEFAULT_PASS" 2>/dev/null || true
-                    rabbitmqctl change_password "$RABBITMQ_DEFAULT_USER" "$RABBITMQ_DEFAULT_PASS"
-                    rabbitmqctl set_user_tags "$RABBITMQ_DEFAULT_USER" administrator
-                    rabbitmqctl set_permissions -p "$RABBITMQ_DEFAULT_VHOST" "$RABBITMQ_DEFAULT_USER" ".*" ".*" ".*"
           volumeMounts:
             - name: rabbitmq-definitions
               mountPath: /etc/rabbitmq/definitions.json

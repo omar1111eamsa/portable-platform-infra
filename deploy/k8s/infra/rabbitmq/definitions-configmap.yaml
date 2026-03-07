@@ -9,6 +9,23 @@ data:
       "vhosts": [
         { "name": "/" }
       ],
+      "users": [
+        {
+          "name": "myapp",
+          "password_hash": "LexKrGJIePrQZUzqDG0fPJpcUe0Tm8NwBQ8nnJVThGw6DWO1",
+          "hashing_algorithm": "rabbit_password_hashing_sha256",
+          "tags": "administrator"
+        }
+      ],
+      "permissions": [
+        {
+          "user": "myapp",
+          "vhost": "/",
+          "configure": ".*",
+          "write": ".*",
+          "read": ".*"
+        }
+      ],
       "queues": [
         { "name": "subscription_updates_queue", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {} },
         { "name": "user_notifications_queue", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {} },
