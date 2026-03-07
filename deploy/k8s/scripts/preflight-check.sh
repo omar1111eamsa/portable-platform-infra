@@ -74,6 +74,35 @@ else
   printf "%s\n" "$DEPLOY_FAILS"
 fi
 
+INGRESS_LIST="$(
+  kubectl -n myapp get ingress -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' \
+    | sort
+)"
+EXPECTED_INGRESS_LIST=$'ingress-ip-api\ningress-ip-frontend'
+if [[ "$INGRESS_LIST" == "$EXPECTED_INGRESS_LIST" ]]; then
+  ok "Ingress exposure limited to ingress-ip-api + ingress-ip-frontend"
+else
+  fail "Unexpected myapp ingress objects detected:"
+  printf "%s\n" "$INGRESS_LIST"
+fi
+
+if kubectl -n myapp get deploy rabbitmq >/dev/null 2>&1; then
+  QUEUES_OUT="$(kubectl -n myapp exec deploy/rabbitmq -- rabbitmqctl list_queues name 2>/dev/null || true)"
+  EXCHANGES_OUT="$(kubectl -n myapp exec deploy/rabbitmq -- rabbitmqctl list_exchanges name type 2>/dev/null || true)"
+  if echo "$QUEUES_OUT" | rg -q 'kpi\.prediction\.received'; then
+    ok "RabbitMQ queue kpi.prediction.received exists"
+  else
+    fail "RabbitMQ queue kpi.prediction.received missing"
+  fi
+  if echo "$EXCHANGES_OUT" | rg -q '^kpi\.events\s+topic$'; then
+    ok "RabbitMQ exchange kpi.events (topic) exists"
+  else
+    fail "RabbitMQ exchange kpi.events (topic) missing"
+  fi
+else
+  warn "rabbitmq deployment not found; skipped broker topology checks"
+fi
+
 if [[ -n "${PREFLIGHT_SIGNUP_TEST_EMAIL:-}" ]]; then
   SIGNUP_RESP="$(
     curl -k -s -X POST "https://dev.example.com/api/auth/signup/initiate" \
@@ -90,13 +119,23 @@ else
 fi
 
 if command -v rg >/dev/null 2>&1; then
-  if rg -n --hidden -g '!.git' -g '!**/node_modules/**' -g '!**/.next/**' -g '!**/target/**' -g '!**/build/**' -g '!deploy/k8s/scripts/preflight-check.sh' 'ngrok' "$ROOT_DIR" >/dev/null 2>&1; then
+  if rg -n --hidden -g '!.git' -g '!**/node_modules/**' -g '!**/.next/**' -g '!**/target/**' -g '!**/build/**' -g '!**/preflight-check.sh' 'ngrok' "$ROOT_DIR" >/dev/null 2>&1; then
     fail "Found 'ngrok' references in repository"
   else
     ok "No 'ngrok' references in repository files"
   fi
 else
   warn "rg not found; skipped repository ngrok scan"
+fi
+
+SYNC_COUPLING_REFS="$(
+  rg -n 'name:\s*(USER_MANAGEMENT_SERVICE_URL|PAYMENT_SERVICE_URL|USER_SERVICE_URL)' "$ROOT_DIR/deploy/k8s/apps" -g 'deployment.yaml' || true
+)"
+if [[ -n "$SYNC_COUPLING_REFS" ]]; then
+  warn "Direct backend-to-backend HTTP coupling remains (consider replacing with RabbitMQ events):"
+  printf "%s\n" "$SYNC_COUPLING_REFS"
+else
+  ok "No direct backend-to-backend HTTP env URLs found in k8s manifests"
 fi
 
 if [[ "$FAILED" -eq 0 ]]; then

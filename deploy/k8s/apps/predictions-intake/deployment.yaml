@@ -55,7 +55,7 @@ spec:
             - name: REDIS_PORT
               value: "6379"
             - name: USER_SERVICE_URL
-              value: "http://user-management:8081"
+              value: "http://user-management.myapp.svc.cluster.local:8081"
             - name: METAMODEL_ENABLED
               value: "false"
             - name: SPRING_RABBITMQ_HOST
