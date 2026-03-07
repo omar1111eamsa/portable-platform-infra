@@ -75,6 +75,14 @@ spec:
                 secretKeyRef:
                   name: rabbitmq-credentials
                   key: RABBITMQ_PASSWORD
+            - name: APP_RABBITMQ_SUBSCRIPTION_UPDATES_QUEUE
+              value: "subscription_updates_queue"
+            - name: APP_RABBITMQ_DIRECT_SUBMISSIONS_QUEUE
+              value: "direct_submissions_queue"
+            - name: APP_RABBITMQ_DIRECT_SUBMISSIONS_EXCHANGE
+              value: "direct_submissions_exchange"
+            - name: APP_RABBITMQ_DIRECT_SUBMISSIONS_ROUTING_KEY
+              value: "direct_submissions_rk"
             - name: GOOGLE_CLIENT_ID
               valueFrom:
                 secretKeyRef:

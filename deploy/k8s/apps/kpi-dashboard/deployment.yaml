@@ -59,6 +59,8 @@ spec:
                 secretKeyRef:
                   name: rabbitmq-credentials
                   key: RABBITMQ_PASSWORD
+            - name: APP_RABBITMQ_PREDICTION_RECEIVED_QUEUE
+              value: "kpi.prediction.received"
             - name: SPRING_CLOUD_CONSUL_HOST
               value: consul
             - name: SPRING_CLOUD_CONSUL_PORT
