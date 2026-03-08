@@ -95,10 +95,10 @@ spec:
             - containerPort: 8082
           resources:
             requests:
-              memory: "320Mi"
+              memory: "256Mi"
               cpu: "150m"
             limits:
-              memory: "640Mi"
+              memory: "512Mi"
               cpu: "500m"
           startupProbe:
             tcpSocket:

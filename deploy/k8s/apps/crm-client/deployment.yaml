@@ -87,26 +87,26 @@ spec:
             - containerPort: 8083
           resources:
             requests:
-              memory: "320Mi"
-              cpu: "150m"
+              memory: "256Mi"
+              cpu: "120m"
             limits:
-              memory: "640Mi"
+              memory: "512Mi"
               cpu: "500m"
           startupProbe:
             tcpSocket:
               port: 8083
             initialDelaySeconds: 30
             periodSeconds: 10
-            failureThreshold: 30
+            failureThreshold: 90
           livenessProbe:
             tcpSocket:
               port: 8083
-            initialDelaySeconds: 10
+            initialDelaySeconds: 180
             periodSeconds: 10
           readinessProbe:
             tcpSocket:
               port: 8083
-            initialDelaySeconds: 10
+            initialDelaySeconds: 90
             periodSeconds: 5
       securityContext:
         runAsNonRoot: true
