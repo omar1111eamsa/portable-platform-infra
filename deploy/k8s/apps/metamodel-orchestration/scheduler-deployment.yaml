@@ -21,6 +21,7 @@ spec:
       labels:
         app: metamodel-scheduler
     spec:
+      enableServiceLinks: false
       automountServiceAccountToken: false
       nodeSelector:
         kubernetes.io/hostname: backend2
@@ -39,7 +40,7 @@ spec:
         - name: ghcr-secret
       initContainers:
         - name: airflow-db-init
-          image: ghcr.io/myapp/metamodel-orschestation-airflow:89c2057
+          image: ghcr.io/myapp/metamodel-orschestation-airflow:ed8df0d
           command: ["python", "-m", "airflow", "db", "migrate"]
           env:
             - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
@@ -54,7 +55,7 @@ spec:
             runAsUser: 50000
       containers:
         - name: metamodel-scheduler
-          image: ghcr.io/myapp/metamodel-orschestation-airflow:89c2057
+          image: ghcr.io/myapp/metamodel-orschestation-airflow:ed8df0d
           imagePullPolicy: Always
           command: ["python", "-m", "airflow", "scheduler"]
           env:
