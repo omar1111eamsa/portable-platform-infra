@@ -31,7 +31,7 @@
 | Élément | Fichier | Statut |
 |--------|---------|--------|
 | Domaine frontal (`dev.example.com`) | `apps/api-gateway/deployment.yaml` (FRONTEND_ORIGIN, SPRING_APPLICATION_JSON) | ☐ |
-| Noms des nœuds | Prérequis : `backend-vm`, `frontend-vm` | ☐ |
+| Noms des nœuds | Prérequis : `backend-vm`, `frontend-vm`, `backend2` | ☐ |
 
 ---
 

@@ -121,7 +121,7 @@ Namespace : `myapp`. En production, le routage externe passe par `apps/ingress-i
 
 | Fichier | Rôle |
 |---------|------|
-| **crm-client/deployment.yaml** | 1 replica, nodeSelector backend-vm, image backend-crm-client, Consul `crmservice`. |
+| **crm-client/deployment.yaml** | 1 replica, nodeSelector frontend-vm, image backend-crm-client, Consul `crmservice`. |
 | **crm-client/service.yaml** | ClusterIP 8083. |
 | **crm-client/ingress.yaml** | Ingress `crm.localhost` → crm-client. |
 
@@ -129,7 +129,7 @@ Namespace : `myapp`. En production, le routage externe passe par `apps/ingress-i
 
 | Fichier | Rôle |
 |---------|------|
-| **kpi-dashboard/deployment.yaml** | 1 replica, nodeSelector backend-vm, image backend-kpi-dashboard-notifications, Consul `kpi-service`. |
+| **kpi-dashboard/deployment.yaml** | 1 replica, nodeSelector frontend-vm, image backend-kpi-dashboard-notifications, Consul `kpi-service`. |
 | **kpi-dashboard/service.yaml** | ClusterIP 8084. |
 | **kpi-dashboard/ingress.yaml** | Ingress `kpi.localhost`. |
 
@@ -137,7 +137,7 @@ Namespace : `myapp`. En production, le routage externe passe par `apps/ingress-i
 
 | Fichier | Rôle |
 |---------|------|
-| **payment-service/deployment.yaml** | 1 replica, nodeSelector backend-vm, Stripe, RabbitMQ. |
+| **payment-service/deployment.yaml** | 1 replica, nodeSelector frontend-vm, Stripe, RabbitMQ. |
 | **payment-service/service.yaml** | ClusterIP 8082/8083. |
 | **payment-service/ingress.yaml** | Ingress `payment.localhost`. |
 
@@ -145,7 +145,7 @@ Namespace : `myapp`. En production, le routage externe passe par `apps/ingress-i
 
 | Fichier | Rôle |
 |---------|------|
-| **predictions-intake/deployment.yaml** | 1 replica, nodeSelector backend-vm, Consul `prediction-intake-service`. |
+| **predictions-intake/deployment.yaml** | 1 replica, nodeSelector frontend-vm, Consul `prediction-intake-service`. |
 | **predictions-intake/service.yaml** | ClusterIP 8082. |
 | **predictions-intake/ingress.yaml** | Ingress `predictions.localhost`. |
 
@@ -172,7 +172,7 @@ Namespace : `myapp`. En production, le routage externe passe par `apps/ingress-i
 | Fichier | Rôle |
 |---------|------|
 | **execution-engine/configmap.yaml** | Configuration brokers (`config.yaml`) pour le moteur d’exécution. |
-| **execution-engine/cronjob.yaml** | CronJob `execution-engine` (suspendu par défaut) qui exécute `cq-execution-engine` en mode batch. Lit `trade_signals` depuis `prediction_db`. |
+| **execution-engine/cronjob.yaml** | CronJob `execution-engine` (suspendu par défaut) sur `frontend-vm` qui exécute `cq-execution-engine` en mode batch. Lit `trade_signals` depuis `prediction_db`. |
 | **execution-engine/secret.yaml.example** | Exemple de secret broker credentials (Binance). |
 
 #### Ingress (domaines + IP)

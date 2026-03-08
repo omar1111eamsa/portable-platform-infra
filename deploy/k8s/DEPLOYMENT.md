@@ -8,10 +8,9 @@
 - 3 nœuds : `backend-vm` (10.0.0.11), `frontend-vm` (IP publique 203.0.113.11), `backend2` (10.0.0.13)
 - Master k3s sur backend-vm, workers sur frontend-vm et backend2. Noms exacts : `backend-vm`, `frontend-vm`, `backend2`
 - **Répartition actuelle (nodeSelector)** :
-  - **backend-vm** : postgres, consul, rabbitmq, payment-service, predictions-intake
-  - **frontend-vm** : api-gateway, frontend, redis, chatbot, user-management, crm-client, kpi-dashboard
+  - **backend-vm** : postgres, consul, rabbitmq (control-plane + infra stateful)
+  - **frontend-vm** : api-gateway, frontend, redis, chatbot, user-management, crm-client, kpi-dashboard, payment-service, predictions-intake, execution-engine (CronJob)
   - **backend2** : metamodel-orchestration, metamodel-scheduler, metamodel-dag-processor
-  - **backend-vm (CronJob)** : execution-engine (suspendu par défaut)
 
 ### 1b. Accès kubectl depuis ta machine (backend-vm sans IP externe)
 - Tunnel SSH : `deploy/k8s/scripts/start-kubectl-tunnel.sh --background`  
