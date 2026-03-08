@@ -30,7 +30,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: portfolio-builder
-          image: ghcr.io/myapp/metamodel-portfolio-builder:080926d
+          image: ghcr.io/myapp/metamodel-portfolio-builder:0447516
           imagePullPolicy: Always
           env:
             - name: KAFKA_BOOTSTRAP_SERVERS
