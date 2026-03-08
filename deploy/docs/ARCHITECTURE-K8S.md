@@ -167,12 +167,12 @@ Namespace : `myapp`. En production, le routage externe passe par `apps/ingress-i
 | **metamodel-orchestration/dag-processor-deployment.yaml** | DAG processor Airflow 3 (1 replica) sur backend2. |
 | **metamodel-orchestration/service.yaml** | ClusterIP 8080 (service interne, non exposé par le gateway). |
 
-#### Execution Engine (Batch)
+#### Execution Engine (Realtime)
 
 | Fichier | Rôle |
 |---------|------|
 | **execution-engine/configmap.yaml** | Configuration optionnelle du moteur d’exécution. |
-| **execution-engine/cronjob.yaml** | **Deployment** `execution-engine` sur `frontend-vm`, consumer RabbitMQ realtime (`execution.events` / `trade_signal.created`) qui alimente `filled_trades`. |
+| **execution-engine/cronjob.yaml** | **Deployment** `execution-engine` sur `backend2`, consumer RabbitMQ realtime (`execution.events` / `trade_signal.created`) qui alimente `filled_trades`. |
 | **execution-engine/secret.yaml.example** | Exemple de secret broker credentials (Binance). |
 
 #### Ingress (domaines + IP)
