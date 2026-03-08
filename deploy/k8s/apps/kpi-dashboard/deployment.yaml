@@ -18,7 +18,7 @@ spec:
     spec:
       automountServiceAccountToken: false
       nodeSelector:
-        kubernetes.io/hostname: backend2
+        kubernetes.io/hostname: frontend-vm
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
