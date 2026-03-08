@@ -39,7 +39,7 @@ spec:
         - name: ghcr-secret
       initContainers:
         - name: airflow-db-init
-          image: ghcr.io/myapp/metamodel-orschestation-airflow:26f8ba7
+          image: ghcr.io/myapp/metamodel-orschestation-airflow:5fd0ac9
           command: ["python", "-m", "airflow", "db", "migrate"]
           env:
             - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
@@ -54,7 +54,7 @@ spec:
             runAsUser: 50000
       containers:
         - name: metamodel-scheduler
-          image: ghcr.io/myapp/metamodel-orschestation-airflow:26f8ba7
+          image: ghcr.io/myapp/metamodel-orschestation-airflow:5fd0ac9
           imagePullPolicy: Always
           command: ["python", "-m", "airflow", "scheduler"]
           env:
