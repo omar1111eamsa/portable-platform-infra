@@ -35,7 +35,7 @@ spec:
         - name: ghcr-secret
       initContainers:
         - name: airflow-db-init
-          image: ghcr.io/myapp/metamodel-orschestation-airflow:89c2057
+          image: ghcr.io/myapp/metamodel-orschestation-airflow:ed8df0d
           command: ["python", "-m", "airflow", "db", "migrate"]
           env:
             - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
@@ -71,7 +71,7 @@ spec:
       containers:
         - name: metamodel-orchestration
           # Image: Metamodel-orschestation-airflow (Airflow API server on port 8080) — same as init (latest SHA)
-          image: ghcr.io/myapp/metamodel-orschestation-airflow:89c2057
+          image: ghcr.io/myapp/metamodel-orschestation-airflow:ed8df0d
           imagePullPolicy: Always
           command: ["python", "-m", "airflow", "api-server"]
           env:
