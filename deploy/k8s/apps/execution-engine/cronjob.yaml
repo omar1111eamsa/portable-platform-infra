@@ -22,7 +22,7 @@ spec:
         spec:
           restartPolicy: Never
           nodeSelector:
-            kubernetes.io/hostname: backend-vm
+            kubernetes.io/hostname: frontend-vm
           imagePullSecrets:
             - name: ghcr-secret
           containers:
