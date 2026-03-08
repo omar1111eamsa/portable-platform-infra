@@ -6,6 +6,7 @@
 | [FRONTEND-API-GATEWAY.md](FRONTEND-API-GATEWAY.md) | Relation frontend ↔ api-gateway (env, réseau, tests) |
 | [API-GATEWAY-BACKENDS.md](API-GATEWAY-BACKENDS.md) | Routes API Gateway ↔ backends (paths, services K8s, Consul) |
 | [DB-ARCHITECTURE.md](DB-ARCHITECTURE.md) | Architecture Postgres et services consommateurs |
+| [METAMODEL-FONCTIONNEMENT.md](METAMODEL-FONCTIONNEMENT.md) | Détail du fonctionnement metamodel (Airflow, DAG, DB, modules, exploitation) |
 | [TESTERS-GUIDE.md](../TESTERS-GUIDE.md) | Guide testeurs : architecture, APIs, cURL, pentest |
 | [k8s/README.md](../k8s/README.md) | Kubernetes : structure, kustomize |
 | [k8s/DEPLOYMENT.md](../k8s/DEPLOYMENT.md) | Procédure de déploiement |
