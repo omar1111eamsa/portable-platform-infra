@@ -48,6 +48,8 @@ spec:
                 secretKeyRef:
                   name: metamodel-db-credentials
                   key: AIRFLOW_CONN_POSTGRES_MYAPP
+            - name: AIRFLOW__CORE__EXECUTION_API_SERVER_URL
+              value: "http://metamodel-orchestration:8080/execution/"
             - name: MYAPP_DB_URL
               valueFrom:
                 secretKeyRef:
