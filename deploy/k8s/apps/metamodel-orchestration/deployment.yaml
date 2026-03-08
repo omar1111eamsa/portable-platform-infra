@@ -20,7 +20,7 @@ spec:
     spec:
       automountServiceAccountToken: false
       nodeSelector:
-        kubernetes.io/hostname: backend-vm
+        kubernetes.io/hostname: backend2
       tolerations:
         - key: node.kubernetes.io/disk-pressure
           operator: Exists
