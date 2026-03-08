@@ -4,7 +4,7 @@ This workload runs `Metamodel-execution-engine` as a realtime RabbitMQ consumer.
 
 - Runtime mode (current): `python consumer_realtime.py`
 - Trigger mode: event-driven (`trade_signal.created`)
-- Image currently pinned to: `ghcr.io/myapp/cq-execution-engine:eb2c798`
+- Image currently pinned to: `ghcr.io/myapp/cq-execution-engine:4960759`
 
 ## Why Deployment (not CronJob)
 
