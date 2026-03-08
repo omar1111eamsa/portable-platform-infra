@@ -23,7 +23,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: execution-engine
-          image: ghcr.io/myapp/cq-execution-engine:4960759
+          image: ghcr.io/myapp/cq-execution-engine:b5bcbcc
           imagePullPolicy: Always
           command: ["python", "consumer_realtime.py"]
           env:
