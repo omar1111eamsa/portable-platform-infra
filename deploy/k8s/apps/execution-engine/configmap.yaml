@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: execution-engine-config
+  namespace: myapp
+  labels:
+    app: execution-engine
+data:
+  config.yaml: |
+    configuration:
+      brokers:
+        binance:
+          enabled: false
+          allocation: 1.0
+          params:
+            testnet: true
+
+        interactive_brokers:
+          enabled: false
+          allocation: 0.0
+          params:
+            host: ib-gateway
+            port: 4004

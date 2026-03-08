@@ -1,0 +1,70 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: execution-engine
+  namespace: myapp
+  labels:
+    app: execution-engine
+spec:
+  schedule: "*/15 * * * *"
+  # Safety default: activate manually once broker credentials/config are ready.
+  suspend: true
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app: execution-engine
+        spec:
+          restartPolicy: Never
+          nodeSelector:
+            kubernetes.io/hostname: backend-vm
+          imagePullSecrets:
+            - name: ghcr-secret
+          containers:
+            - name: execution-engine
+              image: ghcr.io/myapp/cq-execution-engine:develop
+              imagePullPolicy: Always
+              env:
+                - name: DB_CONN
+                  valueFrom:
+                    secretKeyRef:
+                      name: metamodel-db-credentials
+                      key: MYAPP_DB_URL
+                - name: PORTFOLIO_SOURCE
+                  value: "trade_signals"
+                - name: TRADING_MODE
+                  value: "paper"
+                - name: BINANCE_TESTNET
+                  value: "true"
+                - name: BINANCE_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: execution-engine-broker-credentials
+                      key: BINANCE_API_KEY
+                      optional: true
+                - name: BINANCE_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: execution-engine-broker-credentials
+                      key: BINANCE_SECRET_KEY
+                      optional: true
+              volumeMounts:
+                - name: execution-engine-config
+                  mountPath: /config.yaml
+                  subPath: config.yaml
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "400m"
+          volumes:
+            - name: execution-engine-config
+              configMap:
+                name: execution-engine-config
