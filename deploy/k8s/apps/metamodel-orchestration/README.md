@@ -39,7 +39,7 @@ Expected: `metadatabase=healthy` and `scheduler=healthy`.
 kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags list
 kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags unpause metapipeline_dag
 kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags trigger metapipeline_dag
-kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags list-runs -d metapipeline_dag
+kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags list-runs metapipeline_dag
 ```
 
 ## Disk pressure recovery (backend2)

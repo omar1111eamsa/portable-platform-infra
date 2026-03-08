@@ -162,7 +162,9 @@ Namespace : `myapp`. En production, le routage externe passe par `apps/ingress-i
 
 | Fichier | Rôle |
 |---------|------|
-| **metamodel-orchestration/deployment.yaml** | 1 replica, nodeSelector backend2, tolère DiskPressure. Métadonnées Airflow : **SQLite** (fichier dans le conteneur). Voir `apps/metamodel-orchestration/README.md`. |
+| **metamodel-orchestration/deployment.yaml** | API server Airflow (1 replica), nodeSelector backend2, tolère DiskPressure. Métadonnées Airflow : **PostgreSQL** via secret `metamodel-db-credentials`. |
+| **metamodel-orchestration/scheduler-deployment.yaml** | Scheduler Airflow (1 replica) sur backend2. |
+| **metamodel-orchestration/dag-processor-deployment.yaml** | DAG processor Airflow 3 (1 replica) sur backend2. |
 | **metamodel-orchestration/service.yaml** | ClusterIP 8080 (service interne, non exposé par le gateway). |
 
 #### Ingress (domaines + IP)
