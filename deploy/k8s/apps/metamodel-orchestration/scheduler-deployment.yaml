@@ -8,6 +8,11 @@ metadata:
 spec:
   replicas: 1
   revisionHistoryLimit: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: metamodel-scheduler
@@ -45,26 +50,6 @@ spec:
           securityContext:
             runAsNonRoot: true
             runAsUser: 50000
-        - name: modules-sync
-          image: alpine/git:latest
-          env:
-            - name: GITHUB_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: github-token
-                  key: token
-          command:
-            - sh
-            - -c
-            - |
-              set -e
-              AUTH="$(printf 'x-access-token:%s' "${GITHUB_TOKEN}" | base64 | tr -d '\n')"
-              rm -rf /modules/cq-scoring /modules/cq-portfolio
-              git -c http.extraHeader="Authorization: Basic ${AUTH}" clone --depth 1 https://github.com/MyApp/metamodel-scoring-engine-new.git /modules/cq-scoring
-              git -c http.extraHeader="Authorization: Basic ${AUTH}" clone --depth 1 https://github.com/MyApp/Metamodel-portfolio-builder.git /modules/cq-portfolio
-          volumeMounts:
-            - name: modules
-              mountPath: /modules
       containers:
         - name: metamodel-scheduler
           image: ghcr.io/myapp/metamodel-orschestation-airflow:26f8ba7
@@ -127,7 +112,7 @@ spec:
               command:
                 - sh
                 - -c
-                - pgrep -f "airflow scheduler" >/dev/null
+                - ps -ef | grep -q "[a]irflow scheduler"
             initialDelaySeconds: 45
             periodSeconds: 15
             timeoutSeconds: 3
@@ -137,7 +122,7 @@ spec:
               command:
                 - sh
                 - -c
-                - pgrep -f "airflow scheduler" >/dev/null
+                - ps -ef | grep -q "[a]irflow scheduler"
             initialDelaySeconds: 60
             periodSeconds: 20
             timeoutSeconds: 3
@@ -146,7 +131,7 @@ spec:
               command:
                 - sh
                 - -c
-                - pgrep -f "airflow scheduler" >/dev/null
+                - ps -ef | grep -q "[a]irflow scheduler"
             initialDelaySeconds: 30
             periodSeconds: 15
             timeoutSeconds: 3
