@@ -18,7 +18,7 @@ resources:
   - crm-client/deployment.yaml
   - crm-client/service.yaml
   - execution-engine/configmap.yaml
-  - execution-engine/cronjob.yaml
+  - execution-engine/deployment.yaml
   - kpi-dashboard/deployment.yaml
   - kpi-dashboard/service.yaml
   - metamodel-orchestration/pvc-modules.yaml

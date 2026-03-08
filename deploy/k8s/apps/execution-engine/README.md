@@ -5,7 +5,7 @@ This workload runs `Metamodel-execution-engine` as a realtime RabbitMQ consumer.
 - Runtime mode (current): `python consumer_realtime.py`
 - Trigger mode: event-driven (`trade_signal.created`)
 - Scheduled on node: `backend2` (`nodeSelector`)
-- Image pinned in manifest `cronjob.yaml` (tag updated by CI)
+- Image pinned in manifest `deployment.yaml` (tag updated by CI)
 
 ## Why Deployment (not CronJob)
 

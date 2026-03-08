@@ -172,7 +172,7 @@ Namespace : `myapp`. En production, le routage externe passe par `apps/ingress-i
 | Fichier | Rôle |
 |---------|------|
 | **execution-engine/configmap.yaml** | Configuration optionnelle du moteur d’exécution. |
-| **execution-engine/cronjob.yaml** | **Deployment** `execution-engine` sur `backend2`, consumer RabbitMQ realtime (`execution.events` / `trade_signal.created`) qui alimente `filled_trades`. |
+| **execution-engine/deployment.yaml** | **Deployment** `execution-engine` sur `backend2`, consumer RabbitMQ realtime (`execution.events` / `trade_signal.created`) qui alimente `filled_trades`. |
 | **execution-engine/secret.yaml.example** | Exemple de secret broker credentials (Binance). |
 
 #### Ingress (domaines + IP)
