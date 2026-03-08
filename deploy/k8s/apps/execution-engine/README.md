@@ -2,10 +2,10 @@
 
 This workload runs `Metamodel-execution-engine` as a batch job.
 
-- Source portfolio mode: `trade_signals` from `prediction_db`
-- Default trading mode: `paper`
+- Runtime mode (current): `python main.py validate examples/orders/open_limit.sample.json`
+- Default trading mode env: `paper`
 - Default state: suspended (`spec.suspend: true`)
-- Image currently pinned to: `ghcr.io/myapp/cq-execution-engine:5b54aa9`
+- Image currently pinned to: `ghcr.io/myapp/cq-execution-engine:0af1fbe`
 
 ## Why CronJob (not Deployment)
 
@@ -14,10 +14,9 @@ Using a Deployment would produce restart loops.
 
 ## Enable it
 
-1. Set broker config in `configmap.yaml` (enable desired broker).
-2. Create broker secret (if needed):
+1. Create broker secret (if needed):
    `kubectl apply -f deploy/k8s/apps/execution-engine/secret.yaml.example`
-3. Unsuspend:
+2. Unsuspend:
    `kubectl -n myapp patch cronjob execution-engine -p '{"spec":{"suspend":false}}'`
 
 ## Run once on demand

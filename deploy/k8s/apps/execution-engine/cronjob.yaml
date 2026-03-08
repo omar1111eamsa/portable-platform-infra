@@ -29,14 +29,8 @@ spec:
             - name: execution-engine
               image: ghcr.io/myapp/cq-execution-engine:0af1fbe
               imagePullPolicy: Always
+              command: ["python", "main.py", "validate", "examples/orders/open_limit.sample.json"]
               env:
-                - name: DB_CONN
-                  valueFrom:
-                    secretKeyRef:
-                      name: metamodel-db-credentials
-                      key: MYAPP_DB_URL
-                - name: PORTFOLIO_SOURCE
-                  value: "trade_signals"
                 - name: TRADING_MODE
                   value: "paper"
                 - name: BINANCE_TESTNET
@@ -53,10 +47,6 @@ spec:
                       name: execution-engine-broker-credentials
                       key: BINANCE_SECRET_KEY
                       optional: true
-              volumeMounts:
-                - name: execution-engine-config
-                  mountPath: /config.yaml
-                  subPath: config.yaml
               resources:
                 requests:
                   memory: "256Mi"
@@ -64,7 +54,3 @@ spec:
                 limits:
                   memory: "512Mi"
                   cpu: "400m"
-          volumes:
-            - name: execution-engine-config
-              configMap:
-                name: execution-engine-config
