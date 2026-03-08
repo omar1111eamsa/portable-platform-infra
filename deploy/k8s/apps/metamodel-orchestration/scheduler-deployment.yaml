@@ -1,21 +1,20 @@
-# Metamodel-orchestration = Apache Airflow API server (internal use).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: metamodel-orchestration
+  name: metamodel-scheduler
   namespace: myapp
   labels:
-    app: metamodel-orchestration
+    app: metamodel-scheduler
 spec:
   replicas: 1
   revisionHistoryLimit: 2
   selector:
     matchLabels:
-      app: metamodel-orchestration
+      app: metamodel-scheduler
   template:
     metadata:
       labels:
-        app: metamodel-orchestration
+        app: metamodel-scheduler
     spec:
       automountServiceAccountToken: false
       nodeSelector:
@@ -30,7 +29,7 @@ spec:
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
-              app: metamodel-orchestration
+              app: metamodel-scheduler
       imagePullSecrets:
         - name: ghcr-secret
       initContainers:
@@ -67,11 +66,10 @@ spec:
             - name: modules
               mountPath: /modules
       containers:
-        - name: metamodel-orchestration
-          # Image: Metamodel-orschestation-airflow (Airflow API server on port 8080) — same as init (latest SHA)
+        - name: metamodel-scheduler
           image: ghcr.io/myapp/metamodel-orschestation-airflow:26f8ba7
           imagePullPolicy: Always
-          command: ["python", "-m", "airflow", "api-server"]
+          command: ["python", "-m", "airflow", "scheduler"]
           env:
             - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
               valueFrom:
@@ -115,13 +113,8 @@ spec:
             - name: PYTHONPATH
               value: "/opt/airflow/modules/cq-scoring:/opt/airflow/modules/cq-portfolio:/opt/airflow/modules/cq-portfolio/src"
           volumeMounts:
-            - name: entrypoint
-              mountPath: /entrypoint.sh
-              subPath: entrypoint.sh
             - name: modules
               mountPath: /opt/airflow/modules
-          ports:
-            - containerPort: 8080
           resources:
             requests:
               memory: "384Mi"
@@ -130,32 +123,34 @@ spec:
               memory: "768Mi"
               cpu: "500m"
           startupProbe:
-            httpGet:
-              path: /api/v2/monitor/health
-              port: 8080
+            exec:
+              command:
+                - sh
+                - -c
+                - airflow jobs check --job-type SchedulerJob --hostname "$HOSTNAME"
             initialDelaySeconds: 30
-            periodSeconds: 10
-            failureThreshold: 30
-          livenessProbe:
-            httpGet:
-              path: /api/v2/monitor/health
-              port: 8080
-            initialDelaySeconds: 60
             periodSeconds: 15
+            failureThreshold: 20
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - airflow jobs check --job-type SchedulerJob --hostname "$HOSTNAME"
+            initialDelaySeconds: 60
+            periodSeconds: 20
           readinessProbe:
-            httpGet:
-              path: /api/v2/monitor/health
-              port: 8080
+            exec:
+              command:
+                - sh
+                - -c
+                - airflow jobs check --job-type SchedulerJob --hostname "$HOSTNAME"
             initialDelaySeconds: 30
-            periodSeconds: 10
+            periodSeconds: 15
       volumes:
-        - name: entrypoint
-          configMap:
-            name: metamodel-entrypoint
-            defaultMode: 0o755
         - name: modules
           persistentVolumeClaim:
             claimName: metamodel-modules-pvc
       securityContext:
         runAsNonRoot: true
-        runAsUser: 50000  # airflow user in apache/airflow image
+        runAsUser: 50000
