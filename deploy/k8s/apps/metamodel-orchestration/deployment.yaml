@@ -82,6 +82,11 @@ spec:
                   key: AIRFLOW_CONN_POSTGRES_MYAPP
             - name: AIRFLOW__CORE__EXECUTION_API_SERVER_URL
               value: "http://metamodel-orchestration:8080/execution/"
+            - name: AIRFLOW__API_AUTH__JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: auth-credentials
+                  key: JWT_SECRET
             - name: MYAPP_DB_URL
               valueFrom:
                 secretKeyRef:
