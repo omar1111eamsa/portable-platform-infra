@@ -27,7 +27,7 @@ spec:
             - name: ghcr-secret
           containers:
             - name: execution-engine
-              image: ghcr.io/myapp/cq-execution-engine:5b54aa9
+              image: ghcr.io/myapp/cq-execution-engine:36390bf
               imagePullPolicy: Always
               env:
                 - name: DB_CONN
