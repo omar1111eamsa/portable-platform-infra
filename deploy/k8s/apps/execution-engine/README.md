@@ -5,6 +5,7 @@ This workload runs `Metamodel-execution-engine` as a batch job.
 - Source portfolio mode: `trade_signals` from `prediction_db`
 - Default trading mode: `paper`
 - Default state: suspended (`spec.suspend: true`)
+- Image currently pinned to: `ghcr.io/myapp/cq-execution-engine:5b54aa9`
 
 ## Why CronJob (not Deployment)
 
@@ -28,3 +29,8 @@ Using a Deployment would produce restart loops.
 `kubectl -n myapp get jobs | grep execution-engine`
 
 `kubectl -n myapp logs job/<job-name>`
+
+## Common pull issue (GHCR)
+
+If pod fails with `401 Unauthorized` or `403 Forbidden`, recreate `ghcr-secret`
+with a PAT that has `read:packages` (and org SSO authorization if required).

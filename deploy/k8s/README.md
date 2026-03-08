@@ -16,6 +16,7 @@ k8s/
 │   └── kustomization.yaml
 ├── apps/              # API Gateway, Frontend, User, Payment, CRM, etc.
 │   ├── api-gateway/
+│   ├── execution-engine/ # CronJob batch execution engine (suspend by default)
 │   ├── frontend/
 │   ├── ingress-ip.yaml  # Routage host-based (dev.example.com)
 │   └── kustomization.yaml
@@ -71,6 +72,7 @@ Configurer une Application ArgoCD pointant vers ce dépôt, path `deploy/k8s/`.
 |-------------|---------------------------------------------|
 | api-gateway | ghcr.io/myapp/backend-api-gateway    |
 | frontend    | ghcr.io/myapp/front-end              |
+| execution-engine | ghcr.io/myapp/cq-execution-engine |
 
 ## Ingress (k3s + Traefik)
 
@@ -95,6 +97,7 @@ kubectl delete pods -n myapp --field-selector=status.phase=Failed
 ```
 
 Voir aussi `apps/metamodel-orchestration/README.md` pour le metamodel (API + scheduler + dag-processor, diagnostics de santé).
+Voir aussi `apps/execution-engine/README.md` pour l’activation du CronJob execution-engine.
 
 ## Sécurité
 

@@ -167,6 +167,14 @@ Namespace : `myapp`. En production, le routage externe passe par `apps/ingress-i
 | **metamodel-orchestration/dag-processor-deployment.yaml** | DAG processor Airflow 3 (1 replica) sur backend2. |
 | **metamodel-orchestration/service.yaml** | ClusterIP 8080 (service interne, non exposé par le gateway). |
 
+#### Execution Engine (Batch)
+
+| Fichier | Rôle |
+|---------|------|
+| **execution-engine/configmap.yaml** | Configuration brokers (`config.yaml`) pour le moteur d’exécution. |
+| **execution-engine/cronjob.yaml** | CronJob `execution-engine` (suspendu par défaut) qui exécute `cq-execution-engine` en mode batch. Lit `trade_signals` depuis `prediction_db`. |
+| **execution-engine/secret.yaml.example** | Exemple de secret broker credentials (Binance). |
+
 #### Ingress (domaines + IP)
 
 | Fichier | Rôle |
@@ -214,7 +222,7 @@ Prérequis côté ArgoCD : `server.insecure`, `server.basehref=/argocd`, `server
 | **Service** | ClusterIP pour chaque deployment. |
 | **Ingress** | Traefik, ingress principal `dev.example.com` via `ingress-ip.yaml` (+ ingress locaux `*.localhost` pour dev local). |
 | **IngressRoute** | Traefik CRD : chatbot → api-gateway. |
-| **CronJob** | Nettoyage disque (backend/frontend), suppression pods evicted. |
+| **CronJob** | Nettoyage disque (backend/frontend), suppression pods evicted, execution-engine batch. |
 | **ServiceAccount / Role / RoleBinding** | Pour le CronJob clean-evicted-pods. |
 
 ---

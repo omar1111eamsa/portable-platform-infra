@@ -11,6 +11,7 @@
   - **backend-vm** : postgres, consul, rabbitmq, payment-service, predictions-intake
   - **frontend-vm** : api-gateway, frontend, redis, chatbot, user-management, crm-client, kpi-dashboard
   - **backend2** : metamodel-orchestration, metamodel-scheduler, metamodel-dag-processor
+  - **backend-vm (CronJob)** : execution-engine (suspendu par défaut)
 
 ### 1b. Accès kubectl depuis ta machine (backend-vm sans IP externe)
 - Tunnel SSH : `deploy/k8s/scripts/start-kubectl-tunnel.sh --background`  
@@ -70,6 +71,11 @@ kubectl create secret generic auth-credentials -n myapp \
 kubectl create secret generic metamodel-db-credentials -n myapp \
   --from-literal=MYAPP_DB_URL='postgresql://<POSTGRES_USER>:<POSTGRES_PASSWORD>@postgres:5432/prediction_db' \
   --from-literal=AIRFLOW_CONN_POSTGRES_MYAPP='postgresql://<POSTGRES_USER>:<POSTGRES_PASSWORD>@postgres:5432/prediction_db'
+
+# Optional: broker credentials for execution-engine
+kubectl create secret generic execution-engine-broker-credentials -n myapp \
+  --from-literal=BINANCE_API_KEY=... \
+  --from-literal=BINANCE_SECRET_KEY=...
 
 # Pour mettre à jour le secret existant :
 # kubectl create secret generic google-oauth-credentials -n myapp \
