@@ -119,7 +119,7 @@ spec:
                   name: mail-credentials
                   key: SPRING_MAIL_PASSWORD
             - name: SKIP_EMAIL_SEND
-              value: "true"
+              value: "false"
             - name: SPRING_MAIN_LAZY_INITIALIZATION
               value: "true"
           resources:
