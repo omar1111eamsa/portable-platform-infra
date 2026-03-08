@@ -105,16 +105,17 @@ spec:
               port: 8082
             initialDelaySeconds: 30
             periodSeconds: 10
-            failureThreshold: 30
+            # Spring boot + JPA warmup can exceed 5 min on constrained nodes.
+            failureThreshold: 90
           livenessProbe:
             tcpSocket:
               port: 8082
-            initialDelaySeconds: 10
+            initialDelaySeconds: 180
             periodSeconds: 10
           readinessProbe:
             tcpSocket:
               port: 8082
-            initialDelaySeconds: 10
+            initialDelaySeconds: 90
             periodSeconds: 5
       securityContext:
         runAsNonRoot: true
