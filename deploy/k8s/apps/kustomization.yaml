@@ -23,6 +23,7 @@ resources:
   - metamodel-orchestration/entrypoint-cm.yaml
   - metamodel-orchestration/deployment.yaml
   - metamodel-orchestration/scheduler-deployment.yaml
+  - metamodel-orchestration/dag-processor-deployment.yaml
   - metamodel-orchestration/service.yaml
   - payment-service/deployment.yaml
   - payment-service/service.yaml

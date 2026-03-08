@@ -1,22 +1,50 @@
-# Metamodel-orchestration (Airflow)
+# Metamodel Orchestration (Airflow)
 
-- **Image** : `Metamodel-orschestation-airflow` (Apache Airflow API server, port 8080).
-- **Pas exposé via l’API Gateway** : service interne (health `/health`).
-- **Métadonnées Airflow** : **SQLite** (`airflow.db` dans le conteneur, défaut airflow.cfg).
-- **Nœud** : **backend2** (nodeSelector).
-- **Réplicas** : 1 (ajuster selon charge/disque).
+Airflow runs with 3 workloads on `backend2`:
+- `metamodel-orchestration` (API server, port 8080)
+- `metamodel-scheduler` (scheduler)
+- `metamodel-dag-processor` (DAG parser for Airflow 3)
 
-## Si le pod est évincé (DiskPressure)
+Metadata DB is PostgreSQL (`AIRFLOW__DATABASE__SQL_ALCHEMY_CONN` from secret `metamodel-db-credentials` key `AIRFLOW_CONN_POSTGRES_MYAPP`).
 
-1. **Libérer le disque** (SSH sur le nœud) : **uniquement** `sudo crictl rmi --prune`  
-   (supprime les images inutilisées ; ne pas lancer `crictl rmp -a` — ça tente de supprimer tous les pods, y compris les running.)
-2. Vérifier : `kubectl describe node backend2 | grep -A5 Conditions`
-3. Réactiver : `kubectl scale deployment metamodel-orchestration -n myapp --replicas=1`
+The code modules are mounted from PVC `metamodel-modules-pvc` at `/opt/airflow/modules`.
 
-## Arrêter
+## Operational checks
 
-`kubectl scale deployment metamodel-orchestration -n myapp --replicas=0`
+```bash
+kubectl -n myapp get deploy metamodel-orchestration metamodel-scheduler metamodel-dag-processor
+kubectl -n myapp get pods -l app=metamodel-orchestration
+kubectl -n myapp get pods -l app=metamodel-scheduler
+kubectl -n myapp get pods -l app=metamodel-dag-processor
+```
 
-## Ressources
+Health check from API pod:
 
-- Request: 384Mi, limit: 768Mi.
+```bash
+kubectl -n myapp exec deploy/metamodel-orchestration -- \
+  python - <<'PY'
+import urllib.request
+u="http://127.0.0.1:8080/api/v2/monitor/health"
+with urllib.request.urlopen(u, timeout=10) as r:
+    print(r.status)
+    print(r.read().decode())
+PY
+```
+
+Expected: `metadatabase=healthy` and `scheduler=healthy`.
+
+## DAG test run
+
+```bash
+kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags list
+kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags unpause metapipeline_dag
+kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags trigger metapipeline_dag
+kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags list-runs -d metapipeline_dag
+```
+
+## Disk pressure recovery (backend2)
+
+```bash
+sudo k3s crictl rmi --prune
+kubectl describe node backend2 | grep -A5 Conditions
+```

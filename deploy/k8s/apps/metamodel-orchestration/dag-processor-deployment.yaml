@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metamodel-dag-processor
+  namespace: myapp
+  labels:
+    app: metamodel-dag-processor
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: metamodel-dag-processor
+  template:
+    metadata:
+      labels:
+        app: metamodel-dag-processor
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/hostname: backend2
+      tolerations:
+        - key: node.kubernetes.io/disk-pressure
+          operator: Exists
+          effect: NoSchedule
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: metamodel-dag-processor
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: metamodel-dag-processor
+          image: ghcr.io/myapp/metamodel-orschestation-airflow:26f8ba7
+          imagePullPolicy: Always
+          command: ["python", "-m", "airflow", "dag-processor"]
+          env:
+            - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+              valueFrom:
+                secretKeyRef:
+                  name: metamodel-db-credentials
+                  key: AIRFLOW_CONN_POSTGRES_MYAPP
+            - name: MYAPP_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: metamodel-db-credentials
+                  key: MYAPP_DB_URL
+            - name: AIRFLOW_CONN_POSTGRES_MYAPP
+              valueFrom:
+                secretKeyRef:
+                  name: metamodel-db-credentials
+                  key: AIRFLOW_CONN_POSTGRES_MYAPP
+            - name: WORLDMONITOR_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: worldmonitor-credentials
+                  key: WORLDMONITOR_BASE_URL
+                  optional: true
+            - name: WORLDMONITOR_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: worldmonitor-credentials
+                  key: WORLDMONITOR_TOKEN
+                  optional: true
+            - name: WORLDMONITOR_ENDPOINT_SIGNALS
+              valueFrom:
+                secretKeyRef:
+                  name: worldmonitor-credentials
+                  key: WORLDMONITOR_ENDPOINT_SIGNALS
+                  optional: true
+            - name: WORLDMONITOR_TIMEOUT_SECONDS
+              valueFrom:
+                secretKeyRef:
+                  name: worldmonitor-credentials
+                  key: WORLDMONITOR_TIMEOUT_SECONDS
+                  optional: true
+            - name: PYTHONPATH
+              value: "/opt/airflow/modules/cq-scoring:/opt/airflow/modules/cq-portfolio:/opt/airflow/modules/cq-portfolio/src"
+          volumeMounts:
+            - name: modules
+              mountPath: /opt/airflow/modules
+          resources:
+            requests:
+              memory: "384Mi"
+              cpu: "150m"
+            limits:
+              memory: "768Mi"
+              cpu: "500m"
+      volumes:
+        - name: modules
+          persistentVolumeClaim:
+            claimName: metamodel-modules-pvc
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 50000
