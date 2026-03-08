@@ -16,7 +16,7 @@ k8s/
 │   └── kustomization.yaml
 ├── apps/              # API Gateway, Frontend, User, Payment, CRM, etc.
 │   ├── api-gateway/
-│   ├── execution-engine/ # CronJob batch execution engine (suspend by default)
+│   ├── execution-engine/ # Realtime execution-engine (RabbitMQ consumer Deployment)
 │   ├── frontend/
 │   ├── ingress-ip.yaml  # Routage host-based (dev.example.com)
 │   └── kustomization.yaml
@@ -97,7 +97,7 @@ kubectl delete pods -n myapp --field-selector=status.phase=Failed
 ```
 
 Voir aussi `apps/metamodel-orchestration/README.md` pour le metamodel (API + scheduler + dag-processor, diagnostics de santé).
-Voir aussi `apps/execution-engine/README.md` pour l’activation du CronJob execution-engine.
+Voir aussi `apps/execution-engine/README.md` pour le mode realtime execution-engine.
 
 ## Sécurité
 

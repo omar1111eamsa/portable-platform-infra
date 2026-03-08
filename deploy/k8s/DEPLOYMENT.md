@@ -9,7 +9,7 @@
 - Master k3s sur backend-vm, workers sur frontend-vm et backend2. Noms exacts : `backend-vm`, `frontend-vm`, `backend2`
 - **Répartition actuelle (nodeSelector)** :
   - **backend-vm** : postgres, consul, rabbitmq (control-plane + infra stateful)
-  - **frontend-vm** : api-gateway, frontend, redis, chatbot, user-management, crm-client, kpi-dashboard, payment-service, predictions-intake, execution-engine (CronJob)
+  - **frontend-vm** : api-gateway, frontend, redis, chatbot, user-management, crm-client, kpi-dashboard, payment-service, predictions-intake, execution-engine (Deployment realtime)
   - **backend2** : metamodel-orchestration, metamodel-scheduler, metamodel-dag-processor
 
 ### 1b. Accès kubectl depuis ta machine (backend-vm sans IP externe)

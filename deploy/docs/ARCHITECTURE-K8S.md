@@ -171,8 +171,8 @@ Namespace : `myapp`. En production, le routage externe passe par `apps/ingress-i
 
 | Fichier | Rôle |
 |---------|------|
-| **execution-engine/configmap.yaml** | Configuration brokers (`config.yaml`) pour le moteur d’exécution. |
-| **execution-engine/cronjob.yaml** | CronJob `execution-engine` (suspendu par défaut) sur `frontend-vm` qui exécute `cq-execution-engine` en mode batch. Lit `trade_signals` depuis `prediction_db`. |
+| **execution-engine/configmap.yaml** | Configuration optionnelle du moteur d’exécution. |
+| **execution-engine/cronjob.yaml** | **Deployment** `execution-engine` sur `frontend-vm`, consumer RabbitMQ realtime (`execution.events` / `trade_signal.created`) qui alimente `filled_trades`. |
 | **execution-engine/secret.yaml.example** | Exemple de secret broker credentials (Binance). |
 
 #### Ingress (domaines + IP)
@@ -222,7 +222,7 @@ Prérequis côté ArgoCD : `server.insecure`, `server.basehref=/argocd`, `server
 | **Service** | ClusterIP pour chaque deployment. |
 | **Ingress** | Traefik, ingress principal `dev.example.com` via `ingress-ip.yaml` (+ ingress locaux `*.localhost` pour dev local). |
 | **IngressRoute** | Traefik CRD : chatbot → api-gateway. |
-| **CronJob** | Nettoyage disque (backend/frontend), suppression pods evicted, execution-engine batch. |
+| **CronJob** | Nettoyage disque (backend/frontend), suppression pods evicted. |
 | **ServiceAccount / Role / RoleBinding** | Pour le CronJob clean-evicted-pods. |
 
 ---

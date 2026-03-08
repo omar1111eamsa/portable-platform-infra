@@ -1,56 +1,66 @@
-apiVersion: batch/v1
-kind: CronJob
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: execution-engine
   namespace: myapp
   labels:
     app: execution-engine
 spec:
-  schedule: "*/15 * * * *"
-  # Safety default: activate manually once broker credentials/config are ready.
-  suspend: true
-  successfulJobsHistoryLimit: 2
-  failedJobsHistoryLimit: 3
-  concurrencyPolicy: Forbid
-  jobTemplate:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: execution-engine
+  template:
+    metadata:
+      labels:
+        app: execution-engine
     spec:
-      backoffLimit: 1
-      template:
-        metadata:
-          labels:
-            app: execution-engine
-        spec:
-          restartPolicy: Never
-          nodeSelector:
-            kubernetes.io/hostname: frontend-vm
-          imagePullSecrets:
-            - name: ghcr-secret
-          containers:
-            - name: execution-engine
-              image: ghcr.io/myapp/cq-execution-engine:0af1fbe
-              imagePullPolicy: Always
-              command: ["python", "main.py", "validate", "examples/orders/open_limit.sample.json"]
-              env:
-                - name: TRADING_MODE
-                  value: "paper"
-                - name: BINANCE_TESTNET
-                  value: "true"
-                - name: BINANCE_API_KEY
-                  valueFrom:
-                    secretKeyRef:
-                      name: execution-engine-broker-credentials
-                      key: BINANCE_API_KEY
-                      optional: true
-                - name: BINANCE_SECRET_KEY
-                  valueFrom:
-                    secretKeyRef:
-                      name: execution-engine-broker-credentials
-                      key: BINANCE_SECRET_KEY
-                      optional: true
-              resources:
-                requests:
-                  memory: "256Mi"
-                  cpu: "100m"
-                limits:
-                  memory: "512Mi"
-                  cpu: "400m"
+      restartPolicy: Always
+      nodeSelector:
+        kubernetes.io/hostname: frontend-vm
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: execution-engine
+          image: ghcr.io/myapp/cq-execution-engine:eb2c798
+          imagePullPolicy: Always
+          command: ["python", "consumer_realtime.py"]
+          env:
+            - name: DB_CONN
+              valueFrom:
+                secretKeyRef:
+                  name: metamodel-db-credentials
+                  key: MYAPP_DB_URL
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_PORT
+              value: "5672"
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_USERNAME
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_PASSWORD
+            - name: RABBITMQ_VHOST
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_VHOST
+            - name: EXECUTION_EVENTS_EXCHANGE
+              value: "execution.events"
+            - name: EXECUTION_EVENTS_ROUTING_KEY
+              value: "trade_signal.created"
+            - name: EXECUTION_EVENTS_QUEUE
+              value: "execution.trade_signals"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "400m"
