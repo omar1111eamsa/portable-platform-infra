@@ -127,29 +127,29 @@ spec:
               command:
                 - sh
                 - -c
-                - airflow jobs check --job-type SchedulerJob --hostname "$HOSTNAME"
-            initialDelaySeconds: 30
+                - pgrep -f "airflow scheduler" >/dev/null
+            initialDelaySeconds: 45
             periodSeconds: 15
-            timeoutSeconds: 10
+            timeoutSeconds: 3
             failureThreshold: 20
           livenessProbe:
             exec:
               command:
                 - sh
                 - -c
-                - airflow jobs check --job-type SchedulerJob --hostname "$HOSTNAME"
+                - pgrep -f "airflow scheduler" >/dev/null
             initialDelaySeconds: 60
             periodSeconds: 20
-            timeoutSeconds: 10
+            timeoutSeconds: 3
           readinessProbe:
             exec:
               command:
                 - sh
                 - -c
-                - airflow jobs check --job-type SchedulerJob --hostname "$HOSTNAME"
+                - pgrep -f "airflow scheduler" >/dev/null
             initialDelaySeconds: 30
             periodSeconds: 15
-            timeoutSeconds: 10
+            timeoutSeconds: 3
       volumes:
         - name: modules
           persistentVolumeClaim:
