@@ -130,6 +130,7 @@ spec:
                 - airflow jobs check --job-type SchedulerJob --hostname "$HOSTNAME"
             initialDelaySeconds: 30
             periodSeconds: 15
+            timeoutSeconds: 10
             failureThreshold: 20
           livenessProbe:
             exec:
@@ -139,6 +140,7 @@ spec:
                 - airflow jobs check --job-type SchedulerJob --hostname "$HOSTNAME"
             initialDelaySeconds: 60
             periodSeconds: 20
+            timeoutSeconds: 10
           readinessProbe:
             exec:
               command:
@@ -147,6 +149,7 @@ spec:
                 - airflow jobs check --job-type SchedulerJob --hostname "$HOSTNAME"
             initialDelaySeconds: 30
             periodSeconds: 15
+            timeoutSeconds: 10
       volumes:
         - name: modules
           persistentVolumeClaim:
