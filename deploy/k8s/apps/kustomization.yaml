@@ -8,6 +8,8 @@ resources:
   # Gateway & Frontend
   - api-gateway/deployment.yaml
   - api-gateway/service.yaml
+  - admin-frontend/deployment.yaml
+  - admin-frontend/service.yaml
   - frontend/deployment.yaml
   - frontend/service.yaml
   # Backend services (alphabétique)
