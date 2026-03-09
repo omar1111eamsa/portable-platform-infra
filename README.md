@@ -1,5 +1,9 @@
 # Backend Management Service
 
+> **Active CI branch:** test-argocd  
+> **Last sync from remote:** 2026-03-09
+
+
 ## Overview
 
 This repository is the **central infrastructure and deployment control plane** for the MyApp platform.  
@@ -16,7 +20,6 @@ Each backend service (user-management, api-gateway, payment-service, etc.) lives
 portable-platform-infra/
 ├── ansible/                    # Ansible (k3s on 3 VMs: backend-vm, frontend-vm, backend2)
 │   ├── playbook.yml           # k3s setup
-│   ├── 
 │   └── roles/k3s-server, k3s-agent
 ├── deploy/
 │   ├── k8s/                   # Kubernetes manifests (k3s) — production
@@ -45,7 +48,8 @@ portable-platform-infra/
 
 ## Domains & access
 
-- **dev.example.com** — Frontend (app), ArgoCD (`/argocd`), and API paths (same host)
+- **dev.example.com** — Frontend principal (app), ArgoCD (`/argocd`), and API paths (same host)
+- **dashboard.example.com** — Admin Frontend
 - **DNS** : A record → `203.0.113.11` (frontend-vm). Cluster has 3 nodes: backend-vm, frontend-vm, backend2.
 
 ## Deployment (k8s + ArgoCD)
