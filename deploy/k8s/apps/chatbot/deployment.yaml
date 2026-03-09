@@ -30,7 +30,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: chatbot
-          image: ghcr.io/myapp/backend-chatbot:896f609
+          image: ghcr.io/myapp/backend-chatbot:b651b02
           imagePullPolicy: Always
           env:
             - name: LLM_API_KEY
