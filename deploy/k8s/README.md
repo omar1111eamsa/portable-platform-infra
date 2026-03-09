@@ -20,6 +20,7 @@ k8s/
 │   ├── frontend/
 │   ├── ingress-ip.yaml  # Routage host-based (dev.example.com)
 │   └── kustomization.yaml
+├── network-policies/  # Default deny + allow-list réseau myapp
 ├── cronjobs/          # Nettoyage disque (backend-vm, frontend-vm)
 ├── scripts/           # clean-node-disk.sh (manuel)
 └── DEPLOYMENT.md      # Prérequis et ordre de déploiement

@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: myapp
+
+resources:
+  - 00-default-deny.yaml
+  - 10-allow-dns-egress.yaml
+  - 20-allow-traefik-ingress.yaml
+  - 30-allow-internal-service-ports.yaml
+  - 40-allow-external-egress.yaml
+

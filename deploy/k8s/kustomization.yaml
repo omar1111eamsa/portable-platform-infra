@@ -8,5 +8,6 @@ resources:
   - base
   - infra
   - apps
+  - network-policies
   - cronjobs  # clean-disk-backend, clean-disk-frontend, clean-evicted-pods
   - argocd
