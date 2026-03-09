@@ -35,7 +35,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: crm-client
-          image: ghcr.io/myapp/backend-crm-client:60193dd
+          image: ghcr.io/myapp/backend-crm-client:db608b0
           imagePullPolicy: Always
           env:
             - name: DB_URL
