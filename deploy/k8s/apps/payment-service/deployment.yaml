@@ -35,7 +35,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: payment-service
-          image: ghcr.io/myapp/backend-payment-service:2064bfe
+          image: ghcr.io/myapp/backend-payment-service:062255e
           imagePullPolicy: Always
           ports:
             - containerPort: 8083
