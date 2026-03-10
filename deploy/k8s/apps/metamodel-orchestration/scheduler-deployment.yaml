@@ -38,25 +38,6 @@ spec:
               app: metamodel-scheduler
       imagePullSecrets:
         - name: ghcr-secret
-      initContainers:
-        - name: airflow-db-init
-          image: ghcr.io/myapp/metamodel-orschestation-airflow:ed8df0d
-          command: ["python", "-m", "airflow", "db", "migrate"]
-          env:
-            - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
-              valueFrom:
-                secretKeyRef:
-                  name: metamodel-db-credentials
-                  key: AIRFLOW_CONN_POSTGRES_MYAPP
-            - name: AIRFLOW__CORE__EXECUTOR
-              value: "CeleryExecutor"
-            - name: AIRFLOW__CELERY__BROKER_URL
-              value: "redis://redis:6379/0"
-            - name: AIRFLOW__CORE__EXECUTION_API_SERVER_URL
-              value: "http://metamodel-orchestration:8080/execution/"
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 50000
       containers:
         - name: metamodel-scheduler
           image: ghcr.io/myapp/metamodel-orschestation-airflow:ed8df0d
@@ -68,6 +49,10 @@ spec:
                 secretKeyRef:
                   name: metamodel-db-credentials
                   key: AIRFLOW_CONN_POSTGRES_MYAPP
+            - name: AIRFLOW__CORE__EXECUTOR
+              value: "CeleryExecutor"
+            - name: AIRFLOW__CELERY__BROKER_URL
+              value: "redis://redis:6379/0"
             - name: AIRFLOW__CORE__EXECUTION_API_SERVER_URL
               value: "http://metamodel-orchestration:8080/execution/"
             - name: AIRFLOW__API_AUTH__JWT_SECRET
