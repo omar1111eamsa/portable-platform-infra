@@ -10,15 +10,8 @@ metadata:
     app: ingress-ip
   annotations:
     traefik.ingress.kubernetes.io/router.priority: "200"
-    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: traefik
-  tls:
-    - hosts:
-        - "dev.example.com"
-      secretName: dev-myapp-io-tls
   rules:
     - host: "dev.example.com"
       http:
@@ -68,15 +61,8 @@ metadata:
     app: ingress-ip
   annotations:
     traefik.ingress.kubernetes.io/router.priority: "100"
-    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: traefik
-  tls:
-    - hosts:
-        - "dev.example.com"
-      secretName: dev-myapp-io-tls
   rules:
     - host: "dev.example.com"
       http:
@@ -98,15 +84,8 @@ metadata:
     app: ingress-ip
   annotations:
     traefik.ingress.kubernetes.io/router.priority: "110"
-    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: traefik
-  tls:
-    - hosts:
-        - "dashboard.example.com"
-      secretName: dashboard-myapp-io-tls
   rules:
     - host: "dashboard.example.com"
       http:
