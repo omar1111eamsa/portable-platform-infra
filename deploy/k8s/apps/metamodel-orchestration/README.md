@@ -1,9 +1,13 @@
 # Metamodel Orchestration (Airflow)
 
-Airflow runs with 3 workloads on `backend2`:
+Airflow runs with 5 workloads on `backend2`:
 - `metamodel-orchestration` (API server, port 8080)
 - `metamodel-scheduler` (scheduler)
 - `metamodel-dag-processor` (DAG parser for Airflow 3)
+- `metamodel-worker` (Celery worker)
+- `metamodel-triggerer` (Triggerer)
+
+Executor mode is `CeleryExecutor` with Redis broker (`redis://redis:6379/0`).
 
 Metadata DB is PostgreSQL (`AIRFLOW__DATABASE__SQL_ALCHEMY_CONN` from secret `metamodel-db-credentials` key `AIRFLOW_CONN_POSTGRES_MYAPP`).
 
@@ -12,10 +16,12 @@ The code modules are mounted from PVC `metamodel-modules-pvc` at `/opt/airflow/m
 ## Operational checks
 
 ```bash
-kubectl -n myapp get deploy metamodel-orchestration metamodel-scheduler metamodel-dag-processor
+kubectl -n myapp get deploy metamodel-orchestration metamodel-scheduler metamodel-dag-processor metamodel-worker metamodel-triggerer
 kubectl -n myapp get pods -l app=metamodel-orchestration
 kubectl -n myapp get pods -l app=metamodel-scheduler
 kubectl -n myapp get pods -l app=metamodel-dag-processor
+kubectl -n myapp get pods -l app=metamodel-worker
+kubectl -n myapp get pods -l app=metamodel-triggerer
 ```
 
 Health check from API pod:

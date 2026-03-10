@@ -10,7 +10,7 @@
 - **Répartition actuelle (nodeSelector)** :
   - **backend-vm** : postgres, consul, rabbitmq (control-plane + infra stateful)
   - **frontend-vm** : api-gateway, frontend, redis, chatbot, user-management, crm-client, kpi-dashboard, payment-service, predictions-intake
-  - **backend2** : metamodel-orchestration, metamodel-scheduler, metamodel-dag-processor, execution-engine (Deployment realtime)
+  - **backend2** : metamodel-orchestration, metamodel-scheduler, metamodel-dag-processor, metamodel-worker, metamodel-triggerer, execution-engine (Deployment realtime)
 
 ### 1b. Accès kubectl depuis ta machine (backend-vm sans IP externe)
 - Tunnel SSH : `deploy/k8s/scripts/start-kubectl-tunnel.sh --background`  

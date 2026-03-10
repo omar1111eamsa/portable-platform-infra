@@ -162,9 +162,11 @@ Namespace : `myapp`. En production, le routage externe passe par `apps/ingress-i
 
 | Fichier | Rôle |
 |---------|------|
-| **metamodel-orchestration/deployment.yaml** | API server Airflow (1 replica), nodeSelector backend2, tolère DiskPressure. Métadonnées Airflow : **PostgreSQL** via secret `metamodel-db-credentials`. |
-| **metamodel-orchestration/scheduler-deployment.yaml** | Scheduler Airflow (1 replica) sur backend2. |
-| **metamodel-orchestration/dag-processor-deployment.yaml** | DAG processor Airflow 3 (1 replica) sur backend2. |
+| **metamodel-orchestration/deployment.yaml** | API server Airflow (1 replica), nodeSelector backend2, tolère DiskPressure. Airflow configuré en **CeleryExecutor** (Redis broker). Métadonnées Airflow : PostgreSQL via secret `metamodel-db-credentials`. |
+| **metamodel-orchestration/scheduler-deployment.yaml** | Scheduler Airflow (1 replica) sur backend2 (CeleryExecutor + Redis broker). |
+| **metamodel-orchestration/dag-processor-deployment.yaml** | DAG processor Airflow 3 (1 replica) sur backend2 (CeleryExecutor + Redis broker). |
+| **metamodel-orchestration/worker-deployment.yaml** | Celery worker Airflow (1 replica) sur backend2. Exécute les tâches asynchrones du DAG. |
+| **metamodel-orchestration/triggerer-deployment.yaml** | Triggerer Airflow (1 replica) sur backend2 pour les opérateurs/sensors deferrables. |
 | **metamodel-orchestration/service.yaml** | ClusterIP 8080 (service interne, non exposé par le gateway). |
 
 #### Execution Engine (Realtime)

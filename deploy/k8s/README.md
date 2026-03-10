@@ -97,7 +97,7 @@ Ne pas utiliser `crictl rmp -a` (tente de supprimer tous les pods). Optionnel : 
 kubectl delete pods -n myapp --field-selector=status.phase=Failed
 ```
 
-Voir aussi `apps/metamodel-orchestration/README.md` pour le metamodel (API + scheduler + dag-processor, diagnostics de santé).
+Voir aussi `apps/metamodel-orchestration/README.md` pour le metamodel (API + scheduler + dag-processor + worker + triggerer, mode CeleryExecutor, diagnostics de santé).
 Voir aussi `apps/execution-engine/README.md` pour le mode realtime execution-engine.
 
 ## Sécurité
