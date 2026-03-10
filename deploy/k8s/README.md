@@ -77,8 +77,9 @@ Configurer une Application ArgoCD pointant vers ce dépôt, path `deploy/k8s/`.
 
 ## Ingress (k3s + Traefik)
 
-- **dev.example.com** → api-gateway:8888 (API, login, oauth2, chatbot, payment-service, internal)
+- **dev.example.com** → api-gateway:8888 (API, login, oauth2, chatbot, payment-service)
 - **dev.example.com** → frontend:3000 (app) and same API paths
+- **dashboard.example.com** → admin-frontend:8080
 - **dev.example.com/argocd** → ArgoCD UI
 - Local: `api.localhost`, `app.localhost`.
 
