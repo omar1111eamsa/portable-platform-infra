@@ -70,6 +70,29 @@ spec:
                 secretKeyRef:
                   name: metamodel-db-credentials
                   key: AIRFLOW_CONN_POSTGRES_MYAPP
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_PORT
+              value: "5672"
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_USERNAME
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_PASSWORD
+            - name: RABBITMQ_VHOST
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_VHOST
+            - name: EXECUTION_EVENTS_EXCHANGE
+              value: "execution.events"
+            - name: EXECUTION_EVENTS_ROUTING_KEY
+              value: "trade_signal.created"
             - name: PYTHONPATH
               value: "/opt/airflow/modules/cq-scoring:/opt/airflow/modules/cq-portfolio:/opt/airflow/modules/cq-portfolio/src"
           volumeMounts:
