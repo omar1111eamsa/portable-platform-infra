@@ -9,8 +9,15 @@ metadata:
   namespace: argocd
   annotations:
     traefik.ingress.kubernetes.io/router.priority: "250"
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - "dev.example.com"
+      secretName: dev-myapp-io-argocd-tls
   rules:
     - host: "dev.example.com"
       http:
