@@ -147,21 +147,24 @@ spec:
             httpGet:
               path: /api/v2/monitor/health
               port: 8080
-            initialDelaySeconds: 30
+            initialDelaySeconds: 60
             periodSeconds: 10
-            failureThreshold: 30
+            timeoutSeconds: 5
+            failureThreshold: 60
           livenessProbe:
             httpGet:
               path: /api/v2/monitor/health
               port: 8080
-            initialDelaySeconds: 60
-            periodSeconds: 15
+            initialDelaySeconds: 180
+            periodSeconds: 20
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /api/v2/monitor/health
               port: 8080
-            initialDelaySeconds: 30
+            initialDelaySeconds: 90
             periodSeconds: 10
+            timeoutSeconds: 5
       volumes:
         - name: entrypoint
           configMap:
