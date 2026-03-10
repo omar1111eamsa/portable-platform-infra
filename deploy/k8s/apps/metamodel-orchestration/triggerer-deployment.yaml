@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: metamodel-dag-processor
+  name: metamodel-triggerer
   namespace: myapp
   labels:
-    app: metamodel-dag-processor
+    app: metamodel-triggerer
 spec:
   replicas: 1
   revisionHistoryLimit: 2
@@ -15,11 +15,11 @@ spec:
       maxUnavailable: 1
   selector:
     matchLabels:
-      app: metamodel-dag-processor
+      app: metamodel-triggerer
   template:
     metadata:
       labels:
-        app: metamodel-dag-processor
+        app: metamodel-triggerer
     spec:
       enableServiceLinks: false
       automountServiceAccountToken: false
@@ -35,14 +35,14 @@ spec:
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
-              app: metamodel-dag-processor
+              app: metamodel-triggerer
       imagePullSecrets:
         - name: ghcr-secret
       containers:
-        - name: metamodel-dag-processor
+        - name: metamodel-triggerer
           image: ghcr.io/myapp/metamodel-orschestation-airflow:ed8df0d
           imagePullPolicy: Always
-          command: ["python", "-m", "airflow", "dag-processor"]
+          command: ["python", "-m", "airflow", "triggerer"]
           env:
             - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
               valueFrom:
@@ -70,30 +70,6 @@ spec:
                 secretKeyRef:
                   name: metamodel-db-credentials
                   key: AIRFLOW_CONN_POSTGRES_MYAPP
-            - name: WORLDMONITOR_BASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: worldmonitor-credentials
-                  key: WORLDMONITOR_BASE_URL
-                  optional: true
-            - name: WORLDMONITOR_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: worldmonitor-credentials
-                  key: WORLDMONITOR_TOKEN
-                  optional: true
-            - name: WORLDMONITOR_ENDPOINT_SIGNALS
-              valueFrom:
-                secretKeyRef:
-                  name: worldmonitor-credentials
-                  key: WORLDMONITOR_ENDPOINT_SIGNALS
-                  optional: true
-            - name: WORLDMONITOR_TIMEOUT_SECONDS
-              valueFrom:
-                secretKeyRef:
-                  name: worldmonitor-credentials
-                  key: WORLDMONITOR_TIMEOUT_SECONDS
-                  optional: true
             - name: PYTHONPATH
               value: "/opt/airflow/modules/cq-scoring:/opt/airflow/modules/cq-portfolio:/opt/airflow/modules/cq-portfolio/src"
           volumeMounts:
@@ -101,11 +77,11 @@ spec:
               mountPath: /opt/airflow/modules
           resources:
             requests:
-              memory: "384Mi"
-              cpu: "150m"
+              memory: "256Mi"
+              cpu: "100m"
             limits:
-              memory: "768Mi"
-              cpu: "500m"
+              memory: "512Mi"
+              cpu: "300m"
       volumes:
         - name: modules
           persistentVolumeClaim:
