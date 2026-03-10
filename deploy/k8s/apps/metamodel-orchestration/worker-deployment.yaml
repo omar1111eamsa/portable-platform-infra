@@ -93,6 +93,12 @@ spec:
               value: "execution.events"
             - name: EXECUTION_EVENTS_ROUTING_KEY
               value: "trade_signal.created"
+            - name: AIRFLOW__CELERY__WORKER_CONCURRENCY
+              value: "2"
+            - name: AIRFLOW__CELERY__WORKER_PREFETCH_MULTIPLIER
+              value: "1"
+            - name: AIRFLOW__CELERY__WORKER_MAX_TASKS_PER_CHILD
+              value: "20"
             - name: PYTHONPATH
               value: "/opt/airflow/modules/cq-scoring:/opt/airflow/modules/cq-portfolio:/opt/airflow/modules/cq-portfolio/src"
           volumeMounts:
@@ -100,10 +106,10 @@ spec:
               mountPath: /opt/airflow/modules
           resources:
             requests:
-              memory: "384Mi"
+              memory: "512Mi"
               cpu: "150m"
             limits:
-              memory: "768Mi"
+              memory: "1Gi"
               cpu: "500m"
       volumes:
         - name: modules
