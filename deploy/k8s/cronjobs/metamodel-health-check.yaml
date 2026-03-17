@@ -6,18 +6,23 @@ metadata:
 spec:
   schedule: "*/5 * * * *"
   concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 120
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
       backoffLimit: 0
+      activeDeadlineSeconds: 180
+      ttlSecondsAfterFinished: 600
       template:
         spec:
           serviceAccountName: metamodel-health-check
           restartPolicy: Never
+          nodeSelector:
+            kubernetes.io/hostname: backend2
           containers:
             - name: check
-              image: bitnami/kubectl:latest
+              image: bitnami/kubectl:1.34.1
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/sh
