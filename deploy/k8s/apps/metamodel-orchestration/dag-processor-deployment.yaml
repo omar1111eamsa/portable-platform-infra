@@ -108,20 +108,20 @@ spec:
               cpu: "500m"
           startupProbe:
             exec:
-              command: ["sh", "-c", "pgrep -f 'airflow dag-processor' >/dev/null"]
+              command: ["python", "-c", "import pathlib,sys; s=pathlib.Path('/proc/1/cmdline').read_text(errors='ignore'); sys.exit(0 if 'dag-processor' in s else 1)"]
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 30
           livenessProbe:
             exec:
-              command: ["sh", "-c", "pgrep -f 'airflow dag-processor' >/dev/null"]
+              command: ["python", "-c", "import pathlib,sys; s=pathlib.Path('/proc/1/cmdline').read_text(errors='ignore'); sys.exit(0 if 'dag-processor' in s else 1)"]
             initialDelaySeconds: 60
             periodSeconds: 20
             timeoutSeconds: 5
           readinessProbe:
             exec:
-              command: ["sh", "-c", "pgrep -f 'airflow dag-processor' >/dev/null"]
+              command: ["python", "-c", "import pathlib,sys; s=pathlib.Path('/proc/1/cmdline').read_text(errors='ignore'); sys.exit(0 if 'dag-processor' in s else 1)"]
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
