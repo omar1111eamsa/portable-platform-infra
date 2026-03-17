@@ -14,6 +14,8 @@ spec:
       app: metamodel-orchestration
   template:
     metadata:
+      annotations:
+        metamodel.example.com/modules-revision: "scoring=800e492b43fcea3dec43806a8ce405cb64528efe;portfolio=21382f2427c869370ca9bea3c5106a7d93607fd2"
       labels:
         app: metamodel-orchestration
     spec:
@@ -61,21 +63,23 @@ spec:
                 secretKeyRef:
                   name: github-token
                   key: token
+            - name: METAMODEL_SCORING_REF
+              value: "800e492b43fcea3dec43806a8ce405cb64528efe"
+            - name: METAMODEL_PORTFOLIO_REF
+              value: "21382f2427c869370ca9bea3c5106a7d93607fd2"
           command:
             - sh
             - -c
             - |
               set -e
-              SCORING_REF="800e492b43fcea3dec43806a8ce405cb64528efe"
-              PORTFOLIO_REF="21382f2427c869370ca9bea3c5106a7d93607fd2"
               GH_AUTH_URL="https://x-access-token:${GITHUB_TOKEN}@github.com"
               rm -rf /modules/cq-scoring /modules/cq-portfolio
               git clone --depth 1 --branch test-ci "${GH_AUTH_URL}/MyApp/metamodel-scoring-engine-new.git" /modules/cq-scoring
-              git -C /modules/cq-scoring fetch --depth 1 origin "${SCORING_REF}"
-              git -C /modules/cq-scoring checkout --detach "${SCORING_REF}"
+              git -C /modules/cq-scoring fetch --depth 1 origin "${METAMODEL_SCORING_REF}"
+              git -C /modules/cq-scoring checkout --detach "${METAMODEL_SCORING_REF}"
               git clone --depth 1 "${GH_AUTH_URL}/MyApp/Metamodel-portfolio-builder.git" /modules/cq-portfolio
-              git -C /modules/cq-portfolio fetch --depth 1 origin "${PORTFOLIO_REF}"
-              git -C /modules/cq-portfolio checkout --detach "${PORTFOLIO_REF}"
+              git -C /modules/cq-portfolio fetch --depth 1 origin "${METAMODEL_PORTFOLIO_REF}"
+              git -C /modules/cq-portfolio checkout --detach "${METAMODEL_PORTFOLIO_REF}"
           volumeMounts:
             - name: modules
               mountPath: /modules

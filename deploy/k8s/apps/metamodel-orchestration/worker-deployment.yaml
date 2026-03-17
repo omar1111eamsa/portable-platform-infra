@@ -18,6 +18,8 @@ spec:
       app: metamodel-worker
   template:
     metadata:
+      annotations:
+        metamodel.example.com/modules-revision: "scoring=800e492b43fcea3dec43806a8ce405cb64528efe;portfolio=21382f2427c869370ca9bea3c5106a7d93607fd2"
       labels:
         app: metamodel-worker
     spec:
@@ -44,6 +46,10 @@ spec:
           imagePullPolicy: Always
           command: ["python", "-m", "airflow", "celery", "worker"]
           env:
+            - name: METAMODEL_SCORING_REF
+              value: "800e492b43fcea3dec43806a8ce405cb64528efe"
+            - name: METAMODEL_PORTFOLIO_REF
+              value: "21382f2427c869370ca9bea3c5106a7d93607fd2"
             - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
               valueFrom:
                 secretKeyRef:
