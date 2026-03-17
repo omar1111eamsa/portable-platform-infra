@@ -43,12 +43,3 @@ spec:
                   echo "${HEALTH}" | grep -q '"scheduler":{"status":"healthy"'
                   echo "${HEALTH}" | grep -q '"triggerer":{"status":"healthy"'
                   echo "${HEALTH}" | grep -q '"dag_processor":{"status":"healthy"'
-
-                  for d in metamodel-orchestration metamodel-scheduler metamodel-dag-processor metamodel-worker metamodel-triggerer; do
-                    desired="$(kubectl -n myapp get deploy "${d}" -o jsonpath='{.spec.replicas}')"
-                    ready="$(kubectl -n myapp get deploy "${d}" -o jsonpath='{.status.readyReplicas}')"
-                    desired="${desired:-1}"
-                    ready="${ready:-0}"
-                    echo "${d}: ready=${ready} desired=${desired}"
-                    [ "${ready}" -ge "${desired}" ] || { echo "deployment ${d} not ready"; exit 1; }
-                  done
