@@ -40,7 +40,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: metamodel-scheduler
-          image: ghcr.io/myapp/metamodel-orschestation-airflow:ed8df0d
+          image: ghcr.io/myapp/metamodel-orschestation-airflow:0916be6
           imagePullPolicy: Always
           command: ["python", "-m", "airflow", "scheduler"]
           env:
