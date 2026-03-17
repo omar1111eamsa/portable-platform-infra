@@ -62,7 +62,7 @@ spec:
                   name: postgres-credentials
                   key: POSTGRES_PASSWORD
             - name: JPA_DDL_AUTO
-              value: validate
+              value: update
             - name: SPRING_RABBITMQ_HOST
               value: rabbitmq
             - name: SPRING_RABBITMQ_PORT
