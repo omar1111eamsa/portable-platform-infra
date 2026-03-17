@@ -22,7 +22,7 @@ spec:
             kubernetes.io/hostname: backend2
           containers:
             - name: check
-              image: bitnami/kubectl:1.34.1
+              image: bitnami/kubectl:latest
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/sh
