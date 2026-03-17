@@ -18,8 +18,6 @@ spec:
         spec:
           serviceAccountName: metamodel-health-check
           restartPolicy: Never
-          nodeSelector:
-            kubernetes.io/hostname: backend2
           containers:
             - name: check
               image: bitnami/kubectl:latest
