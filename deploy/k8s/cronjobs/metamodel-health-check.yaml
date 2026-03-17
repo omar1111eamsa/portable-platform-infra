@@ -25,9 +25,12 @@ spec:
                 - |
                   set -eu
 
+                  POD="$(kubectl -n myapp get pod -l app=metamodel-orchestration -o jsonpath='{.items[0].metadata.name}')"
+                  [ -n "${POD}" ] || { echo "metamodel-orchestration pod not found"; exit 1; }
+
                   HEALTH=""
                   for i in 1 2 3 4 5; do
-                    if HEALTH="$(kubectl get --raw '/api/v1/namespaces/myapp/services/http:metamodel-orchestration:8080/proxy/api/v2/monitor/health' 2>/dev/null)"; then
+                    if HEALTH="$(kubectl -n myapp exec "${POD}" -- python -c \"import urllib.request;print(urllib.request.urlopen('http://127.0.0.1:8080/api/v2/monitor/health', timeout=10).read().decode())\" 2>/dev/null)"; then
                       break
                     fi
                     echo "health endpoint attempt ${i} failed, retrying..."
