@@ -30,7 +30,7 @@ spec:
 
                   HEALTH=""
                   for i in 1 2 3 4 5; do
-                    if HEALTH="$(kubectl -n myapp exec "${POD}" -- python -c \"import urllib.request;print(urllib.request.urlopen('http://127.0.0.1:8080/api/v2/monitor/health', timeout=10).read().decode())\" 2>/dev/null)"; then
+                    if HEALTH="$(kubectl -n myapp exec "${POD}" -- python -c 'import urllib.request;print(urllib.request.urlopen("http://127.0.0.1:8080/api/v2/monitor/health", timeout=10).read().decode())' 2>/dev/null)"; then
                       break
                     fi
                     echo "health endpoint attempt ${i} failed, retrying..."
