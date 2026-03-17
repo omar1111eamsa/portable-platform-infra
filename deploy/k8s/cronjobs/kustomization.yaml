@@ -6,3 +6,5 @@ resources:
   - clean-disk-frontend.yaml
   - clean-evicted-pods-rbac.yaml
   - clean-evicted-pods.yaml
+  - metamodel-health-check-rbac.yaml
+  - metamodel-health-check.yaml

@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: metamodel-health-check
+  namespace: myapp
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          serviceAccountName: metamodel-health-check
+          restartPolicy: Never
+          containers:
+            - name: check
+              image: bitnami/kubectl:1.34.1
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  set -eu
+
+                  HEALTH="$(kubectl get --raw '/api/v1/namespaces/myapp/services/http:metamodel-orchestration:8080/proxy/api/v2/monitor/health')"
+                  echo "health=${HEALTH}"
+
+                  echo "${HEALTH}" | grep -q '"metadatabase":{"status":"healthy"}'
+                  echo "${HEALTH}" | grep -q '"scheduler":{"status":"healthy"'
+                  echo "${HEALTH}" | grep -q '"triggerer":{"status":"healthy"'
+                  echo "${HEALTH}" | grep -q '"dag_processor":{"status":"healthy"'
+
+                  for d in metamodel-orchestration metamodel-scheduler metamodel-dag-processor metamodel-worker metamodel-triggerer; do
+                    desired="$(kubectl -n myapp get deploy "${d}" -o jsonpath='{.spec.replicas}')"
+                    ready="$(kubectl -n myapp get deploy "${d}" -o jsonpath='{.status.readyReplicas}')"
+                    desired="${desired:-1}"
+                    ready="${ready:-0}"
+                    echo "${d}: ready=${ready} desired=${desired}"
+                    [ "${ready}" -ge "${desired}" ] || { echo "deployment ${d} not ready"; exit 1; }
+                  done
