@@ -26,24 +26,24 @@ spec:
                 - /bin/sh
                 - -ec
                 - |
-              set -eu
+                  set -eu
 
-              POD="$(kubectl -n myapp get pods -l app=metamodel-orchestration --field-selector=status.phase=Running -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{range .status.conditions[*]}{.type}={.status}{";"}{end}{"\n"}{end}' | awk -F'\t' '$2 ~ /Ready=True/ {print $1; exit}')"
-              if [ -z "${POD}" ]; then
-                POD="$(kubectl -n myapp get pod -l app=metamodel-orchestration --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}')"
-              fi
-              [ -n "${POD}" ] || { echo "metamodel-orchestration pod not found"; exit 1; }
-              kubectl -n myapp wait --for=condition=Ready --timeout=60s "pod/${POD}" >/dev/null
+                  POD="$(kubectl -n myapp get pods -l app=metamodel-orchestration --field-selector=status.phase=Running -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{range .status.conditions[*]}{.type}={.status}{";"}{end}{"\n"}{end}' | awk -F'\t' '$2 ~ /Ready=True/ {print $1; exit}')"
+                  if [ -z "${POD}" ]; then
+                    POD="$(kubectl -n myapp get pod -l app=metamodel-orchestration --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}')"
+                  fi
+                  [ -n "${POD}" ] || { echo "metamodel-orchestration pod not found"; exit 1; }
+                  kubectl -n myapp wait --for=condition=Ready --timeout=60s "pod/${POD}" >/dev/null
 
-              HEALTH=""
-              for i in 1 2 3 4 5 6 7 8 9 10; do
-                if OUT="$(kubectl -n myapp exec "${POD}" -- python -c 'import urllib.request;print(urllib.request.urlopen("http://127.0.0.1:8080/api/v2/monitor/health", timeout=10).read().decode())' 2>&1)"; then
-                  HEALTH="${OUT}"
-                  break
-                fi
-                echo "health endpoint attempt ${i} failed: ${OUT}"
-                sleep 10
-              done
+                  HEALTH=""
+                  for i in 1 2 3 4 5 6 7 8 9 10; do
+                    if OUT="$(kubectl -n myapp exec "${POD}" -- python -c 'import urllib.request;print(urllib.request.urlopen("http://127.0.0.1:8080/api/v2/monitor/health", timeout=10).read().decode())' 2>&1)"; then
+                      HEALTH="${OUT}"
+                      break
+                    fi
+                    echo "health endpoint attempt ${i} failed: ${OUT}"
+                    sleep 10
+                  done
                   [ -n "${HEALTH}" ] || { echo "health endpoint unavailable after retries"; exit 1; }
                   echo "health=${HEALTH}"
 
