@@ -9,7 +9,7 @@ Compatible avec réinitialisation des VMs : ordre correct, PVC postgres, Ingress
 k8s/
 ├── base/              # Namespace myapp
 ├── infra/             # PostgreSQL, Redis, Consul, RabbitMQ
-│   ├── postgres/      # secret example, PVC, Deployment, Service
+│   ├── postgres/      # PVC, Deployment, Service, init job
 │   ├── redis/         # Deployment, Service
 │   ├── consul/        # Deployment, Service
 │   ├── rabbitmq/      # Deployment, Service
