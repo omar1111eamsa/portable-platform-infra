@@ -25,7 +25,15 @@ spec:
                 - |
                   set -eu
 
-                  HEALTH="$(kubectl get --raw '/api/v1/namespaces/myapp/services/http:metamodel-orchestration:8080/proxy/api/v2/monitor/health')"
+                  HEALTH=""
+                  for i in 1 2 3 4 5; do
+                    if HEALTH="$(kubectl get --raw '/api/v1/namespaces/myapp/services/http:metamodel-orchestration:8080/proxy/api/v2/monitor/health' 2>/dev/null)"; then
+                      break
+                    fi
+                    echo "health endpoint attempt ${i} failed, retrying..."
+                    sleep 5
+                  done
+                  [ -n "${HEALTH}" ] || { echo "health endpoint unavailable after retries"; exit 1; }
                   echo "health=${HEALTH}"
 
                   echo "${HEALTH}" | grep -q '"metadatabase":{"status":"healthy"}'
