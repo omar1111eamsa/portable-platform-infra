@@ -38,7 +38,6 @@ resources:
   - pgadmin/deployment.yaml
   - pgadmin/service.yaml
   - pgadmin/middleware-forward-prefix.yaml
-  - pgadmin/middleware-strip-prefix.yaml
   - pgadmin/ingress.yaml
   - predictions-intake/deployment.yaml
   - predictions-intake/service.yaml
