@@ -12,6 +12,7 @@ spec:
           - admin-frontend
           - frontend
           - metamodel-orchestration
+          - pgadmin
   policyTypes:
     - Ingress
   ingress:
@@ -29,3 +30,5 @@ spec:
           port: 8888
         - protocol: TCP
           port: 3000
+        - protocol: TCP
+          port: 8080
