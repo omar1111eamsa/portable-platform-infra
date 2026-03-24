@@ -64,7 +64,7 @@ spec:
                   name: github-token
                   key: token
             - name: METAMODEL_SCORING_REF
-              value: "800e492b43fcea3dec43806a8ce405cb64528efe"
+              value: "957d2486fc14bd4c7cd82d0a886f3d5d028b326b"
             - name: METAMODEL_PORTFOLIO_REF
               value: "21382f2427c869370ca9bea3c5106a7d93607fd2"
           command:
