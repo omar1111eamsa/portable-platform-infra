@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: metamodel-orchestration-ingress
+  namespace: myapp
+  labels:
+    app: metamodel-orchestration
+  annotations:
+    traefik.ingress.kubernetes.io/router.priority: "120"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: "airflow.dev.example.com"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: metamodel-orchestration
+                port:
+                  number: 8080

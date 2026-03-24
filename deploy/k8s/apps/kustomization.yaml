@@ -31,6 +31,7 @@ resources:
   - metamodel-orchestration/worker-deployment.yaml
   - metamodel-orchestration/triggerer-deployment.yaml
   - metamodel-orchestration/service.yaml
+  - metamodel-orchestration/ingress.yaml
   - payment-service/deployment.yaml
   - payment-service/service.yaml
   - predictions-intake/deployment.yaml

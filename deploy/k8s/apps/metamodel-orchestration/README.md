@@ -13,6 +13,16 @@ Metadata DB is PostgreSQL (`AIRFLOW__DATABASE__SQL_ALCHEMY_CONN` from secret `me
 
 The code modules are mounted from PVC `metamodel-modules-pvc` at `/opt/airflow/modules`.
 
+## Temporary UI exposure
+
+Airflow UI is exposed temporarily through Traefik on:
+
+```text
+http://airflow.dev.example.com
+```
+
+This assumes DNS for `airflow.dev.example.com` points to the same ingress entrypoint as the rest of the dev environment.
+
 ## Operational checks
 
 ```bash
