@@ -91,6 +91,12 @@ spec:
               value: "true"
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_SERVICE_NAME
               value: prediction-intake-service
+            - name: SPRING_CLOUD_CONSUL_DISCOVERY_PREFER_IP_ADDRESS
+              value: "true"
+            - name: SPRING_CLOUD_CONSUL_DISCOVERY_IP_ADDRESS
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
           ports:
             - containerPort: 8082
           resources:
