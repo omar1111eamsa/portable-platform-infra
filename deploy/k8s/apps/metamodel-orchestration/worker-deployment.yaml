@@ -42,7 +42,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: metamodel-worker
-          image: ghcr.io/myapp/metamodel-orschestation-airflow:abbb4ae
+          image: ghcr.io/myapp/metamodel-orschestation-airflow:debef22
           imagePullPolicy: Always
           command: ["python", "-m", "airflow", "celery", "worker"]
           env:
