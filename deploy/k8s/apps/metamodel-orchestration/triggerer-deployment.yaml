@@ -90,23 +90,23 @@ spec:
               cpu: "300m"
           startupProbe:
             exec:
-              command: ["python", "-c", "import pathlib,sys; s=pathlib.Path('/proc/1/cmdline').read_text(errors='ignore'); sys.exit(0 if 'triggerer' in s else 1)"]
-            initialDelaySeconds: 30
+              command: ["sh", "-c", "tr '\\000' ' ' </proc/1/cmdline | grep -q triggerer"]
+            initialDelaySeconds: 45
             periodSeconds: 10
-            timeoutSeconds: 5
+            timeoutSeconds: 10
             failureThreshold: 30
           livenessProbe:
             exec:
-              command: ["python", "-c", "import pathlib,sys; s=pathlib.Path('/proc/1/cmdline').read_text(errors='ignore'); sys.exit(0 if 'triggerer' in s else 1)"]
-            initialDelaySeconds: 60
+              command: ["sh", "-c", "tr '\\000' ' ' </proc/1/cmdline | grep -q triggerer"]
+            initialDelaySeconds: 90
             periodSeconds: 20
-            timeoutSeconds: 5
+            timeoutSeconds: 10
           readinessProbe:
             exec:
-              command: ["python", "-c", "import pathlib,sys; s=pathlib.Path('/proc/1/cmdline').read_text(errors='ignore'); sys.exit(0 if 'triggerer' in s else 1)"]
-            initialDelaySeconds: 30
+              command: ["sh", "-c", "tr '\\000' ' ' </proc/1/cmdline | grep -q triggerer"]
+            initialDelaySeconds: 45
             periodSeconds: 10
-            timeoutSeconds: 5
+            timeoutSeconds: 10
       volumes:
         - name: modules
           persistentVolumeClaim:
