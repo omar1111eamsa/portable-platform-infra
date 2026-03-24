@@ -11,6 +11,7 @@ spec:
           - api-gateway
           - admin-frontend
           - frontend
+          - metamodel-orchestration
   policyTypes:
     - Ingress
   ingress:
