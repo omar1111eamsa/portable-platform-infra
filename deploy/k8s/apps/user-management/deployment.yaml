@@ -110,6 +110,11 @@ spec:
                 secretKeyRef:
                   name: google-oauth-credentials
                   key: FRONTEND_URL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: auth-credentials
+                  key: JWT_SECRET
             - name: SPRING_MAIL_USERNAME
               valueFrom:
                 secretKeyRef:
