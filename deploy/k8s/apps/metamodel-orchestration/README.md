@@ -38,7 +38,7 @@ Health check from API pod:
 
 ```bash
 kubectl -n myapp exec deploy/metamodel-orchestration -- \
-  python - <<'PY'
+  python3 - <<'PY'
 import urllib.request
 u="http://127.0.0.1:8080/api/v2/monitor/health"
 with urllib.request.urlopen(u, timeout=10) as r:
@@ -47,16 +47,37 @@ with urllib.request.urlopen(u, timeout=10) as r:
 PY
 ```
 
-Expected: `metadatabase=healthy` and `scheduler=healthy`.
+Expected:
+- `metadatabase=healthy`
+- `scheduler=healthy`
+- `triggerer=healthy`
+- `dag_processor=healthy`
 
 ## DAG test run
+
+Current DAG split:
+- `metapipeline_dag`: Stage A, every 5 minutes
+- `stage_b_dag`: Stage B + reward, every hour
 
 ```bash
 kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags list
 kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags unpause metapipeline_dag
+kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags unpause stage_b_dag
 kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags trigger metapipeline_dag
 kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags list-runs metapipeline_dag
+kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags list-runs stage_b_dag
 ```
+
+## Current dev validation
+
+The current dev deployment has been revalidated for Stage A end to end:
+- new prediction detected
+- scoring succeeded
+- portfolio succeeded
+- trade signal created
+- execution verification succeeded
+
+Stage B is deployed separately and has successful runs, but should be validated as its own path.
 
 ## Disk pressure recovery (backend2)
 
