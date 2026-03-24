@@ -6,6 +6,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.priority: "300"
+    traefik.ingress.kubernetes.io/router.middlewares: myapp-pgadmin-strip-prefix@kubernetescrd
 spec:
   rules:
     - host: dev.example.com

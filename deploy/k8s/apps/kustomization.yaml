@@ -37,6 +37,7 @@ resources:
   # pgadmin-credentials: créer manuellement (kubectl create secret generic pgadmin-credentials -n myapp --from-literal=PGADMIN_DEFAULT_EMAIL=... --from-literal=PGADMIN_DEFAULT_PASSWORD=...)
   - pgadmin/deployment.yaml
   - pgadmin/service.yaml
+  - pgadmin/middleware-strip-prefix.yaml
   - pgadmin/ingress.yaml
   - predictions-intake/deployment.yaml
   - predictions-intake/service.yaml
