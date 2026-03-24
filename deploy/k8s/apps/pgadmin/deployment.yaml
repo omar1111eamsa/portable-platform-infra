@@ -43,12 +43,24 @@ spec:
                   key: PGADMIN_DEFAULT_PASSWORD
             - name: PGADMIN_LISTEN_PORT
               value: "8080"
+            - name: SCRIPT_NAME
+              value: /pgadmin
             - name: PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION
               value: "True"
             - name: PGADMIN_CONFIG_CONSOLE_LOG_LEVEL
               value: "20"
             - name: PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED
               value: "False"
+            - name: PGADMIN_CONFIG_PROXY_X_FOR_COUNT
+              value: "1"
+            - name: PGADMIN_CONFIG_PROXY_X_PROTO_COUNT
+              value: "1"
+            - name: PGADMIN_CONFIG_PROXY_X_HOST_COUNT
+              value: "1"
+            - name: PGADMIN_CONFIG_PROXY_X_PORT_COUNT
+              value: "1"
+            - name: PGADMIN_CONFIG_PROXY_X_PREFIX_COUNT
+              value: "1"
           ports:
             - containerPort: 8080
               name: http

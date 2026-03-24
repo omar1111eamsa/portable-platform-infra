@@ -7,10 +7,10 @@ metadata:
     kubernetes.io/ingress.class: traefik
 spec:
   rules:
-    - host: pgadmin.dev.example.com
+    - host: dev.example.com
       http:
         paths:
-          - path: /
+          - path: /pgadmin
             pathType: Prefix
             backend:
               service:
