@@ -61,9 +61,9 @@ spec:
               value: "redis://redis:6379/0"
             - name: AIRFLOW__CORE__EXECUTION_API_SERVER_URL
               value: "http://metamodel-orchestration:8080/execution/"
-            - name: AIRFLOW__CORE__EXECUTION_API_TIMEOUT
+            - name: AIRFLOW__WORKERS__EXECUTION_API_TIMEOUT
               value: "60"
-            - name: AIRFLOW__CORE__EXECUTION_API_RETRIES
+            - name: AIRFLOW__WORKERS__EXECUTION_API_RETRIES
               value: "10"
             - name: AIRFLOW__API_AUTH__JWT_SECRET
               valueFrom:
