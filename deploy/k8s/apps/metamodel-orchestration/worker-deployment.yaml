@@ -49,7 +49,7 @@ spec:
             - name: METAMODEL_SCORING_REF
               value: "957d2486fc14bd4c7cd82d0a886f3d5d028b326b"
             - name: METAMODEL_PORTFOLIO_REF
-              value: "21382f2427c869370ca9bea3c5106a7d93607fd2"
+              value: "917dbbe1521e10f1248b5da1eb3ed5f133b5f28d"
             - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
               valueFrom:
                 secretKeyRef:
