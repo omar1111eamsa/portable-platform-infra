@@ -148,16 +148,16 @@ spec:
             - containerPort: 8080
           resources:
             requests:
-              memory: "384Mi"
-              cpu: "150m"
+              memory: "512Mi"
+              cpu: "250m"
             limits:
-              memory: "768Mi"
-              cpu: "500m"
+              memory: "1Gi"
+              cpu: "1"
           startupProbe:
             httpGet:
               path: /api/v2/monitor/health
               port: 8080
-            initialDelaySeconds: 90
+            initialDelaySeconds: 120
             periodSeconds: 10
             timeoutSeconds: 10
             failureThreshold: 60
@@ -165,14 +165,14 @@ spec:
             httpGet:
               path: /api/v2/monitor/health
               port: 8080
-            initialDelaySeconds: 210
+            initialDelaySeconds: 240
             periodSeconds: 20
             timeoutSeconds: 10
           readinessProbe:
             httpGet:
               path: /api/v2/monitor/health
               port: 8080
-            initialDelaySeconds: 120
+            initialDelaySeconds: 150
             periodSeconds: 10
             timeoutSeconds: 10
       volumes:
