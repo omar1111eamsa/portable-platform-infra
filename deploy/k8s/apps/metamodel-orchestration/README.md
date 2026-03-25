@@ -23,6 +23,8 @@ http://airflow.dev.example.com
 
 This assumes DNS for `airflow.dev.example.com` points to the same ingress entrypoint as the rest of the dev environment.
 
+The current auth mode is Airflow SimpleAuth for dev. The password is runtime-generated inside the pod and can change after pod restarts; do not document it as a fixed credential in Git.
+
 ## Operational checks
 
 ```bash
@@ -53,6 +55,8 @@ Expected:
 - `triggerer=healthy`
 - `dag_processor=healthy`
 
+Automatic monitoring is also deployed through `deploy/k8s/cronjobs/metamodel-health-check.yaml`. It checks the same endpoint through the internal service URL instead of `kubectl exec`.
+
 ## DAG test run
 
 Current DAG split:
@@ -68,6 +72,10 @@ kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags list-runs m
 kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags list-runs stage_b_dag
 ```
 
+Timing note:
+- Stage B respects the `1h` horizon logic, but runs in batch mode on the next hourly `stage_b_dag` schedule.
+- A prediction inserted manually can be consumed by a waiting scheduled Stage A run before a manual run reaches `task_score`.
+
 ## Current dev validation
 
 The current dev deployment has been revalidated for Stage A end to end:
@@ -77,7 +85,7 @@ The current dev deployment has been revalidated for Stage A end to end:
 - trade signal created
 - execution verification succeeded
 
-Stage B is deployed separately and has successful runs, but should be validated as its own path.
+Stage B is deployed separately and has successful runs, but should be validated as its own path after the 1-hour horizon has elapsed.
 
 ## Disk pressure recovery (backend2)
 

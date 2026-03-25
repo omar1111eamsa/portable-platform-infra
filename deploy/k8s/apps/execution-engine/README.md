@@ -18,6 +18,12 @@ CronJob/batch would introduce latency and miss realtime requirements.
 - Routing key: `trade_signal.created`
 - Queue consumed by execution-engine: `execution.trade_signals`
 
+Payload compatibility currently handled by the consumer:
+- modern shape with top-level `signal_id`
+- legacy shape with `orders[0].orderId`
+
+This keeps the live metamodel publisher and execution-engine aligned during the current dev phase.
+
 ## Check logs/status
 
 `kubectl -n myapp get deploy execution-engine`

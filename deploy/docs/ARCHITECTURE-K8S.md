@@ -13,6 +13,8 @@ Ce document décrit l’architecture globale du cluster et le rôle de chaque fi
 - **Accès externe** :
   - `https://dev.example.com` (frontend + API)
   - `https://dashboard.example.com` (admin-frontend)
+  - `http://airflow.dev.example.com` (exposition Airflow temporaire pour dev)
+  - `https://dev.example.com/pgadmin` (pgAdmin derrière Traefik, usage dev)
 
 ### Flux réseau (simplifié)
 
@@ -98,7 +100,7 @@ Namespace : `myapp`. En production, le routage externe passe par `apps/ingress-i
 
 | Fichier | Rôle |
 |---------|------|
-| **api-gateway/deployment.yaml** | 1 replica, nodeSelector frontend-vm, image GHCR, port 8888, env (JWT, CORS, etc.), probes HTTP /health. |
+| **api-gateway/deployment.yaml** | 1 replica, nodeSelector frontend-vm, image GHCR, port 8888, env (JWT, CORS, etc.), probes HTTP /health. Lit `JWT_SECRET` depuis le secret partagé `auth-credentials`. |
 | **api-gateway/service.yaml** | ClusterIP 8888. |
 | **api-gateway/ingress.yaml** | Ingress Traefik pour `api.localhost` → api-gateway:8888. |
 
@@ -155,7 +157,7 @@ Namespace : `myapp`. En production, le routage externe passe par `apps/ingress-i
 
 | Fichier | Rôle |
 |---------|------|
-| **predictions-intake/deployment.yaml** | 1 replica, nodeSelector frontend-vm, Consul `prediction-intake-service`. |
+| **predictions-intake/deployment.yaml** | 1 replica, nodeSelector frontend-vm, Consul `prediction-intake-service`, enregistrement forcé sur `status.podIP` (`prefer-ip-address=true`) pour éviter les `UnknownHostException` côté gateway. |
 | **predictions-intake/service.yaml** | ClusterIP 8082. |
 | **predictions-intake/ingress.yaml** | Ingress `predictions.localhost`. |
 
@@ -163,7 +165,7 @@ Namespace : `myapp`. En production, le routage externe passe par `apps/ingress-i
 
 | Fichier | Rôle |
 |---------|------|
-| **user-management/deployment.yaml** | 1 replica, nodeSelector **frontend-vm**, Consul `user-service`, env depuis secret. |
+| **user-management/deployment.yaml** | 1 replica, nodeSelector **frontend-vm**, Consul `user-service`, env depuis secret. Lit `JWT_SECRET` depuis le secret partagé `auth-credentials` comme l'API Gateway. |
 | **user-management/service.yaml** | ClusterIP 8081. |
 | **user-management/user-service.yaml** | Service alias `user-service` (ClusterIP 8081) pointant sur les mêmes pods. |
 | **user-management/ingress.yaml** | Ingress `users.localhost`. |
@@ -185,8 +187,17 @@ Namespace : `myapp`. En production, le routage externe passe par `apps/ingress-i
 | Fichier | Rôle |
 |---------|------|
 | **execution-engine/configmap.yaml** | Configuration optionnelle du moteur d’exécution. |
-| **execution-engine/deployment.yaml** | **Deployment** `execution-engine` sur `backend2`, consumer RabbitMQ realtime (`execution.events` / `trade_signal.created`) qui alimente `filled_trades`. |
+| **execution-engine/deployment.yaml** | **Deployment** `execution-engine` sur `backend2`, consumer RabbitMQ realtime (`execution.events` / `trade_signal.created`) qui alimente `filled_trades`. Le consumer accepte maintenant le payload legacy `orders[].orderId` et le format moderne `signal_id`. |
 | **execution-engine/secret.yaml.example** | Exemple de secret broker credentials (Binance). |
+
+#### pgAdmin
+
+| Fichier | Rôle |
+|---------|------|
+| **pgadmin/deployment.yaml** | 1 replica, nodeSelector frontend-vm, interface d'administration PostgreSQL pour usage dev. |
+| **pgadmin/service.yaml** | ClusterIP 80. |
+| **pgadmin/ingress.yaml** | Exposition via `https://dev.example.com/pgadmin` avec `SCRIPT_NAME=/pgadmin`. |
+| **pgadmin/middleware-strip-prefix.yaml** | Middleware Traefik présent dans le repo mais non utilisé sur le chemin final, afin de conserver le préfixe `/pgadmin`. |
 
 #### Ingress (domaines + IP)
 
@@ -208,6 +219,7 @@ Namespace : `myapp`. Maintenance disque et nettoyage des pods.
 | **clean-disk-frontend.yaml** | CronJob `15,45 * * * *` : même chose pour **frontend-vm**. |
 | **clean-evicted-pods-rbac.yaml** | ServiceAccount + Role + RoleBinding pour le CronJob qui supprime les pods. |
 | **clean-evicted-pods.yaml** | CronJob `*/30 * * * *` : utilise l’image `bitnami/kubectl`, supprime les pods en `Failed` et `Succeeded` dans `myapp` (évite l’accumulation de pods evicted). |
+| **metamodel-health-check.yaml** | CronJob `*/5 * * * *` : vérifie l'endpoint `http://metamodel-orchestration.myapp.svc.cluster.local:8080/api/v2/monitor/health` directement via HTTP, sans dépendre du control-plane Kubernetes. |
 
 ---
 
@@ -235,7 +247,7 @@ Prérequis côté ArgoCD : `server.insecure`, `server.basehref=/argocd`, `server
 | **Service** | ClusterIP pour chaque deployment. |
 | **Ingress** | Traefik, ingress principaux `dev.example.com` et `dashboard.example.com` via `ingress-ip.yaml` (+ ingress locaux `*.localhost` pour dev local). |
 | **IngressRoute** | Traefik CRD : chatbot → api-gateway. |
-| **CronJob** | Nettoyage disque (backend/frontend), suppression pods evicted. |
+| **CronJob** | Nettoyage disque (backend/frontend), suppression pods evicted, health-check metamodel. |
 | **ServiceAccount / Role / RoleBinding** | Pour le CronJob clean-evicted-pods. |
 
 ---

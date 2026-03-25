@@ -9,6 +9,8 @@
 | [FLOW-END-TO-END.md](FLOW-END-TO-END.md) | Flux cible complet frontend → API → metamodel → execution |
 | [DB-ARCHITECTURE.md](DB-ARCHITECTURE.md) | Architecture Postgres et services consommateurs |
 | [METAMODEL-FONCTIONNEMENT.md](METAMODEL-FONCTIONNEMENT.md) | Détail du fonctionnement metamodel (Airflow, DAG, DB, modules, exploitation) |
+| [k8s/apps/metamodel-orchestration/README.md](../k8s/apps/metamodel-orchestration/README.md) | Accès Airflow dev, checks runtime, DAGs, health |
+| [k8s/apps/execution-engine/README.md](../k8s/apps/execution-engine/README.md) | Consumer RabbitMQ temps réel et payload attendu |
 | [TESTERS-GUIDE.md](../TESTERS-GUIDE.md) | Guide testeurs : architecture, APIs, cURL, pentest |
 | [k8s/README.md](../k8s/README.md) | Kubernetes : structure, kustomize |
 | [k8s/DEPLOYMENT.md](../k8s/DEPLOYMENT.md) | Procédure de déploiement |
