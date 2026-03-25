@@ -6,7 +6,7 @@ metadata:
   labels:
     app: predictions-intake
 spec:
-  replicas: 1
+  replicas: 0
   revisionHistoryLimit: 2
   strategy:
     type: RollingUpdate
