@@ -80,7 +80,7 @@ Namespace : `myapp`. Tous les services sont en ClusterIP.
 
 | Fichier | Rôle |
 |---------|------|
-| **consul/deployment.yaml** | 1 replica, nodeSelector backend-vm, bootstrap-expect=1. Découverte de services pour l’API Gateway. |
+| **consul/deployment.yaml** | 1 replica, nodeSelector backend-vm, bootstrap-expect=1. Découverte de services pour l’API Gateway. En single-node, le déploiement ne doit pas utiliser `retry-join` vers son propre ClusterIP. |
 | **consul/service.yaml** | ClusterIP 8500 (HTTP), 8600 (DNS). |
 
 #### RabbitMQ
@@ -141,7 +141,7 @@ Namespace : `myapp`. En production, le routage externe passe par `apps/ingress-i
 
 | Fichier | Rôle |
 |---------|------|
-| **kpi-dashboard/deployment.yaml** | 1 replica, nodeSelector frontend-vm, image backend-kpi-dashboard-notifications, Consul `kpi-service`. |
+| **kpi-dashboard/deployment.yaml** | 1 replica, nodeSelector frontend-vm, image backend-kpi-dashboard-notifications, Consul `kpi-service`. Le service runtime embarque désormais Actuator + Consul Discovery pour s’enregistrer proprement. |
 | **kpi-dashboard/service.yaml** | ClusterIP 8084. |
 | **kpi-dashboard/ingress.yaml** | Ingress `kpi.localhost`. |
 
@@ -165,7 +165,7 @@ Namespace : `myapp`. En production, le routage externe passe par `apps/ingress-i
 
 | Fichier | Rôle |
 |---------|------|
-| **user-management/deployment.yaml** | 1 replica, nodeSelector **frontend-vm**, Consul `user-service`, env depuis secret. Lit `JWT_SECRET` depuis le secret partagé `auth-credentials` comme l'API Gateway. |
+| **user-management/deployment.yaml** | 1 replica, nodeSelector **frontend-vm**, Consul `user-service`, enregistrement sur IP de pod, env depuis secret. Lit `JWT_SECRET` depuis le secret partagé `auth-credentials` comme l'API Gateway. |
 | **user-management/service.yaml** | ClusterIP 8081. |
 | **user-management/user-service.yaml** | Service alias `user-service` (ClusterIP 8081) pointant sur les mêmes pods. |
 | **user-management/ingress.yaml** | Ingress `users.localhost`. |

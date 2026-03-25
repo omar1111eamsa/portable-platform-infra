@@ -13,6 +13,12 @@ Metadata DB is PostgreSQL (`AIRFLOW__DATABASE__SQL_ALCHEMY_CONN` from secret `me
 
 The code modules are mounted from PVC `metamodel-modules-pvc` at `/opt/airflow/modules`.
 
+Mounted source modules in the running Airflow pods:
+- `metamodel-scoring-engine-new` -> `/opt/airflow/modules/cq-scoring`
+- `Metamodel-portfolio-builder` -> `/opt/airflow/modules/cq-portfolio`
+
+These repos are cloned by the `modules-sync` init container into the shared PVC, then reused by the API server, scheduler, worker, dag-processor, and triggerer through `PYTHONPATH`.
+
 ## Temporary UI exposure
 
 Airflow UI is exposed temporarily through Traefik on:
