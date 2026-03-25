@@ -6,7 +6,7 @@ metadata:
   labels:
     app: admin-frontend
 spec:
-  replicas: 1
+  replicas: 0
   revisionHistoryLimit: 2
   selector:
     matchLabels:
@@ -56,4 +56,3 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 101
-
