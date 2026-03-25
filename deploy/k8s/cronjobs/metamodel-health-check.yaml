@@ -16,13 +16,10 @@ spec:
       ttlSecondsAfterFinished: 600
       template:
         spec:
-          serviceAccountName: metamodel-health-check
           restartPolicy: Never
-          nodeSelector:
-            kubernetes.io/hostname: backend-vm
           containers:
             - name: check
-              image: bitnami/kubectl:latest
+              image: python:3.12-alpine
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/sh
@@ -30,31 +27,30 @@ spec:
                 - |
                   set -eu
 
-                  POD=""
-                  for i in 1 2 3 4 5 6 7 8 9 10; do
-                    POD="$(kubectl -n myapp get pods -l app=metamodel-orchestration --field-selector=status.phase=Running -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{range .status.conditions[*]}{.type}={.status}{";"}{end}{"\n"}{end}' 2>/dev/null | awk -F'\t' '$2 ~ /Ready=True/ {print $1; exit}' || true)"
-                    if [ -z "${POD}" ]; then
-                      POD="$(kubectl -n myapp get pod -l app=metamodel-orchestration --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
-                    fi
-                    [ -n "${POD}" ] && break
-                    echo "metamodel-orchestration pod lookup attempt ${i} failed, retrying..."
-                    sleep 5
-                  done
-                  [ -n "${POD}" ] || { echo "metamodel-orchestration pod not found"; exit 1; }
+                  python - <<'PY'
+                  import json
+                  import time
+                  import urllib.request
 
-                  HEALTH=""
-                  for i in 1 2 3 4 5 6 7 8 9 10; do
-                    if OUT="$(kubectl -n myapp exec "${POD}" -- python -c 'import urllib.request;print(urllib.request.urlopen("http://127.0.0.1:8080/api/v2/monitor/health", timeout=10).read().decode())' 2>&1)"; then
-                      HEALTH="${OUT}"
-                      break
-                    fi
-                    echo "health endpoint attempt ${i} failed: ${OUT}"
-                    sleep 10
-                  done
-                  [ -n "${HEALTH}" ] || { echo "health endpoint unavailable after retries"; exit 1; }
-                  echo "health=${HEALTH}"
+                  url = "http://metamodel-orchestration.myapp.svc.cluster.local:8080/api/v2/monitor/health"
+                  health = None
 
-                  echo "${HEALTH}" | grep -q '"metadatabase":{"status":"healthy"}'
-                  echo "${HEALTH}" | grep -q '"scheduler":{"status":"healthy"'
-                  echo "${HEALTH}" | grep -q '"triggerer":{"status":"healthy"'
-                  echo "${HEALTH}" | grep -q '"dag_processor":{"status":"healthy"'
+                  for attempt in range(1, 11):
+                      try:
+                          with urllib.request.urlopen(url, timeout=10) as response:
+                              health = json.loads(response.read().decode())
+                              break
+                      except Exception as exc:
+                          print(f"health endpoint attempt {attempt} failed: {exc}")
+                          time.sleep(10)
+
+                  if health is None:
+                      raise SystemExit("health endpoint unavailable after retries")
+
+                  print(f"health={json.dumps(health, separators=(',', ':'))}")
+
+                  required = ("metadatabase", "scheduler", "triggerer", "dag_processor")
+                  bad = [name for name in required if health.get(name, {}).get("status") != "healthy"]
+                  if bad:
+                      raise SystemExit(f"unhealthy components: {', '.join(bad)}")
+                  PY
