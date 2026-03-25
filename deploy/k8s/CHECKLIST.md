@@ -1,6 +1,12 @@
-# Checklist — Configuration manquante (DevOps & Développeurs)
+# Checklist — Configuration & backlog restant
 
-> À utiliser pour le suivi des éléments à configurer avant mise en production.
+> Ce fichier n'est pas la source de vérité runtime. Il sert de backlog pour les points encore à durcir avant une mise en production propre.
+>
+> Pour l'état réellement déployé, voir:
+> - `deploy/docs/ARCHITECTURE-K8S.md`
+> - `deploy/docs/API-GATEWAY-BACKENDS.md`
+> - `deploy/docs/FLOW-END-TO-END.md`
+> - `deploy/docs/METAMODEL-FONCTIONNEMENT.md`
 
 ---
 
@@ -10,7 +16,7 @@
 
 | Action | Détail | Statut |
 |--------|--------|--------|
-| **GH_PAT** | PAT GitHub (scopes `repo` + `read:packages`) pour que les CI puissent pousser dans portable-platform-infra. À ajouter dans chaque repo : Settings → Secrets → GH_PAT | ☐ |
+| **GH_PAT** | Vérifier que chaque repo CI qui met à jour `portable-platform-infra` a bien un secret valide (`repo` + `read:packages`). | ☐ |
 
 → Voir [ARGOCD-AUTODEPLOY.md](../argocd/ARGOCD-AUTODEPLOY.md) pour le détail.
 
@@ -35,17 +41,29 @@
 
 ---
 
-## 2. Côté Développeurs
+## 2. Etat déjà aligné en dev
+
+Ces points ont déjà été corrigés dans les manifests GitOps actuels:
+
+| Point | Etat |
+|-------|------|
+| `JWT_SECRET` partagé gateway + user-management | Aligné via `auth-credentials/JWT_SECRET` |
+| `predictions-intake` via gateway | Aligné via Consul avec enregistrement sur `status.podIP` |
+| `execution-engine` | Compatible avec le payload legacy `orders[0].orderId` et le format moderne `signal_id` |
+| `metamodel-health-check` | Vérification directe via service Airflow, sans `kubectl exec` |
+
+---
+
+## 3. Côté Développeurs / backlog restant
 
 ### user-management
 
 | Variable | Problème | Action | Statut |
 |----------|----------|--------|--------|
-| **JWT_SECRET** | Non configuré en k8s | Créer Secret, injecter via env | ☐ |
-| **GOOGLE_CLIENT_ID** | Non configuré | Créer app Google Cloud, ajouter au deployment | ☐ |
-| **GOOGLE_CLIENT_SECRET** | Non configuré | Idem | ☐ |
-| **GOOGLE_REDIRECT_URI** | Vérifier la valeur du secret en cluster | Doit être `https://dev.example.com/login/oauth2/code/google` et correspondre à Google Cloud Console. | ☐ |
-| **FRONTEND_URL** | Vérifier la valeur du secret en cluster | Doit être `https://dev.example.com` pour les redirections OAuth. | ☐ |
+| **GOOGLE_CLIENT_ID** | Vérifier la cohérence avec les clients Android/iOS/web réellement utilisés | Maintenir les client IDs Google hors code et alignés avec Google Cloud Console | ☐ |
+| **GOOGLE_CLIENT_SECRET** | Secret sensible | Rester uniquement côté backend/cluster | ☐ |
+| **GOOGLE_REDIRECT_URI** | Dépend du domaine exposé | Doit rester aligné sur `https://dev.example.com/login/oauth2/code/google` tant que ce domaine est utilisé | ☐ |
+| **FRONTEND_URL** | Dépend du domaine exposé | Doit rester aligné sur `https://dev.example.com` | ☐ |
 
 ### payment-service
 
@@ -60,7 +78,7 @@
 
 | Variable | Problème | Action | Statut |
 |----------|----------|--------|--------|
-| **JWT_SECRET** | Doit provenir d'un secret k8s partagé | Utiliser `auth-credentials/JWT_SECRET` (même valeur que user-management) | ☐ |
+| **JWT_SECRET** | Déjà aligné en dev | Conserver `auth-credentials/JWT_SECRET` comme source unique | ☑ |
 
 ### Base de données
 
@@ -78,7 +96,7 @@
 
 ---
 
-## 3. Priorité
+## 4. Priorité
 
 ### Critique (à faire pour que tout fonctionne)
 
@@ -89,13 +107,15 @@
 
 ### Important (sécurité)
 
-5. ☐ JWT_SECRET (api-gateway + user-management, même valeur)
+5. ☑ JWT_SECRET (api-gateway + user-management, même valeur)
 6. ☐ Postgres : mot de passe fort en prod
+7. ☐ Sauvegarde PostgreSQL formelle après la récupération WAL
+8. ☐ Stabiliser un accès admin durable (Airflow password fixe via secret ou autre méthode)
 
 ### Optionnel
 
-7. ☐ HTTPS (certificats + config Traefik)
-8. ☐ Domaine personnalisé au lieu de l’IP
+9. ☐ HTTPS (certificats + config Traefik)
+10. ☐ Domaine personnalisé au lieu de l’IP
 
 ---
 
