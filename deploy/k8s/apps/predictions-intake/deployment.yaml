@@ -77,6 +77,10 @@ spec:
                 secretKeyRef:
                   name: rabbitmq-credentials
                   key: RABBITMQ_ADDRESSES
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: PREDICTION_EVENTS_EXCHANGE
               value: "kpi.events"
             - name: PREDICTION_RECEIVED_ROUTING_KEY
@@ -97,6 +101,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
+            - name: SPRING_CLOUD_CONSUL_DISCOVERY_INSTANCE_ID
+              value: "$(POD_NAME)"
+            - name: SPRING_CLOUD_CONSUL_DISCOVERY_HEALTH_CHECK_PATH
+              value: /actuator/health
           ports:
             - containerPort: 8082
           resources:
