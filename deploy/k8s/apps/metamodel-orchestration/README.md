@@ -9,6 +9,8 @@ Airflow runs with 5 workloads on `backend2`:
 
 Executor mode is `CeleryExecutor` with Redis broker (`redis://redis:6379/0`).
 
+Task logs are configured for remote storage in an S3-compatible object store instead of being fetched from worker pod hostnames. The portable in-cluster target is MinIO, using `s3://airflow-logs/task-logs`.
+
 Metadata DB is PostgreSQL (`AIRFLOW__DATABASE__SQL_ALCHEMY_CONN` from secret `metamodel-db-credentials` key `AIRFLOW_CONN_POSTGRES_MYAPP`).
 
 The code modules are mounted from PVC `metamodel-modules-pvc` at `/opt/airflow/modules`.
@@ -30,6 +32,8 @@ http://airflow.dev.example.com
 This assumes DNS for `airflow.dev.example.com` points to the same ingress entrypoint as the rest of the dev environment.
 
 The current auth mode is Airflow SimpleAuth for dev. The admin password is mounted from the Kubernetes secret `metamodel-airflow-simple-auth` at `/opt/airflow/secrets/simple_auth_manager_passwords.json`, so it remains stable across pod restarts and image updates until the secret is rotated.
+
+Remote task logging uses the Airflow connection `aws_default`, injected from the Kubernetes secret `metamodel-airflow-s3-logging`.
 
 ## Operational checks
 

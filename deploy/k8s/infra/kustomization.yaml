@@ -9,6 +9,11 @@ resources:
   - postgres/deployment.yaml
   - postgres/service.yaml
   - postgres/init-databases-job.yaml
+  # minio-credentials: créer manuellement (voir DEPLOYMENT.md)
+  - minio/pvc.yaml
+  - minio/deployment.yaml
+  - minio/service.yaml
+  - minio/init-bucket-job.yaml
   - redis/deployment.yaml
   - redis/service.yaml
   - consul/deployment.yaml

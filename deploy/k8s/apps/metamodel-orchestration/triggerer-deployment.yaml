@@ -50,6 +50,19 @@ spec:
               value: "admin:admin"
             - name: AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_PASSWORDS_FILE
               value: "/opt/airflow/secrets/simple_auth_manager_passwords.json"
+            - name: AIRFLOW__LOGGING__REMOTE_LOGGING
+              value: "true"
+            - name: AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID
+              value: "aws_default"
+            - name: AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER
+              value: "s3://airflow-logs/task-logs"
+            - name: AIRFLOW__LOGGING__DELETE_LOCAL_LOGS
+              value: "true"
+            - name: AIRFLOW_CONN_AWS_DEFAULT
+              valueFrom:
+                secretKeyRef:
+                  name: metamodel-airflow-s3-logging
+                  key: AIRFLOW_CONN_AWS_DEFAULT
             - name: METAMODEL_SCORING_REF
               value: "957d2486fc14bd4c7cd82d0a886f3d5d028b326b"
             - name: METAMODEL_PORTFOLIO_REF

@@ -5,6 +5,7 @@ This folder contains only Kubernetes runtime manifests for shared infrastructure
 ## Included Infra
 
 - `postgres/`: PVC, Deployment, Service, init job for app databases
+- `minio/`: PVC, Deployment, Service, init job for Airflow remote log bucket
 - `redis/`: Deployment, Service
 - `consul/`: Deployment, Service
 - `rabbitmq/`: definitions configmap, Deployment, Service
@@ -22,6 +23,7 @@ Use the canonical commands in:
 Required secrets for infra/app boot:
 
 - `postgres-credentials`
+- `minio-credentials`
 - `rabbitmq-credentials`
 - `ghcr-secret`
 
