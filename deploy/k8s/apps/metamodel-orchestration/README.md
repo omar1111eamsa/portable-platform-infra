@@ -9,7 +9,7 @@ Airflow runs with 5 workloads on `backend2`:
 
 Executor mode is `CeleryExecutor` with Redis broker (`redis://redis:6379/0`).
 
-Task logs are configured for remote storage in an S3-compatible object store instead of being fetched from worker pod hostnames. The portable in-cluster target is MinIO, using `s3://airflow-logs/task-logs`.
+Task logs are configured for remote storage in an S3-compatible object store instead of being fetched from worker pod hostnames on port `8793`. The portable in-cluster target is MinIO, using `s3://airflow-logs/task-logs`.
 
 Metadata DB is PostgreSQL (`AIRFLOW__DATABASE__SQL_ALCHEMY_CONN` from secret `metamodel-db-credentials` key `AIRFLOW_CONN_POSTGRES_MYAPP`).
 
@@ -34,6 +34,20 @@ This assumes DNS for `airflow.dev.example.com` points to the same ingress entryp
 The current auth mode is Airflow SimpleAuth for dev. The admin password is mounted from the Kubernetes secret `metamodel-airflow-simple-auth` at `/opt/airflow/secrets/simple_auth_manager_passwords.json`, so it remains stable across pod restarts and image updates until the secret is rotated.
 
 Remote task logging uses the Airflow connection `aws_default`, injected from the Kubernetes secret `metamodel-airflow-s3-logging`.
+
+Runtime dependencies for the current setup:
+- `metamodel-db-credentials`
+- `metamodel-airflow-simple-auth`
+- `metamodel-airflow-s3-logging`
+- `minio-credentials`
+- `github-token`
+- `ghcr-secret`
+
+Current logging flow:
+- Airflow task logs are written to MinIO bucket `airflow-logs`
+- logical prefix: `task-logs`
+- connection endpoint: `http://minio:9000`
+- this avoids UI failures caused by direct worker hostname resolution
 
 ## Operational checks
 
@@ -66,6 +80,20 @@ Expected:
 - `dag_processor=healthy`
 
 Automatic monitoring is also deployed through `deploy/k8s/cronjobs/metamodel-health-check.yaml`. It checks the same endpoint through the internal service URL instead of `kubectl exec`.
+
+Remote logging checks:
+
+```bash
+kubectl -n myapp get deploy minio
+kubectl -n myapp get jobs minio-init-airflow-logs
+kubectl -n myapp exec deploy/metamodel-orchestration -- env | rg 'AIRFLOW__LOGGING__REMOTE|AIRFLOW_CONN_AWS_DEFAULT'
+```
+
+Expected:
+- `minio` is `1/1`
+- job `minio-init-airflow-logs` is `Complete`
+- `AIRFLOW__LOGGING__REMOTE_LOGGING=true`
+- `AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER=s3://airflow-logs/task-logs`
 
 ## DAG test run
 

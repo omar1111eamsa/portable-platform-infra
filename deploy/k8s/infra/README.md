@@ -24,6 +24,7 @@ Required secrets for infra/app boot:
 
 - `postgres-credentials`
 - `minio-credentials`
+- `metamodel-airflow-s3-logging`
 - `rabbitmq-credentials`
 - `ghcr-secret`
 
@@ -31,11 +32,13 @@ Required secrets for infra/app boot:
 
 ```bash
 kubectl apply -k deploy/k8s/infra/
-kubectl -n myapp get deploy postgres redis consul rabbitmq
-kubectl -n myapp get pods | rg -i 'postgres|redis|consul|rabbitmq'
+kubectl -n myapp get deploy postgres redis consul rabbitmq minio
+kubectl -n myapp get jobs minio-init-airflow-logs
+kubectl -n myapp get pods | rg -i 'postgres|redis|consul|rabbitmq|minio'
 ```
 
 ## Notes
 
 - `postgres/init-databases-job.yaml` creates app databases (`payment_db`, `crm_db`, `prediction_db`, `kpi_db`) and is kept in this folder because it is part of infra bootstrap.
+- `minio/init-bucket-job.yaml` creates bucket `airflow-logs` for Airflow remote logging.
 - Do not add app-specific manifests here; place them under `deploy/k8s/apps/`.
