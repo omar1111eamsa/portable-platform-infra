@@ -83,6 +83,21 @@ spec:
           volumeMounts:
             - name: modules
               mountPath: /modules
+        - name: airflow-simple-auth-init
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              cp /bootstrap/simple_auth_manager_passwords.json /secrets/simple_auth_manager_passwords.json
+              chmod 600 /secrets/simple_auth_manager_passwords.json
+          volumeMounts:
+            - name: airflow-simple-auth-bootstrap
+              mountPath: /bootstrap
+              readOnly: true
+            - name: airflow-simple-auth
+              mountPath: /secrets
       containers:
         - name: metamodel-orchestration
           # Image: Metamodel-orschestation-airflow (Airflow API server on port 8080) — same as init (latest SHA)
@@ -148,7 +163,6 @@ spec:
               subPath: entrypoint.sh
             - name: airflow-simple-auth
               mountPath: /opt/airflow/secrets
-              readOnly: true
             - name: modules
               mountPath: /opt/airflow/modules
           ports:
@@ -191,6 +205,8 @@ spec:
           persistentVolumeClaim:
             claimName: metamodel-modules-pvc
         - name: airflow-simple-auth
+          emptyDir: {}
+        - name: airflow-simple-auth-bootstrap
           secret:
             secretName: metamodel-airflow-simple-auth
       securityContext:
