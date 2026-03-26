@@ -90,6 +90,10 @@ spec:
           imagePullPolicy: Always
           command: ["python", "-m", "airflow", "api-server"]
           env:
+            - name: AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_USERS
+              value: "admin:admin"
+            - name: AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_PASSWORDS_FILE
+              value: "/opt/airflow/secrets/simple_auth_manager_passwords.json"
             - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
               valueFrom:
                 secretKeyRef:
@@ -142,6 +146,9 @@ spec:
             - name: entrypoint
               mountPath: /entrypoint.sh
               subPath: entrypoint.sh
+            - name: airflow-simple-auth
+              mountPath: /opt/airflow/secrets
+              readOnly: true
             - name: modules
               mountPath: /opt/airflow/modules
           ports:
@@ -183,6 +190,9 @@ spec:
         - name: modules
           persistentVolumeClaim:
             claimName: metamodel-modules-pvc
+        - name: airflow-simple-auth
+          secret:
+            secretName: metamodel-airflow-simple-auth
       securityContext:
         runAsNonRoot: true
         runAsUser: 50000  # airflow user in apache/airflow image

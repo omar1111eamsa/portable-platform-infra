@@ -46,6 +46,10 @@ spec:
           imagePullPolicy: Always
           command: ["python", "-m", "airflow", "scheduler"]
           env:
+            - name: AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_USERS
+              value: "admin:admin"
+            - name: AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_PASSWORDS_FILE
+              value: "/opt/airflow/secrets/simple_auth_manager_passwords.json"
             - name: METAMODEL_SCORING_REF
               value: "957d2486fc14bd4c7cd82d0a886f3d5d028b326b"
             - name: METAMODEL_PORTFOLIO_REF
@@ -130,6 +134,9 @@ spec:
             - name: PYTHONPATH
               value: "/opt/airflow/modules/cq-scoring:/opt/airflow/modules/cq-portfolio:/opt/airflow/modules/cq-portfolio/src"
           volumeMounts:
+            - name: airflow-simple-auth
+              mountPath: /opt/airflow/secrets
+              readOnly: true
             - name: modules
               mountPath: /opt/airflow/modules
           resources:
@@ -159,6 +166,9 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 10
       volumes:
+        - name: airflow-simple-auth
+          secret:
+            secretName: metamodel-airflow-simple-auth
         - name: modules
           persistentVolumeClaim:
             claimName: metamodel-modules-pvc
