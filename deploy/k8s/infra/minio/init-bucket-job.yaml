@@ -17,7 +17,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: mc
-          image: minio/mc:RELEASE.2026-02-21T16-00-46Z
+          image: minio/mc:RELEASE.2025-05-21T01-59-54Z
           envFrom:
             - secretRef:
                 name: minio-credentials
