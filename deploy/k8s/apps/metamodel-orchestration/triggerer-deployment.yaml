@@ -64,7 +64,7 @@ spec:
                   name: metamodel-airflow-s3-logging
                   key: AIRFLOW_CONN_AWS_DEFAULT
             - name: METAMODEL_SCORING_REF
-              value: "957d2486fc14bd4c7cd82d0a886f3d5d028b326b"
+              value: "515d925be57e886856c64dfea67c3d480a58cc2f"
             - name: METAMODEL_PORTFOLIO_REF
               value: "917dbbe1521e10f1248b5da1eb3ed5f133b5f28d"
             - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
