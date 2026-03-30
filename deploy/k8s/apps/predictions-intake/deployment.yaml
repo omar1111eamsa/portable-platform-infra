@@ -35,7 +35,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: predictions-intake
-          image: ghcr.io/myapp/backend-predictions-intake-service:5484a17
+          image: ghcr.io/myapp/backend-predictions-intake-service:5dde3fb
           imagePullPolicy: Always
           env:
             - name: SPRING_DATASOURCE_URL
