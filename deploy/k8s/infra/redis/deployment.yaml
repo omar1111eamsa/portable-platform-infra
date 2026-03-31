@@ -17,7 +17,7 @@ spec:
         app: redis
     spec:
       nodeSelector:
-        kubernetes.io/hostname: frontend-vm
+        kubernetes.io/hostname: backend2
       containers:
         - name: redis
           image: redis:7-alpine
