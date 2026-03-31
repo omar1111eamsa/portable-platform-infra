@@ -11,6 +11,10 @@ metadata:
     traefik.ingress.kubernetes.io/router.priority: "250"
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - "dev.example.com"
+      secretName: dev-myapp-io-argocd-tls
   rules:
     - host: "dev.example.com"
       http:

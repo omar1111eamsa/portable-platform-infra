@@ -9,6 +9,10 @@ metadata:
     traefik.ingress.kubernetes.io/router.middlewares: myapp-rabbitmq-redirect-slash@kubernetescrd
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - dev.example.com
+      secretName: dev-myapp-io-tls
   rules:
     - host: dev.example.com
       http:

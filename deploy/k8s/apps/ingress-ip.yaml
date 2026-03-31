@@ -12,6 +12,10 @@ metadata:
     traefik.ingress.kubernetes.io/router.priority: "200"
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - "dev.example.com"
+      secretName: dev-myapp-io-tls
   rules:
     - host: "dev.example.com"
       http:
@@ -70,6 +74,10 @@ metadata:
     traefik.ingress.kubernetes.io/router.priority: "100"
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - "dev.example.com"
+      secretName: dev-myapp-io-tls
   rules:
     - host: "dev.example.com"
       http:
