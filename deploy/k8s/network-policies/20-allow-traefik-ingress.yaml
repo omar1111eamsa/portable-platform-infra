@@ -13,6 +13,7 @@ spec:
           - frontend
           - metamodel-orchestration
           - pgadmin
+          - rabbitmq
   policyTypes:
     - Ingress
   ingress:
@@ -32,3 +33,5 @@ spec:
           port: 3000
         - protocol: TCP
           port: 8080
+        - protocol: TCP
+          port: 15672
