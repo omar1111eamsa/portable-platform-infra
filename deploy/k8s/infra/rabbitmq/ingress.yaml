@@ -6,6 +6,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.priority: "260"
+    traefik.ingress.kubernetes.io/router.middlewares: myapp-rabbitmq-redirect-slash@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:

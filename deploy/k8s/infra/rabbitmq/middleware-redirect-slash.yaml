@@ -1,0 +1,10 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: rabbitmq-redirect-slash
+  namespace: myapp
+spec:
+  redirectRegex:
+    regex: ^https?://([^/]+)/rabbitmq$
+    replacement: https://${1}/rabbitmq/
+    permanent: true
