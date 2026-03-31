@@ -22,3 +22,4 @@ resources:
   - rabbitmq/definitions-configmap.yaml
   - rabbitmq/deployment.yaml
   - rabbitmq/service.yaml
+  - rabbitmq/ingress.yaml

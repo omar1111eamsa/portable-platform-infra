@@ -51,6 +51,8 @@ spec:
                   key: RABBITMQ_DEFAULT_VHOST
             - name: RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS
               value: '-rabbitmq_management load_definitions "/etc/rabbitmq/definitions.json"'
+            - name: RABBITMQ_MANAGEMENT_PATH_PREFIX
+              value: /rabbitmq
           volumeMounts:
             - name: rabbitmq-definitions
               mountPath: /etc/rabbitmq/definitions.json
