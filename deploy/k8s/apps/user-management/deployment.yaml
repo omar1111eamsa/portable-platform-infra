@@ -104,6 +104,10 @@ spec:
                   key: RABBITMQ_ADDRESSES
             - name: APP_RABBITMQ_SUBSCRIPTION_UPDATES_QUEUE
               value: "subscription_updates_queue"
+            - name: APP_RABBITMQ_EVENTS_EXCHANGE
+              value: "payment.events"
+            - name: APP_RABBITMQ_SUBSCRIPTION_UPDATES_ROUTING_KEY
+              value: "subscription.updates"
             - name: APP_RABBITMQ_DIRECT_SUBMISSIONS_QUEUE
               value: "direct_submissions_queue"
             - name: APP_RABBITMQ_DIRECT_SUBMISSIONS_EXCHANGE
@@ -148,7 +152,7 @@ spec:
             - name: SKIP_EMAIL_SEND
               value: "false"
             - name: SPRING_MAIN_LAZY_INITIALIZATION
-              value: "true"
+              value: "false"
           resources:
             requests:
               memory: "384Mi"
