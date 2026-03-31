@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-management-config
+  namespace: myapp
+data:
+  10-management-prefix.conf: |
+    management.path_prefix = /rabbitmq

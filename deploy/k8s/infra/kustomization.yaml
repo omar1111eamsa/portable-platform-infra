@@ -20,6 +20,7 @@ resources:
   - consul/service.yaml
   # rabbitmq-credentials: créer manuellement (voir DEPLOYMENT.md)
   - rabbitmq/definitions-configmap.yaml
+  - rabbitmq/management-configmap.yaml
   - rabbitmq/deployment.yaml
   - rabbitmq/service.yaml
   - rabbitmq/ingress.yaml
