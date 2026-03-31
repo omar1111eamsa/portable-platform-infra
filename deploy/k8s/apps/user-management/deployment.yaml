@@ -55,6 +55,8 @@ spec:
               value: "true"
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_REGISTER
               value: "true"
+            - name: SPRING_CLOUD_CONSUL_DISCOVERY_DEREGISTER
+              value: "true"
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_SERVICE_NAME
               value: user-service
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_PREFER_IP_ADDRESS
@@ -63,6 +65,10 @@ spec:
               value: "$(POD_IP)"
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_INSTANCE_ID
               value: "$(POD_NAME)"
+            - name: SPRING_CLOUD_CONSUL_DISCOVERY_HEALTH_CHECK_PATH
+              value: /actuator/health
+            - name: SPRING_CLOUD_CONSUL_DISCOVERY_HEALTH_CHECK_CRITICAL_TIMEOUT
+              value: 1m
             - name: SPRING_DATASOURCE_URL
               value: jdbc:postgresql://postgres:5432/userdb
             - name: SPRING_DATASOURCE_USERNAME

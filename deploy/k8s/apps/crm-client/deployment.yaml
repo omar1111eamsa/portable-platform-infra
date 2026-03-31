@@ -89,6 +89,8 @@ spec:
               value: "true"
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_REGISTER
               value: "true"
+            - name: SPRING_CLOUD_CONSUL_DISCOVERY_DEREGISTER
+              value: "true"
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_SERVICE_NAME
               value: crmservice
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_PREFER_IP_ADDRESS
@@ -99,6 +101,8 @@ spec:
               value: "$(POD_NAME)"
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_HEALTH_CHECK_PATH
               value: /actuator/health
+            - name: SPRING_CLOUD_CONSUL_DISCOVERY_HEALTH_CHECK_CRITICAL_TIMEOUT
+              value: 1m
           ports:
             - containerPort: 8083
           resources:

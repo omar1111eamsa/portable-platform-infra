@@ -55,7 +55,11 @@ spec:
               value: "true"
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_REGISTER
               value: "true"
+            - name: SPRING_CLOUD_CONSUL_DISCOVERY_DEREGISTER
+              value: "true"
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_PREFER_IP_ADDRESS
+              value: "true"
+            - name: SPRING_CLOUD_CONSUL_DISCOVERY_QUERY_PASSING
               value: "true"
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_IP_ADDRESS
               value: "$(POD_IP)"
@@ -63,6 +67,8 @@ spec:
               value: "$(POD_NAME)"
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_HEALTH_CHECK_PATH
               value: /actuator/health
+            - name: SPRING_CLOUD_CONSUL_DISCOVERY_HEALTH_CHECK_CRITICAL_TIMEOUT
+              value: 1m
             # K8s DNS (direct WebClient, not Consul) — service name: user-management
             - name: USER_SERVICE_URI
               value: "http://user-management:8081"
