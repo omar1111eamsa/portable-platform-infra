@@ -11,6 +11,11 @@ data:
       ],
       "users": [
         {
+          "name": "rabbitmq",
+          "password": "rabbitmq",
+          "tags": "administrator"
+        },
+        {
           "name": "myapp",
           "password_hash": "LexKrGJIePrQZUzqDG0fPJpcUe0Tm8NwBQ8nnJVThGw6DWO1",
           "hashing_algorithm": "rabbit_password_hashing_sha256",
@@ -18,6 +23,13 @@ data:
         }
       ],
       "permissions": [
+        {
+          "user": "rabbitmq",
+          "vhost": "/",
+          "configure": ".*",
+          "write": ".*",
+          "read": ".*"
+        },
         {
           "user": "myapp",
           "vhost": "/",
