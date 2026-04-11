@@ -25,7 +25,7 @@ spec:
         - name: execution-engine
           image: ghcr.io/myapp/cq-execution-engine:b20ee5c
           imagePullPolicy: Always
-          command: ["python", "consumer_realtime.py"]
+          command: ["python", "engine/reporting/consumer_realtime.py"]
           env:
             - name: DB_CONN
               valueFrom:
