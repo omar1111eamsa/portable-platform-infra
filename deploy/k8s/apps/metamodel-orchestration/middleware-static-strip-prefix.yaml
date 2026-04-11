@@ -1,0 +1,9 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: airflow-static-strip-prefix
+  namespace: myapp
+spec:
+  stripPrefix:
+    prefixes:
+      - /airflow/api/v2/static

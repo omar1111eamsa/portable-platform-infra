@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: consul-ingress
+  namespace: myapp
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.priority: "255"
+    traefik.ingress.kubernetes.io/router.middlewares: myapp-consul-strip-prefix@kubernetescrd,myapp-consul-add-ui-prefix@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - dev.example.com
+      secretName: dev-myapp-io-tls
+  rules:
+    - host: dev.example.com
+      http:
+        paths:
+          - path: /consul
+            pathType: Prefix
+            backend:
+              service:
+                name: consul
+                port:
+                  number: 8500

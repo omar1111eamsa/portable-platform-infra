@@ -14,6 +14,7 @@ spec:
           - metamodel-orchestration
           - pgadmin
           - rabbitmq
+          - consul
   policyTypes:
     - Ingress
   ingress:
@@ -35,3 +36,5 @@ spec:
           port: 8080
         - protocol: TCP
           port: 15672
+        - protocol: TCP
+          port: 8500

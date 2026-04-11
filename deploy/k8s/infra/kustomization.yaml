@@ -18,6 +18,9 @@ resources:
   - redis/service.yaml
   - consul/deployment.yaml
   - consul/service.yaml
+  - consul/middleware-strip-prefix.yaml
+  - consul/middleware-add-ui-prefix.yaml
+  - consul/ingress.yaml
   # rabbitmq-credentials: créer manuellement (voir DEPLOYMENT.md)
   - rabbitmq/definitions-configmap.yaml
   - rabbitmq/management-configmap.yaml

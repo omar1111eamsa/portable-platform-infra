@@ -33,7 +33,9 @@ resources:
   - metamodel-orchestration/service.yaml
   - metamodel-orchestration/middleware-forward-prefix.yaml
   - metamodel-orchestration/middleware-strip-prefix.yaml
+  - metamodel-orchestration/middleware-static-strip-prefix.yaml
   - metamodel-orchestration/ingress.yaml
+  - metamodel-orchestration/static-ingress.yaml
   - payment-service/deployment.yaml
   - payment-service/service.yaml
   # pgadmin-credentials: créer manuellement (kubectl create secret generic pgadmin-credentials -n myapp --from-literal=PGADMIN_DEFAULT_EMAIL=... --from-literal=PGADMIN_DEFAULT_PASSWORD=...)
