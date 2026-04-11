@@ -8,6 +8,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.priority: "300"
     traefik.ingress.kubernetes.io/router.middlewares: myapp-pgadmin-forward-prefix@kubernetescrd
 spec:
+  ingressClassName: traefik
   tls:
     - hosts:
         - dev.example.com

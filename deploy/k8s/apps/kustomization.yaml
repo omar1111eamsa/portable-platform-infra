@@ -31,6 +31,8 @@ resources:
   - metamodel-orchestration/worker-deployment.yaml
   - metamodel-orchestration/triggerer-deployment.yaml
   - metamodel-orchestration/service.yaml
+  - metamodel-orchestration/middleware-forward-prefix.yaml
+  - metamodel-orchestration/middleware-strip-prefix.yaml
   - metamodel-orchestration/ingress.yaml
   - payment-service/deployment.yaml
   - payment-service/service.yaml
@@ -38,6 +40,7 @@ resources:
   - pgadmin/deployment.yaml
   - pgadmin/service.yaml
   - pgadmin/middleware-forward-prefix.yaml
+  - pgadmin/middleware-strip-prefix.yaml
   - pgadmin/ingress.yaml
   - predictions-intake/deployment.yaml
   - predictions-intake/service.yaml

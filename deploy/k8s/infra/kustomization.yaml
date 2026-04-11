@@ -21,7 +21,7 @@ resources:
   # rabbitmq-credentials: créer manuellement (voir DEPLOYMENT.md)
   - rabbitmq/definitions-configmap.yaml
   - rabbitmq/management-configmap.yaml
-  - rabbitmq/middleware-redirect-slash.yaml
   - rabbitmq/deployment.yaml
   - rabbitmq/service.yaml
+  - rabbitmq/middleware-redirect-slash.yaml
   - rabbitmq/ingress.yaml

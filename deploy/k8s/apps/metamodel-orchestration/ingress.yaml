@@ -6,14 +6,15 @@ metadata:
   labels:
     app: metamodel-orchestration
   annotations:
-    traefik.ingress.kubernetes.io/router.priority: "120"
+    traefik.ingress.kubernetes.io/router.priority: "240"
+    traefik.ingress.kubernetes.io/router.middlewares: myapp-airflow-forward-prefix@kubernetescrd,myapp-airflow-strip-prefix@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
-    - host: "airflow.dev.example.com"
+    - host: "dev.example.com"
       http:
         paths:
-          - path: /
+          - path: /airflow
             pathType: Prefix
             backend:
               service:

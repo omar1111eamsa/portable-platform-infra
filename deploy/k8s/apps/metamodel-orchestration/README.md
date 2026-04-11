@@ -21,15 +21,13 @@ Mounted source modules in the running Airflow pods:
 
 These repos are cloned by the `modules-sync` init container into the shared PVC, then reused by the API server, scheduler, worker, dag-processor, and triggerer through `PYTHONPATH`.
 
-## Temporary UI exposure
+## UI exposure
 
-Airflow UI is exposed temporarily through Traefik on:
+Airflow UI is exposed through Traefik on:
 
 ```text
-http://airflow.dev.example.com
+https://dev.example.com/airflow
 ```
-
-This assumes DNS for `airflow.dev.example.com` points to the same ingress entrypoint as the rest of the dev environment.
 
 The current auth mode is Airflow SimpleAuth for dev. The admin password is mounted from the Kubernetes secret `metamodel-airflow-simple-auth` at `/opt/airflow/secrets/simple_auth_manager_passwords.json`, so it remains stable across pod restarts and image updates until the secret is rotated.
 

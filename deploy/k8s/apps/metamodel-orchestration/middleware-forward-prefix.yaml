@@ -1,0 +1,9 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: airflow-forward-prefix
+  namespace: myapp
+spec:
+  headers:
+    customRequestHeaders:
+      X-Forwarded-Prefix: /airflow
