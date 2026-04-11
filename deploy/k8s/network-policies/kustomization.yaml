@@ -7,6 +7,6 @@ resources:
   - 00-default-deny.yaml
   - 10-allow-dns-egress.yaml
   - 20-allow-traefik-ingress.yaml
+  - 25-allow-traefik-acme-http01-solver.yaml
   - 30-allow-internal-service-ports.yaml
   - 40-allow-external-egress.yaml
-
