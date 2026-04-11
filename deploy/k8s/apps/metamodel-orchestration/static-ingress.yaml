@@ -20,4 +20,4 @@ spec:
               service:
                 name: metamodel-orchestration
                 port:
-                  number: 8081
+                  name: ui-static
