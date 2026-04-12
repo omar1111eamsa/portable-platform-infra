@@ -15,4 +15,7 @@ spec:
     - port: 15672
       targetPort: 15672
       name: management
+    - port: 15692
+      targetPort: 15692
+      name: prometheus
   type: ClusterIP

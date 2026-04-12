@@ -58,6 +58,14 @@ spec:
               value: "s3://airflow-logs/task-logs"
             - name: AIRFLOW__LOGGING__DELETE_LOCAL_LOGS
               value: "true"
+            - name: AIRFLOW__METRICS__STATSD_ON
+              value: "true"
+            - name: AIRFLOW__METRICS__STATSD_HOST
+              value: "statsd-exporter"
+            - name: AIRFLOW__METRICS__STATSD_PORT
+              value: "9125"
+            - name: AIRFLOW__METRICS__STATSD_PREFIX
+              value: "airflow"
             - name: AIRFLOW_CONN_AWS_DEFAULT
               valueFrom:
                 secretKeyRef:

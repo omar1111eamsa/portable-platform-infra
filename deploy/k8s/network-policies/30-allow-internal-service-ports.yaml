@@ -22,6 +22,8 @@ spec:
         - protocol: TCP
           port: 15672
         - protocol: TCP
+          port: 15692
+        - protocol: TCP
           port: 6379
         - protocol: TCP
           port: 8000
@@ -41,6 +43,14 @@ spec:
           port: 8888
         - protocol: TCP
           port: 9000
+        - protocol: TCP
+          port: 9090
+        - protocol: TCP
+          port: 9102
+        - protocol: UDP
+          port: 9125
+        - protocol: TCP
+          port: 9187
   egress:
     - to:
         - namespaceSelector:
@@ -56,6 +66,8 @@ spec:
         - protocol: TCP
           port: 15672
         - protocol: TCP
+          port: 15692
+        - protocol: TCP
           port: 6379
         - protocol: TCP
           port: 8000
@@ -75,3 +87,11 @@ spec:
           port: 8888
         - protocol: TCP
           port: 9000
+        - protocol: TCP
+          port: 9090
+        - protocol: TCP
+          port: 9102
+        - protocol: UDP
+          port: 9125
+        - protocol: TCP
+          port: 9187

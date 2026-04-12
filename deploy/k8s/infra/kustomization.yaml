@@ -24,7 +24,22 @@ resources:
   # rabbitmq-credentials: créer manuellement (voir DEPLOYMENT.md)
   - rabbitmq/definitions-configmap.yaml
   - rabbitmq/management-configmap.yaml
+  - rabbitmq/enabled-plugins-configmap.yaml
   - rabbitmq/deployment.yaml
   - rabbitmq/service.yaml
   - rabbitmq/middleware-redirect-slash.yaml
   - rabbitmq/ingress.yaml
+  # Monitoring stack (Prometheus + Grafana + exporters)
+  - monitoring/prometheus-configmap.yaml
+  - monitoring/prometheus-deployment.yaml
+  - monitoring/prometheus-service.yaml
+  - monitoring/prometheus-strip-prefix-middleware.yaml
+  - monitoring/prometheus-ingress.yaml
+  - monitoring/grafana-datasources-configmap.yaml
+  - monitoring/grafana-deployment.yaml
+  - monitoring/grafana-service.yaml
+  - monitoring/grafana-ingress.yaml
+  - monitoring/postgres-exporter-deployment.yaml
+  - monitoring/postgres-exporter-service.yaml
+  - monitoring/statsd-exporter-deployment.yaml
+  - monitoring/statsd-exporter-service.yaml

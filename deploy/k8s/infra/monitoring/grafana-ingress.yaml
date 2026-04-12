@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: myapp
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.priority: "251"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - dev.example.com
+      secretName: dev-myapp-io-tls
+  rules:
+    - host: dev.example.com
+      http:
+        paths:
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000
