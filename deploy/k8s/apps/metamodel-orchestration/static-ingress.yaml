@@ -10,11 +10,15 @@ metadata:
     traefik.ingress.kubernetes.io/router.middlewares: myapp-airflow-static-strip-prefix@kubernetescrd
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - airflow.dev.example.com
+      secretName: dev-myapp-io-tls
   rules:
-    - host: "dev.example.com"
+    - host: "airflow.dev.example.com"
       http:
         paths:
-          - path: /airflow/api/v2/static
+          - path: /api/v2/static
             pathType: Prefix
             backend:
               service:

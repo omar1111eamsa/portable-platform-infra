@@ -7,14 +7,17 @@ metadata:
     app: metamodel-orchestration
   annotations:
     traefik.ingress.kubernetes.io/router.priority: "240"
-    traefik.ingress.kubernetes.io/router.middlewares: myapp-airflow-forward-prefix@kubernetescrd,myapp-airflow-strip-prefix@kubernetescrd,myapp-airflow-dedupe-api-prefix@kubernetescrd
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - airflow.dev.example.com
+      secretName: dev-myapp-io-tls
   rules:
-    - host: "dev.example.com"
+    - host: "airflow.dev.example.com"
       http:
         paths:
-          - path: /airflow
+          - path: /
             pathType: Prefix
             backend:
               service:

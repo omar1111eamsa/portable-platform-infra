@@ -130,11 +130,11 @@ spec:
             - name: AIRFLOW__CORE__EXECUTION_API_SERVER_URL
               value: "http://metamodel-orchestration:8080/execution/"
             - name: AIRFLOW__WEBSERVER__BASE_URL
-              value: "https://dev.example.com/airflow"
+              value: "https://airflow.dev.example.com"
             - name: AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX
               value: "true"
             - name: AIRFLOW__API__BASE_URL
-              value: "https://dev.example.com/airflow/api/v2"
+              value: "https://airflow.dev.example.com/api/v2"
             - name: AIRFLOW__API_AUTH__JWT_SECRET
               valueFrom:
                 secretKeyRef:

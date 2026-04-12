@@ -6,4 +6,4 @@ metadata:
 spec:
   stripPrefix:
     prefixes:
-      - /airflow/api/v2/static
+      - /api/v2/static
