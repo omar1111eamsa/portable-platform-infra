@@ -5,6 +5,8 @@ metadata:
   namespace: myapp
   labels:
     app: metamodel-orchestration
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: myapp-airflow-dedupe-api-prefix@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:
