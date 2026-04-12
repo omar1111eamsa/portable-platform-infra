@@ -14,7 +14,7 @@ spec:
     - host: "dev.example.com"
       http:
         paths:
-          - path: /airflow/api/v2/static
+          - path: /airflow/static
             pathType: Prefix
             backend:
               service:
