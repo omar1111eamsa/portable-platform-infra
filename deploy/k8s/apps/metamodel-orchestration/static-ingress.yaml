@@ -6,7 +6,6 @@ metadata:
   labels:
     app: metamodel-orchestration
   annotations:
-    traefik.ingress.kubernetes.io/router.priority: "245"
     traefik.ingress.kubernetes.io/router.middlewares: myapp-airflow-static-strip-prefix@kubernetescrd
 spec:
   ingressClassName: traefik
