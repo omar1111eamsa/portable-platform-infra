@@ -1,0 +1,9 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: airflow-dedupe-api-prefix
+  namespace: myapp
+spec:
+  replacePathRegex:
+    regex: "^/api/v2/api/v2/(.*)"
+    replacement: "/api/v2/$1"

@@ -7,7 +7,7 @@ metadata:
     app: metamodel-orchestration
   annotations:
     traefik.ingress.kubernetes.io/router.priority: "240"
-    traefik.ingress.kubernetes.io/router.middlewares: myapp-airflow-forward-prefix@kubernetescrd,myapp-airflow-strip-prefix@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: myapp-airflow-forward-prefix@kubernetescrd,myapp-airflow-strip-prefix@kubernetescrd,myapp-airflow-dedupe-api-prefix@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:

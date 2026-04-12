@@ -33,6 +33,7 @@ resources:
   - metamodel-orchestration/service.yaml
   - metamodel-orchestration/middleware-forward-prefix.yaml
   - metamodel-orchestration/middleware-strip-prefix.yaml
+  - metamodel-orchestration/middleware-dedupe-api-prefix.yaml
   - metamodel-orchestration/middleware-static-strip-prefix.yaml
   - metamodel-orchestration/ingress.yaml
   - metamodel-orchestration/static-ingress.yaml
