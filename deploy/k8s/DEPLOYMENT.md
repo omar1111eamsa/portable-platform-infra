@@ -5,8 +5,8 @@
 ## Prérequis avant `kubectl apply`
 
 ### 1. Cluster k3s
-- 3 nœuds : `backend-vm` (10.0.0.11), `frontend-vm` (IP publique 203.0.113.11), `backend2` (10.0.0.13)
-- Master k3s sur backend-vm, workers sur frontend-vm et backend2. Noms exacts : `backend-vm`, `frontend-vm`, `backend2`
+- 3 nœuds : `backend-vm` (10.0.0.11), `frontend-vm` (IP publique du jumphost + 10.0.0.12), `backend2` (10.0.0.13)
+- Control-plane k3s sur backend-vm, workers sur frontend-vm et backend2. Noms exacts : `backend-vm`, `frontend-vm`, `backend2`
 - **Répartition actuelle (nodeSelector)** :
   - **backend-vm** : postgres, consul, rabbitmq (control-plane + infra stateful)
   - **frontend-vm** : api-gateway, frontend, redis, chatbot, user-management, crm-client, kpi-dashboard, payment-service, predictions-intake
@@ -43,6 +43,11 @@ kubectl create secret generic rabbitmq-credentials -n myapp \
   --from-literal=RABBITMQ_PASSWORD=remplacer-password \
   --from-literal=RABBITMQ_VHOST=/ \
   --from-literal=RABBITMQ_ADDRESSES='amqp://remplacer-user:remplacer-password@rabbitmq:5672/'
+
+# Consul UI BasicAuth (Traefik middleware)
+CONSUL_HASH="$(openssl passwd -apr1 'change-me-consul-ui')"
+kubectl create secret generic consul-ui-basic-auth -n myapp \
+  --from-literal=users="admin:${CONSUL_HASH}"
 
 # Stripe (payment-service)
 kubectl create secret generic stripe-credentials -n myapp \
@@ -133,6 +138,7 @@ kubectl get pods -n myapp
 kubectl get ingress -n myapp
 curl -k -s https://dev.example.com/
 curl -k -s https://dev.example.com/api/actuator/health
+curl -k -I https://airflow.dev.example.com/
 ```
 
 ### Vérifier OAuth2 Google (Sign in with Google)

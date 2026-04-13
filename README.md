@@ -48,9 +48,10 @@ portable-platform-infra/
 
 ## Domains & access
 
-- **dev.example.com** — Frontend principal (app), ArgoCD (`/argocd`), and API paths (same host)
-- **dashboard.example.com** — Admin Frontend
-- **DNS** : A record → `203.0.113.11` (frontend-vm). Cluster has 3 nodes: backend-vm, frontend-vm, backend2.
+- **dev.example.com** — Frontend principal (app), API (`/api`), ArgoCD (`/argocd`), and UI tools by path (`/pgadmin`, `/rabbitmq`, `/grafana`, `/consul`, `/prometheus`)
+- **airflow.dev.example.com** — Airflow UI/API host
+- **dashboard.example.com** — Admin frontend
+- **DNS** : A records point to the reserved public IP of `frontend-vm`. Cluster has 3 nodes: `backend-vm`, `frontend-vm`, `backend2`.
 
 ## Deployment (k8s + ArgoCD)
 
@@ -74,7 +75,8 @@ See [deploy/k8s/DEPLOYMENT.md](deploy/k8s/DEPLOYMENT.md) and [deploy/SETUP.md](d
 
 - No secrets committed to the repository
 - Secrets injected at runtime (ghcr-secret, postgres-credentials, etc.)
-- Backend services internal; only API Gateway + Frontend exposed via Ingress
+- Backend services internal; only gateway/frontend and selected dev UIs exposed via Ingress
+- UI exposure is path/host constrained; sensitive UIs (ArgoCD, pgAdmin, RabbitMQ, Grafana, Airflow, Consul) require authentication
 
 ---
 

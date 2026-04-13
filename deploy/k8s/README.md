@@ -11,7 +11,7 @@ k8s/
 ├── infra/             # PostgreSQL, Redis, Consul, RabbitMQ
 │   ├── postgres/      # PVC, Deployment, Service, init job
 │   ├── redis/         # Deployment, Service
-│   ├── consul/        # Deployment, Service
+│   ├── consul/        # Deployment, Service, Ingress, middlewares
 │   ├── rabbitmq/      # Deployment, Service
 │   └── kustomization.yaml
 ├── apps/              # API Gateway, Frontend, User, Payment, CRM, etc.
@@ -44,7 +44,7 @@ kubectl apply -k apps/
 ### Depuis le backend via SSH
 
 ```bash
-ssh -A -i ~/.ssh/myapp_vms -J hodeconlimited@203.0.113.11 hodeconlimited@10.0.0.11 \
+ssh -A -i ~/.ssh/myapp_vms -J myapp@<FRONTEND_PUBLIC_IP> myapp@10.0.0.11 \
   "sudo k3s kubectl apply -k -" < <(kubectl kustomize deploy/k8s/base)
 ```
 
@@ -81,6 +81,12 @@ Configurer une Application ArgoCD pointant vers ce dépôt, path `deploy/k8s/`.
 - **dev.example.com** → frontend:3000 (app) and same API paths
 - **dashboard.example.com** → admin-frontend:8080
 - **dev.example.com/argocd** → ArgoCD UI
+- **airflow.dev.example.com** → Airflow UI/API
+- **dev.example.com/pgadmin** → pgAdmin
+- **dev.example.com/rabbitmq** → RabbitMQ UI
+- **dev.example.com/grafana** → Grafana
+- **dev.example.com/prometheus** → Prometheus
+- **dev.example.com/consul** (+ `/ui`, `/v1`) → Consul UI/API (BasicAuth)
 - Local: `api.localhost`, `app.localhost`.
 
 ## Dépannage : Pression disque (Evicted, DiskPressure)

@@ -13,7 +13,7 @@ Ce document décrit l’architecture globale du cluster et le rôle de chaque fi
 - **Accès externe** :
   - `https://dev.example.com` (frontend + API)
   - `https://dashboard.example.com` (admin-frontend)
-  - `http://airflow.dev.example.com` (exposition Airflow temporaire pour dev)
+  - `https://airflow.dev.example.com` (UI/API Airflow sur host dédié)
   - `https://dev.example.com/pgadmin` (pgAdmin derrière Traefik, usage dev)
 
 ### Flux réseau (simplifié)
@@ -82,6 +82,9 @@ Namespace : `myapp`. Tous les services sont en ClusterIP.
 |---------|------|
 | **consul/deployment.yaml** | 1 replica, nodeSelector backend-vm, bootstrap-expect=1. Découverte de services pour l’API Gateway. En single-node, le déploiement ne doit pas utiliser `retry-join` vers son propre ClusterIP. |
 | **consul/service.yaml** | ClusterIP 8500 (HTTP), 8600 (DNS). |
+| **consul/ingress.yaml** | Exposition UI via `https://dev.example.com/consul` avec middlewares de réécriture de préfixe. |
+| **consul/ingress-ui-api.yaml** | Route explicite `/ui` et `/v1` vers Consul pour charger correctement les assets/API UI. |
+| **consul/middleware-basic-auth.yaml** | Authentification BasicAuth Traefik pour protéger l’UI Consul. |
 
 #### RabbitMQ
 
@@ -213,6 +216,12 @@ Namespace : `myapp`. En production, le routage externe passe par `apps/ingress-i
 | Fichier | Rôle |
 |---------|------|
 | **ingress-ip.yaml** | **ingress-ip-api** (priorité 200) : host `dev.example.com` → `/api`, `/login`, `/oauth2`, `/chatbot`, `/payment-service` → api-gateway. **ingress-ip-frontend** (priorité 100) : host `dev.example.com` → `/` → frontend. **ingress-dashboard-admin** (priorité 110) : host `dashboard.example.com` → `/` → admin-frontend:8080. |
+| **consul/ingress.yaml + ingress-ui-api.yaml** | Expose Consul sous `https://dev.example.com/consul` + routes `/ui` et `/v1` nécessaires au rendu UI. |
+| **monitoring/grafana-ingress.yaml** | Expose Grafana sous `https://dev.example.com/grafana`. |
+| **monitoring/prometheus-ingress.yaml** | Expose Prometheus sous `https://dev.example.com/prometheus`. |
+| **rabbitmq/ingress.yaml** | Expose RabbitMQ Management sous `https://dev.example.com/rabbitmq`. |
+| **pgadmin/ingress.yaml** | Expose pgAdmin sous `https://dev.example.com/pgadmin`. |
+| **metamodel-orchestration/ingress.yaml** | Expose Airflow sous host dédié `https://airflow.dev.example.com`. |
 
 Le chemin `/chatbot` est défini dans **ingress-ip.yaml** (route vers api-gateway). Optionnel : **chatbot/ingressroute.yaml** si le CRD IngressRoute Traefik est installé.
 
@@ -269,6 +278,7 @@ Prérequis côté ArgoCD : `server.insecure`, `server.basehref=/argocd`, `server
 - **metamodel-airflow-simple-auth** : mot de passe stable de l’UI Airflow.
 - **chatbot-credentials** : clé `LLM_API_KEY` (OpenRouter).
 - **stripe-credentials**, **google-oauth-credentials**, **mail-credentials** : selon les services.
+- **consul-ui-basic-auth** : users BasicAuth Traefik pour l’UI Consul.
 
 Voir `deploy/k8s/CHECKLIST.md` et `deploy/k8s/apps/chatbot/SECRET-SETUP.md` pour les commandes.
 

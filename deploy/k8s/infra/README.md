@@ -7,7 +7,7 @@ This folder contains only Kubernetes runtime manifests for shared infrastructure
 - `postgres/`: PVC, Deployment, Service, init job for app databases
 - `minio/`: PVC, Deployment, Service, init job for Airflow remote log bucket
 - `redis/`: Deployment, Service
-- `consul/`: Deployment, Service
+- `consul/`: Deployment, Service, Ingress + middlewares (`/consul`, `/ui`, `/v1`, BasicAuth)
 - `rabbitmq/`: definitions configmap, Deployment, Service
 
 Everything deployed from this folder is referenced by [`kustomization.yaml`](./kustomization.yaml).
@@ -27,6 +27,7 @@ Required secrets for infra/app boot:
 - `metamodel-airflow-s3-logging`
 - `rabbitmq-credentials`
 - `ghcr-secret`
+- `consul-ui-basic-auth`
 
 ## Deploy / Verify
 
