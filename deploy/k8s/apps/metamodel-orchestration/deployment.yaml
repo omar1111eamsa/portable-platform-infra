@@ -142,7 +142,7 @@ spec:
             - name: AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX
               value: "true"
             - name: AIRFLOW__API__BASE_URL
-              value: "https://airflow.dev.example.com/api/v2"
+              value: "https://airflow.dev.example.com"
             - name: AIRFLOW__API_AUTH__JWT_SECRET
               valueFrom:
                 secretKeyRef:
