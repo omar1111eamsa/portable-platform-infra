@@ -18,6 +18,7 @@ resources:
   - redis/service.yaml
   - consul/deployment.yaml
   - consul/service.yaml
+  - consul/middleware-basic-auth.yaml
   - consul/middleware-strip-prefix.yaml
   - consul/middleware-add-ui-prefix.yaml
   - consul/ingress.yaml

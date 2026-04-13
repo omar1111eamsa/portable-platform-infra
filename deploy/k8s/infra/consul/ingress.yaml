@@ -6,7 +6,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.priority: "255"
-    traefik.ingress.kubernetes.io/router.middlewares: myapp-consul-strip-prefix@kubernetescrd,myapp-consul-add-ui-prefix@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: myapp-consul-basic-auth@kubernetescrd,myapp-consul-strip-prefix@kubernetescrd,myapp-consul-add-ui-prefix@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:

@@ -1,0 +1,8 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: consul-basic-auth
+  namespace: myapp
+spec:
+  basicAuth:
+    secret: consul-ui-basic-auth
