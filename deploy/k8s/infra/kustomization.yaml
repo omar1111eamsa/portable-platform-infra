@@ -22,6 +22,7 @@ resources:
   - consul/middleware-strip-prefix.yaml
   - consul/middleware-add-ui-prefix.yaml
   - consul/ingress.yaml
+  - consul/ingress-ui-api.yaml
   # rabbitmq-credentials: créer manuellement (voir DEPLOYMENT.md)
   - rabbitmq/definitions-configmap.yaml
   - rabbitmq/management-configmap.yaml
