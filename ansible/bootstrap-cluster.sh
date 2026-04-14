@@ -203,6 +203,7 @@ require_env STRIPE_API_KEY
 require_env STRIPE_WEBHOOK_SECRET
 require_env GITHUB_TOKEN
 require_env CONSUL_UI_PASSWORD
+require_env GH_PAT
 
 MYAPP_DB_URL="${MYAPP_DB_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/prediction_db}"
 AIRFLOW_CONN_POSTGRES_MYAPP="${AIRFLOW_CONN_POSTGRES_MYAPP:-${MYAPP_DB_URL}}"
@@ -298,6 +299,25 @@ if [[ -n "${WORLDMONITOR_BASE_URL:-}" || -n "${WORLDMONITOR_TOKEN:-}" ]]; then
     --from-literal=WORLDMONITOR_ENDPOINT_SIGNALS="${WORLDMONITOR_ENDPOINT_SIGNALS:-/signals}" \
     --from-literal=WORLDMONITOR_TIMEOUT_SECONDS="${WORLDMONITOR_TIMEOUT_SECONDS:-10}"
 fi
+
+# Mobile web app: Flutter assets/.env injected at CI build time from this secret
+MOBILE_API_HOST="${MOBILE_API_HOST:-https://dev.example.com}"
+MOBILE_API_BASE_URL="${MOBILE_API_BASE_URL:-https://dev.example.com/api/auth}"
+MOBILE_GOOGLE_OAUTH_ANDROID_CLIENT_ID="${MOBILE_GOOGLE_OAUTH_ANDROID_CLIENT_ID:-}"
+MOBILE_GOOGLE_OAUTH_ANDROID_SERVER_CLIENT_ID="${MOBILE_GOOGLE_OAUTH_ANDROID_SERVER_CLIENT_ID:-}"
+MOBILE_GOOGLE_OAUTH_WEB_CLIENT_ID="${MOBILE_GOOGLE_OAUTH_WEB_CLIENT_ID:-}"
+create_or_update_secret mobile-web-env \
+  --from-literal=API_HOST="${MOBILE_API_HOST}" \
+  --from-literal=API_BASE_URL="${MOBILE_API_BASE_URL}" \
+  --from-literal=GOOGLE_OAUTH_ANDROID_CLIENT_ID="${MOBILE_GOOGLE_OAUTH_ANDROID_CLIENT_ID}" \
+  --from-literal=GOOGLE_OAUTH_ANDROID_SERVER_CLIENT_ID="${MOBILE_GOOGLE_OAUTH_ANDROID_SERVER_CLIENT_ID}" \
+  --from-literal=GOOGLE_OAUTH_WEB_CLIENT_ID="${MOBILE_GOOGLE_OAUTH_WEB_CLIENT_ID}" \
+  --from-literal=APP_NAME="MyApp" \
+  --from-literal=APP_DEBUG="false"
+
+# GitHub PAT used by CI pipelines to write back to portable-platform-infra
+create_or_update_secret ci-gh-pat \
+  --from-literal=GH_PAT="${GH_PAT}"
 
 echo "[7/7] Apply Kubernetes stack (includes Argo CD install + Ingress)"
 # Ensure argocd namespace exists before applying the full kustomize tree.

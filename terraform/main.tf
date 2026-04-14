@@ -149,3 +149,40 @@ resource "google_compute_instance" "myapp" {
     scopes = ["cloud-platform"]
   }
 }
+
+# Auto-run bootstrap-cluster.sh after infrastructure is provisioned.
+# This installs k3s, creates all Kubernetes secrets, and applies the full stack.
+#
+# Prerequisites (must exist on the machine running terraform apply):
+#   - deploy/k8s/secrets.env   (copy from secrets.env.example and fill values)
+#   - ~/.ssh/myapp_vms      (SSH key for VM access)
+#   - kubectl, ansible-playbook, terraform, openssl present in PATH
+#
+# Re-runs whenever any VM instance is replaced (triggers on instance fingerprint changes).
+resource "null_resource" "bootstrap" {
+  triggers = {
+    # Re-run if any VM is recreated
+    instance_ids = join(",", [for k, v in google_compute_instance.myapp : v.id])
+    # Re-run if the public IP changes
+    public_ip = google_compute_address.frontend_vm_public_ip.address
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      set -euo pipefail
+      REPO_ROOT="$(cd "$(dirname "${path.module}")" && pwd)"
+      SECRETS_FILE="${SECRETS_FILE:-${path.module}/../deploy/k8s/secrets.env}"
+      if [[ ! -f "$SECRETS_FILE" ]]; then
+        echo "ERROR: secrets.env not found at $SECRETS_FILE"
+        echo "Run: cp deploy/k8s/secrets.env.example deploy/k8s/secrets.env && fill values"
+        exit 1
+      fi
+      "$REPO_ROOT/ansible/bootstrap-cluster.sh" \
+        --terraform-dir "${path.module}" \
+        --secrets-file "$SECRETS_FILE"
+    EOT
+    interpreter = ["bash", "-c"]
+  }
+
+  depends_on = [google_compute_instance.myapp]
+}
