@@ -112,3 +112,26 @@ spec:
                 name: admin-frontend
                 port:
                   number: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-mobile-web
+  namespace: myapp
+  labels:
+    app: ingress-ip
+  annotations:
+    traefik.ingress.kubernetes.io/router.priority: "100"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: "mobile.example.com"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mobile-web
+                port:
+                  number: 80

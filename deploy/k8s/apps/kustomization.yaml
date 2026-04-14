@@ -51,6 +51,8 @@ resources:
   - user-management/service.yaml
   - user-management/user-service.yaml
   # mail-credentials: créer manuellement (voir DEPLOYMENT.md)
+  - mobile-web/deployment.yaml
+  - mobile-web/service.yaml
   # Ingress dev.example.com
   - ingress-ip.yaml
 

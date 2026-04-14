@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mobile-web
+  namespace: myapp
+  labels:
+    app: mobile-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mobile-web
+  template:
+    metadata:
+      labels:
+        app: mobile-web
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: frontend-vm
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: mobile-web
+          image: ghcr.io/myapp/mobile-app-ios-android:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 30
