@@ -1,6 +1,9 @@
-# Ingress ArgoCD — accès UI via dev.example.com
-# URL: https://dev.example.com/argocd
-# Prérequis: appliquer le patch ArgoCD (voir README.md)
+# Ingress Argo CD — Traefik
+# - https://dev.example.com/argocd  (Host: dev.example.com)
+# - https://<frontend-public-ip>/argocd  (Host: IP — needs second rule without host)
+#
+# TLS: use the same cert secret as the main site. Copy into argocd namespace, e.g.:
+#   kubectl get secret dev-myapp-io-tls -n myapp -o yaml | sed '/resourceVersion:/d;/uid:/d' | sed 's/namespace: myapp/namespace: argocd/' | kubectl apply -f -
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -8,16 +11,30 @@ metadata:
   name: argocd-server
   namespace: argocd
   annotations:
-    traefik.ingress.kubernetes.io/router.priority: "250"
+    # Above API paths (200) and frontend / (100); /argocd must win for any Host (incl. bare IP).
+    traefik.ingress.kubernetes.io/router.priority: "280"
+    # Preserve Host / forwarding so Argo CD matches the origin the browser used (IP vs hostname).
+    traefik.ingress.kubernetes.io/service.passhostheader: "true"
 spec:
   ingressClassName: traefik
   tls:
     - hosts:
         - "dev.example.com"
-      secretName: dev-myapp-io-argocd-tls
+      # Same name as myapp ingresses — copy secret to namespace argocd (see comment above).
+      secretName: dev-myapp-io-tls
   rules:
     - host: "dev.example.com"
       http:
+        paths:
+          - path: /argocd
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80
+    # Browsers send Host: <public IP>; without this rule Traefik returns 404 for /argocd.
+    - http:
         paths:
           - path: /argocd
             pathType: Prefix

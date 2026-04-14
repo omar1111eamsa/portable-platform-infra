@@ -1,0 +1,10 @@
+# Traefik path prefix — see README.md
+# Argo CD < 2.14.10 duplicated /argocd in the URL after local login (blank UI) — use install.yaml v2.14.10+.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cmd-params-cm
+data:
+  server.insecure: "true"
+  server.basehref: "/argocd"
+  server.rootpath: "/argocd"

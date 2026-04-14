@@ -1,14 +1,14 @@
-# Chatbot — Configuration du secret LLM
+# Chatbot — Secret Configuration
 
-Le secret `chatbot-credentials` **n'est pas** dans le dépôt (pour ne pas écraser ta clé à chaque sync ArgoCD).
+The `chatbot-credentials` secret is not stored in this repository. It must be created manually to avoid overwriting the API key on each ArgoCD sync.
 
-## Créer / mettre à jour le secret
+## Create or Update the Secret
 
 ```bash
-kubectl create secret generic chatbot-credentials -n myapp \
-  --from-literal=LLM_API_KEY=sk-or-TA_CLE_OPENROUTER \
+kubectl create secret generic chatbot-credentials \
+  -n myapp \
+  --from-literal=LLM_API_KEY=<your_openrouter_key> \
   --dry-run=client -o yaml | kubectl apply -f -
-kubectl rollout restart deployment/chatbot -n myapp
 ```
 
-Remplacer `sk-or-TA_CLE_OPENROUTER` par ta clé réelle (sans espace).
+The secret is referenced by `deployment.yaml` as the `LLM_API_KEY` environment variable.

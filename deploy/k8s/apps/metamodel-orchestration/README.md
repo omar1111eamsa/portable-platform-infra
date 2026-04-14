@@ -1,131 +1,74 @@
-# Metamodel Orchestration (Airflow)
+# Metamodel Orchestration — Operations Guide
 
-Airflow runs with 5 workloads on `backend2`:
-- `metamodel-orchestration` (API server, port 8080)
-- `metamodel-scheduler` (scheduler)
-- `metamodel-dag-processor` (DAG parser for Airflow 3)
-- `metamodel-worker` (Celery worker)
-- `metamodel-triggerer` (Triggerer)
+## Architecture
 
-Executor mode is `CeleryExecutor` with Redis broker (`redis://redis:6379/0`).
+Airflow runs in CeleryExecutor mode with five separate deployments:
 
-Task logs are configured for remote storage in an S3-compatible object store instead of being fetched from worker pod hostnames on port `8793`. The portable in-cluster target is MinIO, using `s3://airflow-logs/task-logs`.
+| Deployment | Role |
+|---|---|
+| metamodel-orchestration | Airflow API server (UI + REST API) |
+| metamodel-scheduler | DAG scheduler |
+| metamodel-dag-processor | DAG file processor |
+| metamodel-worker | Celery task worker |
+| metamodel-triggerer | Deferrable operator triggerer |
 
-Metadata DB is PostgreSQL (`AIRFLOW__DATABASE__SQL_ALCHEMY_CONN` from secret `metamodel-db-credentials` key `AIRFLOW_CONN_POSTGRES_MYAPP`).
+All components share the same container image and run on `backend2`.
 
-The code modules are mounted from PVC `metamodel-modules-pvc` at `/opt/airflow/modules`.
+## Persistent Storage
 
-Mounted source modules in the running Airflow pods:
-- `metamodel-scoring-engine-new` -> `/opt/airflow/modules/cq-scoring`
-- `Metamodel-portfolio-builder` -> `/opt/airflow/modules/cq-portfolio`
+- `metamodel-modules-pvc` — mounted at `/opt/airflow/modules` in all pods. Contains DAG files and Python scoring/portfolio modules. Changes to files on this PVC take effect on the next DAG run without requiring a pod restart or image rebuild.
+- MinIO — used for remote task log storage. Airflow writes logs to `s3://airflow-logs/` via the `aws_default` connection pointing to the internal MinIO service.
 
-These repos are cloned by the `modules-sync` init container into the shared PVC, then reused by the API server, scheduler, worker, dag-processor, and triggerer through `PYTHONPATH`.
+## Module Loading
 
-## UI exposure
+The `cq-scoring` and `cq-portfolio` modules are loaded from `/opt/airflow/modules` at DAG runtime. They are synced from GitHub via an init container on pod startup using the `github-token` secret. To update modules without redeploying the pod, copy files directly to the PVC mount on `backend2`.
 
-Airflow UI is exposed through Traefik on:
+## Required Secrets
 
-```text
-https://airflow.dev.example.com
-```
+All secrets must exist in namespace `myapp` before deployment:
 
-The current auth mode is Airflow SimpleAuth for dev. The admin password is mounted from the Kubernetes secret `metamodel-airflow-simple-auth` at `/opt/airflow/secrets/simple_auth_manager_passwords.json`, so it remains stable across pod restarts and image updates until the secret is rotated.
+| Secret | Keys |
+|---|---|
+| metamodel-db-credentials | `DB_CONN`, `AIRFLOW__DATABASE__SQL_ALCHEMY_CONN` |
+| metamodel-airflow-simple-auth | `AIRFLOW_ADMIN_PASSWORD` |
+| metamodel-airflow-s3-logging | `AIRFLOW_CONN_AWS_DEFAULT` |
+| minio-credentials | `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD` |
+| auth-credentials | `JWT_SECRET` |
+| github-token | `GITHUB_TOKEN` |
+| ghcr-secret | Docker registry pull credentials |
 
-Remote task logging uses the Airflow connection `aws_default`, injected from the Kubernetes secret `metamodel-airflow-s3-logging`.
-
-Runtime dependencies for the current setup:
-- `metamodel-db-credentials`
-- `metamodel-airflow-simple-auth`
-- `metamodel-airflow-s3-logging`
-- `minio-credentials`
-- `github-token`
-- `ghcr-secret`
-
-Current logging flow:
-- Airflow task logs are written to MinIO bucket `airflow-logs`
-- logical prefix: `task-logs`
-- connection endpoint: `http://minio:9000`
-- this avoids UI failures caused by direct worker hostname resolution
-
-## Operational checks
+## Operational Commands
 
 ```bash
-kubectl -n myapp get deploy metamodel-orchestration metamodel-scheduler metamodel-dag-processor metamodel-worker metamodel-triggerer
+# Pod status
 kubectl -n myapp get pods -l app=metamodel-orchestration
 kubectl -n myapp get pods -l app=metamodel-scheduler
-kubectl -n myapp get pods -l app=metamodel-dag-processor
 kubectl -n myapp get pods -l app=metamodel-worker
-kubectl -n myapp get pods -l app=metamodel-triggerer
-```
 
-Health check from API pod:
-
-```bash
+# Airflow health
 kubectl -n myapp exec deploy/metamodel-orchestration -- \
-  python3 - <<'PY'
-import urllib.request
-u="http://127.0.0.1:8080/api/v2/monitor/health"
-with urllib.request.urlopen(u, timeout=10) as r:
-    print(r.status)
-    print(r.read().decode())
-PY
-```
+  curl -s http://127.0.0.1:8080/api/v2/monitor/health | python3 -m json.tool
 
-Expected:
-- `metadatabase=healthy`
-- `scheduler=healthy`
-- `triggerer=healthy`
-- `dag_processor=healthy`
-
-Automatic monitoring is also deployed through `deploy/k8s/cronjobs/metamodel-health-check.yaml`. It checks the same endpoint through the internal service URL instead of `kubectl exec`.
-
-Remote logging checks:
-
-```bash
-kubectl -n myapp get deploy minio
-kubectl -n myapp get jobs minio-init-airflow-logs
-kubectl -n myapp exec deploy/metamodel-orchestration -- env | rg 'AIRFLOW__LOGGING__REMOTE|AIRFLOW_CONN_AWS_DEFAULT'
-```
-
-Expected:
-- `minio` is `1/1`
-- job `minio-init-airflow-logs` is `Complete`
-- `AIRFLOW__LOGGING__REMOTE_LOGGING=true`
-- `AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER=s3://airflow-logs/task-logs`
-
-## DAG test run
-
-Current DAG split:
-- `metapipeline_dag`: Stage A, every 5 minutes
-- `stage_b_dag`: Stage B + reward, every hour
-
-```bash
+# List DAGs
 kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags list
-kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags unpause metapipeline_dag
-kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags unpause stage_b_dag
+
+# Trigger a run manually
 kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags trigger metapipeline_dag
-kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags list-runs metapipeline_dag
-kubectl -n myapp exec deploy/metamodel-orchestration -- airflow dags list-runs stage_b_dag
+
+# View recent DAG runs
+kubectl -n myapp exec deploy/metamodel-orchestration -- \
+  airflow dags list-runs metapipeline_dag
+
+# Check task states for a specific run
+kubectl -n myapp exec deploy/metamodel-orchestration -- \
+  airflow tasks states-for-dag-run metapipeline_dag <run_id>
 ```
 
-Timing note:
-- Stage B respects the `1h` horizon logic, but runs in batch mode on the next hourly `stage_b_dag` schedule.
-- A prediction inserted manually can be consumed by a waiting scheduled Stage A run before a manual run reaches `task_score`.
+## Troubleshooting
 
-## Current dev validation
-
-The current dev deployment has been revalidated for Stage A end to end:
-- new prediction detected
-- scoring succeeded
-- portfolio succeeded
-- trade signal created
-- execution verification succeeded
-
-Stage B is deployed separately and has successful runs, but should be validated as its own path after the 1-hour horizon has elapsed.
-
-## Disk pressure recovery (backend2)
-
-```bash
-sudo k3s crictl rmi --prune
-kubectl describe node backend2 | grep -A5 Conditions
-```
+| Symptom | Action |
+|---|---|
+| DAG not visible in UI | Check `metamodel-dag-processor` logs for import errors |
+| Task stuck in queued state | Check `metamodel-worker` is running and Redis is reachable |
+| Logs not loading in UI | Verify `minio-init-airflow-logs` job completed and `aws_default` connection is set |
+| Module import error | Check `/opt/airflow/modules` content on PVC; re-run init container if needed |

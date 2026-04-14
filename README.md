@@ -1,85 +1,56 @@
-# Backend Management Service
+# MyApp — Infrastructure Management
 
-> **Active CI branch:** test-argocd  
-> **Last sync from remote:** 2026-03-09
-
-
-## Overview
-
-This repository is the **central infrastructure and deployment control plane** for the MyApp platform.  
-It orchestrates, configures, and deploys backend microservices and supporting infrastructure in a secure, reproducible, and scalable way.
-
-**Application source code is not stored here.**  
-Each backend service (user-management, api-gateway, payment-service, etc.) lives in its own dedicated repository.
-
----
+This repository contains all Kubernetes manifests, Ansible playbooks, and Terraform configurations for the MyApp platform deployed on a 3-node k3s cluster.
 
 ## Repository Structure
 
 ```
 portable-platform-infra/
-├── ansible/                    # Ansible (k3s on 3 VMs: backend-vm, frontend-vm, backend2)
-│   ├── playbook.yml           # k3s setup
-│   └── roles/k3s-server, k3s-agent
-├── deploy/
-│   ├── k8s/                   # Kubernetes manifests (k3s) — production
-│   │   ├── base/              # Namespace
-│   │   ├── infra/             # Postgres, Redis, Consul, RabbitMQ
-│   │   ├── apps/              # api-gateway, frontend, user-management, etc.
-│   │   ├── cronjobs/          # Disk cleanup, evicted pods
-│   │   └── argocd/            # ArgoCD Ingress
-│   ├── local/                 # Docker Compose (local dev only)
-│   ├── docs/                  # Architecture docs (INDEX.md)
-│   └── argocd/                # ArgoCD Application definition
-├── .env.example
-└── README.md
+├── ansible/          Cluster provisioning playbooks
+├── terraform/        GCP base infrastructure
+└── deploy/
+    ├── argocd/       ArgoCD application definition
+    ├── docs/         Architecture and operational documentation
+    ├── k8s/          Kubernetes manifests (apps, infra, network)
+    ├── SETUP.md      Full cluster bootstrap guide
+    └── TESTERS-GUIDE.md  API and endpoint reference for testers
 ```
 
----
+## Cluster Overview
 
-## Responsibilities
+| Node | Role | Internal IP |
+|---|---|---|
+| backend-vm | k3s control-plane | 10.0.0.11 |
+| frontend-vm | k3s worker, public ingress | 10.0.0.12 |
+| backend2 | k3s worker | 10.0.0.13 |
 
-- **Kubernetes (k3s)** : manifests, Ingress, CronJobs — production deployment
-- **ArgoCD** : GitOps, watches `test-argocd`, syncs on manifest changes
-- **Infrastructure** : PostgreSQL, Redis, Consul, RabbitMQ
-- **Documentation** : architecture, deployment guide, checklist
+- **Namespace**: `myapp`
+- **Ingress**: Traefik
+- **GitOps**: ArgoCD watching `test-argocd` branch of this repository
+- **Domain**: `dev.example.com`
 
----
+## CI/CD Flow
 
-## Domains & access
+Every service repository has a `test-ci` branch. On each push:
 
-- **dev.example.com** — Frontend principal (app), API (`/api`), ArgoCD (`/argocd`), and UI tools by path (`/pgadmin`, `/rabbitmq`, `/grafana`, `/consul`, `/prometheus`)
-- **airflow.dev.example.com** — Airflow UI/API host
-- **dashboard.example.com** — Admin frontend
-- **DNS** : A records point to the reserved public IP of `frontend-vm`. Cluster has 3 nodes: `backend-vm`, `frontend-vm`, `backend2`.
+1. GitHub Actions builds and pushes a Docker image to GHCR, tagged with the commit SHA.
+2. CI writes the new image tag into the corresponding deployment manifest in this repository.
+3. ArgoCD detects the change and syncs the cluster automatically.
 
-## Deployment (k8s + ArgoCD)
+No manual manifest updates are required.
 
-**Production** : ArgoCD syncs automatically from branch `test-argocd`, path `deploy/k8s`.  
-See [deploy/argocd/ARGOCD-AUTODEPLOY.md](deploy/argocd/ARGOCD-AUTODEPLOY.md).
+## Documentation Index
 
-**Manual apply** :
-
-```bash
-# Prérequis : ghcr-secret, KUBECONFIG
-kubectl apply -k deploy/k8s/
-# Avec domaine fixe (dev.example.com) :
-deploy/k8s/scripts/apply-with-domain.sh
-```
-
-See [deploy/k8s/DEPLOYMENT.md](deploy/k8s/DEPLOYMENT.md) and [deploy/SETUP.md](deploy/SETUP.md).
-
----
-
-## Security
-
-- No secrets committed to the repository
-- Secrets injected at runtime (ghcr-secret, postgres-credentials, etc.)
-- Backend services internal; only gateway/frontend and selected dev UIs exposed via Ingress
-- UI exposure is path/host constrained; sensitive UIs (ArgoCD, pgAdmin, RabbitMQ, Grafana, Airflow, Consul) require authentication
-
----
-
-## License
-
-Proprietary — internal platform management.
+| Document | Purpose |
+|---|---|
+| [deploy/docs/ARCHITECTURE-K8S.md](deploy/docs/ARCHITECTURE-K8S.md) | Kubernetes architecture, node layout, workload placement |
+| [deploy/docs/FLOW-END-TO-END.md](deploy/docs/FLOW-END-TO-END.md) | Full trading pipeline flow, stages and database writes |
+| [deploy/docs/SERVICE-MATRIX.md](deploy/docs/SERVICE-MATRIX.md) | All services, images, ports, dependencies |
+| [deploy/docs/DB-ARCHITECTURE.md](deploy/docs/DB-ARCHITECTURE.md) | Database schema, tables, relationships |
+| [deploy/docs/METAMODEL-FONCTIONNEMENT.md](deploy/docs/METAMODEL-FONCTIONNEMENT.md) | Airflow DAG pipeline internals |
+| [deploy/docs/ENDPOINTS-CATALOG.md](deploy/docs/ENDPOINTS-CATALOG.md) | All API endpoints |
+| [deploy/SETUP.md](deploy/SETUP.md) | Cluster bootstrap from scratch |
+| [deploy/TESTERS-GUIDE.md](deploy/TESTERS-GUIDE.md) | Tester reference: URLs, auth, API usage |
+| [deploy/argocd/ARGOCD-AUTODEPLOY.md](deploy/argocd/ARGOCD-AUTODEPLOY.md) | ArgoCD setup and auto-deploy configuration |
+| [ansible/README.md](ansible/README.md) | Ansible usage and inventory |
+| [terraform/README.md](terraform/README.md) | Terraform GCP infrastructure |

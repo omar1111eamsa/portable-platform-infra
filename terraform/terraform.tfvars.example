@@ -1,0 +1,10 @@
+project_id = "project-1116f13d-c944-4ebe-93c"
+region     = "europe-west1"
+zone       = "europe-west1-b"
+
+admin_source_ranges = [
+  "0.0.0.0/0"
+]
+
+# Replace with the real content of your public SSH key.
+ssh_public_key = "ssh-ed25519 AAAA..."

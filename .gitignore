@@ -44,10 +44,11 @@ __pycache__/
 .mypy_cache/
 .ansible/
 
-# Terraform (if used later)
+# Terraform
 .terraform/
 *.tfstate
 *.tfstate.*
+terraform.tfvars
 
 # Misc
 *.bak

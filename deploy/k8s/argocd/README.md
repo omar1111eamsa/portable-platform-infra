@@ -1,37 +1,41 @@
-# ArgoCD Ingress — accès UI via domaine
+# ArgoCD — Installation and Ingress
 
-## URL d'accès
+## Installation
 
-- **https://dev.example.com/argocd**
-- Aucun header supplementaire requis.
+ArgoCD is installed from the official upstream manifest (`install.yaml`) pinned to v2.14.10+. This version resolves the `/argocd/argocd/applications` redirect issue after local login (upstream issue #20790).
 
-## Prérequis: configurer ArgoCD pour le reverse proxy
+The `argocd-cmd-params-patch.yaml` configures ArgoCD to operate behind a reverse proxy at path `/argocd`:
 
-Exécuter **une fois** (déjà fait si l'Ingress a été appliqué manuellement):
-
-```bash
-kubectl patch configmap argocd-cmd-params-cm -n argocd --type merge -p '{"data":{"server.insecure":"true","server.basehref":"/argocd","server.rootpath":"/argocd"}}'
-kubectl rollout restart deployment argocd-server -n argocd
+```yaml
+server.insecure: "true"
+server.basehref: /argocd
+server.rootpath: /argocd
 ```
 
-## Si argocd-server est en CrashLoopBackOff (probes trop courtes)
+## Access
 
-Exécuter une fois pour augmenter les délais des probes (liveness/readiness):
-
-```bash
-kubectl patch deployment argocd-server -n argocd --type='json' -p='[
-  {"op": "replace", "path": "/spec/template/spec/containers/0/livenessProbe/initialDelaySeconds", "value": 60},
-  {"op": "replace", "path": "/spec/template/spec/containers/0/readinessProbe/initialDelaySeconds", "value": 30}
-]'
-```
-
-Puis attendre ~1 min que le pod repasse en Running.
-
-## Mot de passe admin
+- **URL**: `https://dev.example.com/argocd`
+- **Username**: `admin`
+- **Password**: Retrieved from the cluster secret (see below)
 
 ```bash
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
-echo
+kubectl get secret argocd-initial-admin-secret -n argocd \
+  -o jsonpath='{.data.password}' | base64 -d
 ```
 
-Utilisateur par défaut: `admin`
+## TLS
+
+TLS is terminated at Traefik. ArgoCD itself runs in insecure mode (`--insecure`). The Traefik ingress handles the HTTPS certificate for `dev.example.com`.
+
+## Application
+
+The `myapp` ArgoCD Application is defined in `deploy/argocd/application-myapp.yaml`. It monitors the `test-argocd` branch of this repository and applies `deploy/k8s` via Kustomize.
+
+Auto-sync is enabled with pruning and self-healing.
+
+## Verify
+
+```bash
+kubectl get application myapp -n argocd \
+  -o custom-columns="NAME:.metadata.name,SYNC:.status.sync.status,HEALTH:.status.health.status,REVISION:.status.sync.revision"
+```

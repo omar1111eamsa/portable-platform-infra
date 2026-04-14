@@ -1,39 +1,20 @@
-# Network Policies (myapp)
+# Network Policies
 
-Baseline policies applied in namespace `myapp`:
+Default-deny network policies applied in namespace `myapp`. All inter-service communication is blocked by default and must be explicitly allowed.
 
-1. `00-default-deny.yaml`  
-   Deny all ingress/egress by default.
+## Applied Policies
 
-2. `10-allow-dns-egress.yaml`  
-   Allow DNS egress to CoreDNS (`kube-system`, `k8s-app=kube-dns`, TCP/UDP 53).
+| File | Effect |
+|---|---|
+| `00-default-deny.yaml` | Deny all ingress and egress for all pods in the namespace |
+| `10-allow-dns-egress.yaml` | Allow egress to CoreDNS (kube-system, port 53 TCP/UDP) |
+| `20-allow-traefik-ingress.yaml` | Allow ingress from Traefik ingress controller |
+| `25-allow-traefik-acme-http01-solver.yaml` | Allow Traefik ACME HTTP-01 challenge traffic |
+| `30-allow-internal-service-ports.yaml` | Allow inter-pod communication on defined service ports |
+| `40-allow-external-egress.yaml` | Allow egress to the internet for external API calls |
 
-3. `20-allow-traefik-ingress.yaml`  
-   Allow ingress from Traefik (`kube-system`, `app.kubernetes.io/name=traefik`) to:
-   - `api-gateway` on TCP 8888
-   - `frontend` on TCP 3000
+## Notes
 
-4. `25-allow-traefik-acme-http01-solver.yaml`  
-   Allow ingress from Traefik to cert-manager HTTP-01 solver pods
-   (`acme.cert-manager.io/http01-solver=true`) on TCP 8089 for Let's Encrypt challenges.
-
-5. `30-allow-internal-service-ports.yaml`  
-   Allow internal `myapp` namespace service traffic only on required ports
-   (`3000, 5432, 5672, 6379, 8080-8084, 8500, 8888`).
-
-6. `40-allow-external-egress.yaml`  
-   Allow internet egress (`80/443/465/587`) for selected pods that need external APIs/mail:
-   `user-management`, `payment-service`, `chatbot`, `metamodel-*`, `execution-engine`.
-
-## Apply
-
-```bash
-kubectl apply -k deploy/k8s/network-policies
-```
-
-## Validate quickly
-
-```bash
-kubectl -n myapp get networkpolicy
-kubectl -n myapp get pods
-```
+- Network policies are enforced by the CNI (k3s default: Flannel with NetworkPolicy support).
+- Policies are additive: a packet is allowed if any policy permits it.
+- Review `30-allow-internal-service-ports.yaml` when adding new services that require internal communication.

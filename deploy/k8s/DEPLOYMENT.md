@@ -1,165 +1,99 @@
-# Déploiement — Prérequis et ordre
+# Deployment — Prerequisites and Apply Order
 
-> **Voir aussi** : [CHECKLIST.md](CHECKLIST.md) pour la liste des configurations manquantes (DevOps + développeurs).
+## Cluster Requirements
 
-## Prérequis avant `kubectl apply`
+Three k3s nodes must be provisioned. Node names must match exactly:
 
-### 1. Cluster k3s
-- 3 nœuds : `backend-vm` (10.0.0.11), `frontend-vm` (IP publique du jumphost + 10.0.0.12), `backend2` (10.0.0.13)
-- Control-plane k3s sur backend-vm, workers sur frontend-vm et backend2. Noms exacts : `backend-vm`, `frontend-vm`, `backend2`
-- **Répartition actuelle (nodeSelector)** :
-  - **backend-vm** : postgres, consul, rabbitmq (control-plane + infra stateful)
-  - **frontend-vm** : api-gateway, frontend, redis, chatbot, user-management, crm-client, kpi-dashboard, payment-service, predictions-intake
-  - **backend2** : metamodel-orchestration, metamodel-scheduler, metamodel-dag-processor, metamodel-worker, metamodel-triggerer, execution-engine (Deployment realtime)
+| Node | IP | Role |
+|---|---|---|
+| backend-vm | 10.0.0.11 | k3s control-plane |
+| frontend-vm | 10.0.0.12 | k3s worker + public ingress |
+| backend2 | 10.0.0.13 | k3s worker |
 
-### 1b. Accès kubectl depuis ta machine (backend-vm sans IP externe)
-- Tunnel SSH : `deploy/k8s/scripts/start-kubectl-tunnel.sh --background`  
-  Puis : `export KUBECONFIG=~/.kube/myapp-k3s.yaml && kubectl get nodes`
-- Guide complet : [SETUP.md](../SETUP.md)
-- Si **TLS handshake timeout** : `./start-kubectl-tunnel.sh --check-vm` (vérifie k3s sur backend via SSH).
+k3s version: v1.35 or later. Traefik is installed automatically by k3s.
 
-### 2. Secrets à créer manuellement
+## Secrets — Create Before Applying
+
+The following secrets must be created manually before running `kubectl apply`. They are not stored in this repository.
 
 ```bash
-# Secret GHCR (images privées)
+# GHCR image pull secret
 kubectl create secret docker-registry ghcr-secret \
-  --namespace=myapp \
   --docker-server=ghcr.io \
-  --docker-username=TON_GITHUB_USERNAME \
-  --docker-password=TON_GITHUB_PAT
+  --docker-username=<github_user> \
+  --docker-password=<github_pat> \
+  -n myapp
 
-# Postgres (infra)
-kubectl create secret generic postgres-credentials -n myapp \
-  --from-literal=POSTGRES_USER=postgres \
-  --from-literal=POSTGRES_PASSWORD=remplacer-par-un-mot-de-passe-fort \
-  --from-literal=POSTGRES_DB=userdb
+# PostgreSQL + Airflow metadata
+kubectl create secret generic metamodel-db-credentials \
+  --from-literal=DB_CONN=postgresql://postgres:postgres@postgres:5432/prediction_db \
+  --from-literal=AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:postgres@postgres:5432/airflow \
+  -n myapp
 
-# RabbitMQ (infra + apps)
-kubectl create secret generic rabbitmq-credentials -n myapp \
-  --from-literal=RABBITMQ_DEFAULT_USER=remplacer-user \
-  --from-literal=RABBITMQ_DEFAULT_PASS=remplacer-password \
-  --from-literal=RABBITMQ_DEFAULT_VHOST=/ \
-  --from-literal=RABBITMQ_USERNAME=remplacer-user \
-  --from-literal=RABBITMQ_PASSWORD=remplacer-password \
-  --from-literal=RABBITMQ_VHOST=/ \
-  --from-literal=RABBITMQ_ADDRESSES='amqp://remplacer-user:remplacer-password@rabbitmq:5672/'
+# Airflow UI password
+kubectl create secret generic metamodel-airflow-simple-auth \
+  --from-literal=AIRFLOW_ADMIN_PASSWORD=<password> \
+  -n myapp
 
-# Consul UI BasicAuth (Traefik middleware)
-CONSUL_HASH="$(openssl passwd -apr1 'change-me-consul-ui')"
-kubectl create secret generic consul-ui-basic-auth -n myapp \
-  --from-literal=users="admin:${CONSUL_HASH}"
+# MinIO credentials
+kubectl create secret generic minio-credentials \
+  --from-literal=MINIO_ROOT_USER=minioadmin \
+  --from-literal=MINIO_ROOT_PASSWORD=<password> \
+  --from-literal=AIRFLOW_LOGS_BUCKET=airflow-logs \
+  -n myapp
 
-# Stripe (payment-service)
-kubectl create secret generic stripe-credentials -n myapp \
-  --from-literal=STRIPE_API_KEY=sk_test_xxx \
-  --from-literal=STRIPE_WEBHOOK_SECRET=whsec_xxx
+# Airflow S3 remote logging (points to MinIO)
+kubectl create secret generic metamodel-airflow-s3-logging \
+  --from-literal=AIRFLOW_CONN_AWS_DEFAULT='aws://?endpoint_url=http%3A%2F%2Fminio.myapp.svc.cluster.local%3A9000&aws_access_key_id=minioadmin&aws_secret_access_key=<password>' \
+  -n myapp
 
-# Google OAuth (user-management) — REQUIS pour Sign in with Google
-# Use dev.example.com (or your API/frontend host)
-kubectl create secret generic google-oauth-credentials -n myapp \
-  --from-literal=GOOGLE_CLIENT_ID=ton-client-id.apps.googleusercontent.com \
-  --from-literal=GOOGLE_CLIENT_SECRET=ton-client-secret \
-  --from-literal=GOOGLE_REDIRECT_URI=https://dev.example.com/login/oauth2/code/google \
-  --from-literal=FRONTEND_URL=https://dev.example.com
+# Shared JWT secret
+kubectl create secret generic auth-credentials \
+  --from-literal=JWT_SECRET=<jwt_secret> \
+  -n myapp
 
-# Mail SMTP (user-management) — requis pour envoi d'emails
-kubectl create secret generic mail-credentials -n myapp \
-  --from-literal=SPRING_MAIL_USERNAME=ton-email@example.com \
-  --from-literal=SPRING_MAIL_PASSWORD=ton-mot-de-passe-app
+# Google OAuth2
+kubectl create secret generic google-oauth-credentials \
+  --from-literal=GOOGLE_CLIENT_ID=<id> \
+  --from-literal=GOOGLE_CLIENT_SECRET=<secret> \
+  -n myapp
 
-# JWT partagé (api-gateway + user-management)
-kubectl create secret generic auth-credentials -n myapp \
-  --from-literal=JWT_SECRET=remplacer-par-une-cle-hex-forte
+# GitHub token for module sync
+kubectl create secret generic github-token \
+  --from-literal=GITHUB_TOKEN=<pat> \
+  -n myapp
 
-# Metamodel DB URLs (Airflow DAG)
-kubectl create secret generic metamodel-db-credentials -n myapp \
-  --from-literal=MYAPP_DB_URL='postgresql://<POSTGRES_USER>:<POSTGRES_PASSWORD>@postgres:5432/prediction_db' \
-  --from-literal=AIRFLOW_CONN_POSTGRES_MYAPP='postgresql://<POSTGRES_USER>:<POSTGRES_PASSWORD>@postgres:5432/prediction_db'
+# Chatbot LLM key
+kubectl create secret generic chatbot-credentials \
+  --from-literal=LLM_API_KEY=<openrouter_key> \
+  -n myapp
 
-# Optional: broker credentials for execution-engine
-kubectl create secret generic execution-engine-broker-credentials -n myapp \
-  --from-literal=BINANCE_API_KEY=... \
-  --from-literal=BINANCE_SECRET_KEY=...
-
-# Pour mettre à jour le secret existant :
-# kubectl create secret generic google-oauth-credentials -n myapp \
-#   --from-literal=GOOGLE_CLIENT_ID=... \
-#   --from-literal=GOOGLE_CLIENT_SECRET=... \
-#   --from-literal=GOOGLE_REDIRECT_URI=https://dev.example.com/login/oauth2/code/google \
-#   --from-literal=FRONTEND_URL=https://dev.example.com \
-#   --dry-run=client -o yaml | kubectl apply -f -
+# Consul BasicAuth
+htpasswd -nb admin <password> | base64  # use output below
+kubectl create secret generic consul-ui-basic-auth \
+  --from-literal=users=<htpasswd_base64> \
+  -n myapp
 ```
 
-### 3. Namespace
-Créé automatiquement par `base/`.
-
----
-
-## Ordre de déploiement
+## Apply
 
 ```bash
-# 1. Base (namespace)
-kubectl apply -k deploy/k8s/base/
-
-# 2. Créer ghcr-secret (voir ci-dessus)
-# 3. Infra (postgres, redis, consul, rabbitmq) + init-databases Job (crée payment_db, crm_db, prediction_db, kpi_db ; pas de base airflow)
-kubectl apply -k deploy/k8s/infra/
-
-# 4. Attendre que postgres, redis, consul, rabbitmq soient Ready
-kubectl get pods -n myapp -w
-
-# 5. Apps
-kubectl apply -k deploy/k8s/apps/
-
-# 6. CronJobs (nettoyage disque)
-kubectl apply -k deploy/k8s/cronjobs/
+kubectl apply -k deploy/k8s
 ```
 
-Ou en une fois :
-```bash
-kubectl apply -k deploy/k8s/
-```
+ArgoCD handles this automatically on every push to `test-argocd`. Manual apply is only needed for bootstrap.
 
----
-
-## Après réinitialisation des VMs
-
-1. Réinstaller k3s sur les 3 nœuds (backend-vm, frontend-vm, backend2)
-2. Recréer le namespace et les secrets (ghcr-secret, postgres si besoin)
-3. `kubectl apply -k deploy/k8s/`
-4. Les PVC (postgres) survivent si le storage class conserve les volumes
-
----
-
-## Vérification
+## Verify
 
 ```bash
+# All pods running
 kubectl get pods -n myapp
-kubectl get ingress -n myapp
-curl -k -s https://dev.example.com/
-curl -k -s https://dev.example.com/api/actuator/health
-curl -k -I https://airflow.dev.example.com/
+
+# Airflow health
+kubectl -n myapp exec deploy/metamodel-orchestration -- \
+  curl -s http://127.0.0.1:8080/api/v2/monitor/health
+
+# Database tables accessible
+kubectl exec -n myapp deploy/postgres -- \
+  psql -U postgres -d prediction_db -c "\dt"
 ```
-
-### Vérifier OAuth2 Google (Sign in with Google)
-
-```bash
-# Test OAuth (dev.example.com)
-API_HOST="dev.example.com"
-
-# 1. /api/auth/oauth2/google doit rediriger 302 vers /oauth2/authorization/google
-curl -sI "https://$API_HOST/api/auth/oauth2/google"
-# Attendu: Location: https://$API_HOST/oauth2/authorization/google
-
-# 2. /oauth2/authorization/google doit rediriger 302 vers Google
-curl -sI -L "https://$API_HOST/api/auth/oauth2/google" | head -20
-# Attendu: Location: https://accounts.google.com/o/oauth2/...
-```
-
-Pour un test complet dans le navigateur : https://$API_HOST/auth/login → cliquer « Sign in with Google ».
-
-## Réseau et CORS
-
-- **Accès principal** : `https://dev.example.com` via `ingress-ip`.
-- **CORS** : api-gateway accepte les origines frontend configurées dans `apps/api-gateway/deployment.yaml` (`FRONTEND_ORIGIN`, `SPRING_APPLICATION_JSON`).
-- Si le domaine/IP change : mettre à jour DNS + `FRONTEND_ORIGIN` + `SPRING_APPLICATION_JSON`.

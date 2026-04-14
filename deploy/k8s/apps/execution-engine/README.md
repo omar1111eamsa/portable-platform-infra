@@ -1,36 +1,36 @@
-# Execution Engine (Realtime Consumer)
+# Execution Engine
 
-This workload runs `Metamodel-execution-engine` as a realtime RabbitMQ consumer.
+## Overview
 
-- Runtime mode (current): `python consumer_realtime.py`
-- Trigger mode: event-driven (`trade_signal.created`)
-- Scheduled on node: `backend2` (`nodeSelector`)
-- Image pinned in manifest `deployment.yaml` (tag updated by CI)
+The execution engine is a realtime RabbitMQ consumer that processes trade signals and records fills. It runs as a Kubernetes Deployment (always-on, not a CronJob) on `backend2`.
 
-## Why Deployment (not CronJob)
+## Behaviour
 
-Execution must consume events continuously from RabbitMQ.
-CronJob/batch would introduce latency and miss realtime requirements.
+- Subscribes to the `execution.events` exchange and the `trade_signal.created` routing key
+- On each message, simulates or forwards the order and writes the result to `filled_trades`
+- Accepts both legacy payload format (`orders[].orderId`) and the current format (`signal_id`)
+- Connects to PostgreSQL using the `DB_CONN` or `MYAPP_DB_URL` environment variable
 
-## RabbitMQ flow
+## Configuration
 
-- Producer: metamodel portfolio stage publishes to exchange `execution.events`
-- Routing key: `trade_signal.created`
-- Queue consumed by execution-engine: `execution.trade_signals`
+| Environment Variable | Description |
+|---|---|
+| `DB_CONN` | PostgreSQL connection string (primary) |
+| `MYAPP_DB_URL` | PostgreSQL connection string (fallback) |
+| `RABBITMQ_HOST` | RabbitMQ hostname (default: `rabbitmq`) |
+| `RABBITMQ_USERNAME` | RabbitMQ username (default: `guest`) |
+| `RABBITMQ_PASSWORD` | RabbitMQ password (default: `guest`) |
 
-Payload compatibility currently handled by the consumer:
-- modern shape with top-level `signal_id`
-- legacy shape with `orders[0].orderId`
+## Logs
 
-This keeps the live metamodel publisher and execution-engine aligned during the current dev phase.
+```bash
+kubectl -n myapp logs deploy/execution-engine --tail=50 -f
+```
 
-## Check logs/status
+## Verify Connectivity
 
-`kubectl -n myapp get deploy execution-engine`
-
-`kubectl -n myapp logs deploy/execution-engine`
-
-## Common pull issue (GHCR)
-
-If pod fails with `401 Unauthorized` or `403 Forbidden`, recreate `ghcr-secret`
-with a PAT that has `read:packages` (and org SSO authorization if required).
+```bash
+# Check filled_trades is being written
+kubectl exec -n myapp deploy/postgres -- \
+  psql -U postgres -d prediction_db -c "SELECT COUNT(*) FROM filled_trades;"
+```

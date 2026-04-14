@@ -1,45 +1,20 @@
-# Infra Folder Guide
+# Infrastructure
 
-This folder contains only Kubernetes runtime manifests for shared infrastructure in namespace `myapp`.
+Shared infrastructure components deployed in namespace `myapp`.
 
-## Included Infra
+## Components
 
-- `postgres/`: PVC, Deployment, Service, init job for app databases
-- `minio/`: PVC, Deployment, Service, init job for Airflow remote log bucket
-- `redis/`: Deployment, Service
-- `consul/`: Deployment, Service, Ingress + middlewares (`/consul`, `/ui`, `/v1`, BasicAuth)
-- `rabbitmq/`: definitions configmap, Deployment, Service
-
-Everything deployed from this folder is referenced by [`kustomization.yaml`](./kustomization.yaml).
-
-## Secrets Policy
-
-Secret examples were removed from this folder to avoid duplicated docs.
-Use the canonical commands in:
-
-- [`../DEPLOYMENT.md`](../DEPLOYMENT.md)
-- [`../CHECKLIST.md`](../CHECKLIST.md)
-
-Required secrets for infra/app boot:
-
-- `postgres-credentials`
-- `minio-credentials`
-- `metamodel-airflow-s3-logging`
-- `rabbitmq-credentials`
-- `ghcr-secret`
-- `consul-ui-basic-auth`
-
-## Deploy / Verify
-
-```bash
-kubectl apply -k deploy/k8s/infra/
-kubectl -n myapp get deploy postgres redis consul rabbitmq minio
-kubectl -n myapp get jobs minio-init-airflow-logs
-kubectl -n myapp get pods | rg -i 'postgres|redis|consul|rabbitmq|minio'
-```
+| Directory | Service | Purpose |
+|---|---|---|
+| `postgres/` | PostgreSQL 15 | Primary database for all application services. 5Gi PVC. Init job creates application databases on first start. |
+| `redis/` | Redis 7 | Celery message broker for Airflow CeleryExecutor. No persistence. |
+| `rabbitmq/` | RabbitMQ 3 | Event bus for the trading pipeline. Exchanges: `pipeline.events`, `execution.events`. |
+| `minio/` | MinIO | S3-compatible object store for Airflow remote task logs. 5Gi PVC. Init job creates the `airflow-logs` bucket. |
+| `consul/` | Consul | Service registry. Exposed at `/consul` with BasicAuth. |
+| `monitoring/` | Prometheus + Grafana | Metrics collection and dashboards. StatSD exporter for Airflow metrics. Postgres exporter for DB metrics. |
 
 ## Notes
 
-- `postgres/init-databases-job.yaml` creates app databases (`payment_db`, `crm_db`, `prediction_db`, `kpi_db`) and is kept in this folder because it is part of infra bootstrap.
-- `minio/init-bucket-job.yaml` creates bucket `airflow-logs` for Airflow remote logging.
-- Do not add app-specific manifests here; place them under `deploy/k8s/apps/`.
+- All infrastructure runs on `backend2` except MinIO (also on `backend2`) and Consul (frontend-vm).
+- PostgreSQL and MinIO use `hostPath`-backed PVCs bound by `nodeSelector` to their respective nodes.
+- RabbitMQ and Redis have no persistence — they recover from the Airflow scheduler and broker on restart.

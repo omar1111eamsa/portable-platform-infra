@@ -1,5 +1,8 @@
 # ArgoCD Application — MyApp
 # Branche suivie : test-argocd (pour tests, pas main)
+#
+# Si le dépôt Git est privé : créer un Secret repository dans argocd (voir ARGOCD-AUTODEPLOY.md §2b
+# et repository-secret.example.yaml). Sinon : ComparisonError "authentication required: Repository not found".
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

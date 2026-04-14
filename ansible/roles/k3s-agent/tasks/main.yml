@@ -13,16 +13,41 @@
     state: present
   become: true
 
-- name: Download k3s install script
+- name: Download k3s binary on controller
+  ansible.builtin.get_url:
+    url: "https://github.com/k3s-io/k3s/releases/download/{{ hostvars[groups['k3s_server'][0]]['k3s_version'] | default('v1.35.3+k3s1') }}/k3s"
+    dest: "/tmp/k3s-{{ hostvars[groups['k3s_server'][0]]['k3s_version'] | default('v1.35.3+k3s1') }}"
+    mode: "0755"
+  delegate_to: localhost
+  run_once: true
+  become: false
+
+- name: Copy k3s binary to agent
+  ansible.builtin.copy:
+    src: "/tmp/k3s-{{ hostvars[groups['k3s_server'][0]]['k3s_version'] | default('v1.35.3+k3s1') }}"
+    dest: /usr/local/bin/k3s
+    mode: "0755"
+  become: true
+
+- name: Download k3s install script on controller
   ansible.builtin.get_url:
     url: https://get.k3s.io
+    dest: "/tmp/install-k3s.sh"
+    mode: "0755"
+  delegate_to: localhost
+  run_once: true
+  become: false
+
+- name: Copy install script to agent
+  ansible.builtin.copy:
+    src: "/tmp/install-k3s.sh"
     dest: /tmp/install-k3s.sh
     mode: "0755"
   become: true
 
 - name: Install k3s agent
   ansible.builtin.shell: |
-    INSTALL_K3S_VERSION={{ hostvars[groups['k3s_server'][0]]['k3s_version'] | default('v1.28.5+k3s1') }} \
+    INSTALL_K3S_SKIP_DOWNLOAD=true \
     K3S_URL=https://{{ k3s_server_ip }}:6443 \
     K3S_TOKEN={{ k3s_token }} \
     /tmp/install-k3s.sh agent

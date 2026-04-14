@@ -1,0 +1,7 @@
+[
+  {
+    "op": "replace",
+    "path": "/rules/0/verbs",
+    "value": ["delete", "get", "list", "patch", "watch"]
+  }
+]

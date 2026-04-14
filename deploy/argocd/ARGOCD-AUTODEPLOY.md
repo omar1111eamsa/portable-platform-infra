@@ -1,56 +1,66 @@
-# ArgoCD Auto-Deploy Setup
+# ArgoCD — Auto-Deploy Configuration
 
-When a service (Front-end, user-management, api-gateway, etc.) pushes to its CI branch, the workflow:
+## Overview
 
-1. Builds and pushes a Docker image to GHCR
-2. Clones `portable-platform-infra` (branch `test-argocd`)
-3. Updates the deployment YAML with the new image tag
-4. Commits and pushes the change
-5. ArgoCD detects the change and syncs the cluster
+ArgoCD monitors the `test-argocd` branch of `portable-platform-infra` and automatically syncs the cluster on every commit to that branch.
 
-## Required: `GH_PAT` Secret
+- **ArgoCD URL**: `https://dev.example.com/argocd`
+- **Application name**: `myapp`
+- **Destination namespace**: `myapp`
+- **Sync policy**: Automated (self-healing, prune enabled)
 
-Step 2–4 requires a **GitHub Personal Access Token** with write access to `portable-platform-infra`.
+## How It Works
 
-### 1. Create a Personal Access Token
+1. A service's GitHub Actions CI pipeline builds a Docker image and pushes it to GHCR.
+2. CI updates the `image:` tag in the relevant deployment manifest in this repository on the `test-argocd` branch.
+3. ArgoCD detects the commit within its polling interval (default: 3 minutes) and applies the changes.
 
-1. Go to [GitHub Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens)
-2. Generate a new token (classic)
-3. Grant scopes: **`repo`** (full control of private repositories) + **`read:packages`** (download GHCR images)
-4. Copy the token (you won’t see it again)
-
-### 2. Add `GH_PAT` in each app repo
-
-Add the secret in **Settings → Secrets and variables → Actions** for:
-
-| Repository | Branch CI uses |
-|------------|----------------|
-| MyApp/Front-end | `test-ci-frontend` |
-| MyApp/Backend-User-management-and-subscripption | `test-ci-user-management` |
-| MyApp/Backend-api-gateway | (configure as needed) |
-| MyApp/Backend-payment-service | (configure as needed) |
-| MyApp/Backend-KPI-Dashboard-notifications | (configure as needed) |
-| MyApp/Backend-chatbot | (configure as needed) |
-| MyApp/Backend-predictions-intake-service | (configure as needed) |
-| MyApp/Backend-crm-client | (configure as needed) |
-
-- Secret name: **`GH_PAT`**
-- Value: the token you created
-
-### 3. Ensure the ArgoCD Application exists
-
-Apply the ArgoCD Application so it watches the `test-argocd` branch:
+Manual sync can be triggered via the ArgoCD UI or CLI:
 
 ```bash
-kubectl apply -f deploy/argocd/application-myapp.yaml
+argocd app sync myapp
 ```
 
-The Application uses `syncPolicy.automated`, so it syncs automatically when the Git repo changes.
+## Application Definition
 
-### 4. Verify the flow
+The ArgoCD Application manifest is at `deploy/argocd/application-myapp.yaml`.
 
-1. Push a commit to `test-ci-frontend` (or `test-ci-user-management`)
-2. Check GitHub Actions: build and push should succeed, and the "Update manifests and push to test-argocd" step should complete
-3. In ArgoCD, the `myapp` app should sync and roll out the new image
+Key fields:
 
-If `GH_PAT` is missing, the workflow will fail with a clear error asking you to add it.
+```yaml
+source:
+  repoURL: https://github.com/MyApp/portable-platform-infra
+  targetRevision: test-argocd
+  path: deploy/k8s
+destination:
+  server: https://kubernetes.default.svc
+  namespace: myapp
+syncPolicy:
+  automated:
+    prune: true
+    selfHeal: true
+```
+
+## Adding a New Service
+
+1. Create the deployment manifest under `deploy/k8s/apps/<service-name>/`.
+2. Add the manifest path to `deploy/k8s/kustomization.yaml`.
+3. Commit to `test-argocd`. ArgoCD will pick up and deploy the new workload.
+
+## Credentials
+
+The ArgoCD initial admin password is stored in the cluster:
+
+```bash
+kubectl get secret argocd-initial-admin-secret -n argocd \
+  -o jsonpath='{.data.password}' | base64 -d
+```
+
+## Troubleshooting
+
+| Symptom | Action |
+|---|---|
+| `OutOfSync` but no manifest change | Run `argocd app sync myapp --force` |
+| Sync fails on image pull | Verify the GHCR image tag exists and the pull secret is valid |
+| Application stuck in `Progressing` | Check pod events: `kubectl describe pod -n myapp <pod>` |
+| ArgoCD UI unreachable | Check Traefik ingress and the `argocd-server` pod |
