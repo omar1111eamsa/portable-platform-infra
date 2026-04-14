@@ -30,7 +30,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: scoring-engine
-          image: ghcr.io/myapp/metamodel-scoring-engine:1de0799
+          image: ghcr.io/myapp/metamodel-scoring-engine:515d925
           imagePullPolicy: Always
           env:
             - name: PORT
