@@ -1,0 +1,50 @@
+# Routes traffic on dev.example.com to mobile-web or desktop frontend
+# based on the User-Agent header.
+#
+# Priority order (highest wins):
+#   300 - ingress-ip-api     (standard Ingress, /api /login /oauth2 /chatbot /ws /payment-service)
+#   150 - ingressroute-mobile-detect (IngressRoute CRD, User-Agent contains mobile keywords)
+#   100 - ingressroute-desktop       (IngressRoute CRD, desktop fallback)
+---
+# Mobile user-agent detection — served by the Flutter web build
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingressroute-mobile-detect
+  namespace: myapp
+  labels:
+    app: ingress-ip
+spec:
+  entryPoints:
+    - websecure
+    - web
+  routes:
+    - match: >-
+        Host(`dev.example.com`) &&
+        HeaderRegexp(`User-Agent`,
+          `(?i)(Mobile|Android|iPhone|iPad|iPod|webOS|BlackBerry|Windows Phone|IEMobile|Opera Mini)`)
+      kind: Rule
+      priority: 150
+      services:
+        - name: mobile-web
+          port: 80
+---
+# Desktop fallback — served by the Next.js frontend
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingressroute-desktop
+  namespace: myapp
+  labels:
+    app: ingress-ip
+spec:
+  entryPoints:
+    - websecure
+    - web
+  routes:
+    - match: Host(`dev.example.com`)
+      kind: Rule
+      priority: 100
+      services:
+        - name: frontend
+          port: 3000

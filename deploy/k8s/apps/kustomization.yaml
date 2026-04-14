@@ -53,6 +53,8 @@ resources:
   # mail-credentials: créer manuellement (voir DEPLOYMENT.md)
   - mobile-web/deployment.yaml
   - mobile-web/service.yaml
+  # Mobile/desktop routing via IngressRoute CRDs (User-Agent header detection)
+  - ingressroute-frontend.yaml
   # Ingress dev.example.com
   - ingress-ip.yaml
 

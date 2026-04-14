@@ -1,5 +1,12 @@
-# Ingress for dev.example.com (frontend + API gateway)
-# ingress-ip-api priority > ingress-ip-frontend so /api, /login, etc. match before /
+# Ingress for dev.example.com
+#
+# Priority model:
+#   300 - ingress-ip-api          API paths (/api /login /oauth2 ...) -> api-gateway
+#   150 - ingressroute-mobile-detect  User-Agent mobile -> mobile-web  (IngressRoute CRD)
+#   100 - ingressroute-desktop        desktop fallback -> frontend      (IngressRoute CRD)
+#
+# Mobile/desktop routing is handled by IngressRoute CRDs in ingressroute-frontend.yaml.
+# The standard Ingress below only handles the API surface and the admin dashboard.
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -9,7 +16,7 @@ metadata:
   labels:
     app: ingress-ip
   annotations:
-    traefik.ingress.kubernetes.io/router.priority: "200"
+    traefik.ingress.kubernetes.io/router.priority: "300"
 spec:
   ingressClassName: traefik
   tls:
@@ -66,33 +73,6 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-ip-frontend
-  namespace: myapp
-  labels:
-    app: ingress-ip
-  annotations:
-    traefik.ingress.kubernetes.io/router.priority: "100"
-spec:
-  ingressClassName: traefik
-  tls:
-    - hosts:
-        - "dev.example.com"
-      secretName: dev-myapp-io-tls
-  rules:
-    - host: "dev.example.com"
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: frontend
-                port:
-                  number: 3000
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
   name: ingress-dashboard-admin
   namespace: myapp
   labels:
@@ -116,7 +96,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-mobile-web
+  name: ingress-mobile-host
   namespace: myapp
   labels:
     app: ingress-ip
