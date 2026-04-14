@@ -17,6 +17,7 @@ spec:
           - pgadmin
           - rabbitmq
           - consul
+          - mobile-web
   policyTypes:
     - Ingress
   ingress:
@@ -44,3 +45,5 @@ spec:
           port: 8500
         - protocol: TCP
           port: 9090
+        - protocol: TCP
+          port: 80
