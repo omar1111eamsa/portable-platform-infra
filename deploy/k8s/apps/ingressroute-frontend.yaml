@@ -18,6 +18,8 @@ spec:
   entryPoints:
     - websecure
     - web
+  tls:
+    secretName: dev-myapp-io-tls
   routes:
     - match: >-
         Host(`dev.example.com`) &&
@@ -41,6 +43,8 @@ spec:
   entryPoints:
     - websecure
     - web
+  tls:
+    secretName: dev-myapp-io-tls
   routes:
     - match: Host(`dev.example.com`)
       kind: Rule
@@ -48,3 +52,4 @@ spec:
       services:
         - name: frontend
           port: 3000
+
