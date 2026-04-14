@@ -1,16 +1,15 @@
-# Routes traffic on dev.example.com to mobile-web or desktop frontend
-# based on the User-Agent header.
+# All routing for dev.example.com — single IngressRoute CRD with explicit priorities.
+# Traefik v3: no OR (||) in rules — use separate route entries per path prefix.
 #
 # Priority order (highest wins):
-#   300 - ingress-ip-api     (standard Ingress, /api /login /oauth2 /chatbot /ws /payment-service)
-#   150 - ingressroute-mobile-detect (IngressRoute CRD, User-Agent contains mobile keywords)
-#   100 - ingressroute-desktop       (IngressRoute CRD, desktop fallback)
----
-# Mobile user-agent detection — served by the Flutter web build
+#   200 — API/backend paths (any UA) → api-gateway
+#   150 — mobile User-Agent         → mobile-web
+#   100 — desktop fallback           → frontend
+
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: ingressroute-mobile-detect
+  name: ingressroute-myapp
   namespace: myapp
   labels:
     app: ingress-ip
@@ -21,6 +20,50 @@ spec:
   tls:
     secretName: dev-myapp-io-tls
   routes:
+    # ── API paths (priority 200) ─────────────────────────────────────────────
+    - match: Host(`dev.example.com`) && PathPrefix(`/api`)
+      kind: Rule
+      priority: 200
+      services:
+        - name: api-gateway
+          port: 8888
+
+    - match: Host(`dev.example.com`) && PathPrefix(`/login`)
+      kind: Rule
+      priority: 200
+      services:
+        - name: api-gateway
+          port: 8888
+
+    - match: Host(`dev.example.com`) && PathPrefix(`/oauth2`)
+      kind: Rule
+      priority: 200
+      services:
+        - name: api-gateway
+          port: 8888
+
+    - match: Host(`dev.example.com`) && PathPrefix(`/chatbot`)
+      kind: Rule
+      priority: 200
+      services:
+        - name: api-gateway
+          port: 8888
+
+    - match: Host(`dev.example.com`) && PathPrefix(`/ws`)
+      kind: Rule
+      priority: 200
+      services:
+        - name: api-gateway
+          port: 8888
+
+    - match: Host(`dev.example.com`) && PathPrefix(`/payment-service`)
+      kind: Rule
+      priority: 200
+      services:
+        - name: api-gateway
+          port: 8888
+
+    # ── Mobile browser (priority 150) ────────────────────────────────────────
     - match: >-
         Host(`dev.example.com`) &&
         HeaderRegexp(`User-Agent`,
@@ -30,26 +73,11 @@ spec:
       services:
         - name: mobile-web
           port: 80
----
-# Desktop fallback — served by the Next.js frontend
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: ingressroute-desktop
-  namespace: myapp
-  labels:
-    app: ingress-ip
-spec:
-  entryPoints:
-    - websecure
-    - web
-  tls:
-    secretName: dev-myapp-io-tls
-  routes:
+
+    # ── Desktop fallback (priority 100) ──────────────────────────────────────
     - match: Host(`dev.example.com`)
       kind: Rule
       priority: 100
       services:
         - name: frontend
           port: 3000
-
