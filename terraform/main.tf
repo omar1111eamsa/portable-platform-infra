@@ -171,7 +171,7 @@ resource "null_resource" "bootstrap" {
     command = <<-EOT
       set -euo pipefail
       REPO_ROOT="$(cd "$(dirname "${path.module}")" && pwd)"
-      SECRETS_FILE="${SECRETS_FILE:-${path.module}/../deploy/k8s/secrets.env}"
+      SECRETS_FILE="$${SECRETS_FILE:-${path.module}/../deploy/k8s/secrets.env}"
       if [[ ! -f "$SECRETS_FILE" ]]; then
         echo "ERROR: secrets.env not found at $SECRETS_FILE"
         echo "Run: cp deploy/k8s/secrets.env.example deploy/k8s/secrets.env && fill values"
