@@ -38,6 +38,12 @@ spec:
                 secretKeyRef:
                   name: chatbot-credentials
                   key: LLM_API_KEY
+            - name: CRM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: chatbot-credentials
+                  key: CRM_API_KEY
+                  optional: true
             - name: DB_PATH
               value: /data/chatbot.db
           ports:

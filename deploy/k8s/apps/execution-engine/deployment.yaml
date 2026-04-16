@@ -51,6 +51,18 @@ spec:
                 secretKeyRef:
                   name: rabbitmq-credentials
                   key: RABBITMQ_VHOST
+            - name: TWS_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: execution-engine-tws-credentials
+                  key: TWS_CLIENT_ID
+                  optional: true
+            - name: TWS_ACCOUNT_CODE
+              valueFrom:
+                secretKeyRef:
+                  name: execution-engine-tws-credentials
+                  key: TWS_ACCOUNT_CODE
+                  optional: true
             - name: EXECUTION_EVENTS_EXCHANGE
               value: "execution.events"
             - name: EXECUTION_EVENTS_ROUTING_KEY

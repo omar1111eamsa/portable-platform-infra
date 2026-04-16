@@ -204,13 +204,10 @@ require_env STRIPE_WEBHOOK_SECRET
 require_env GITHUB_TOKEN
 require_env CONSUL_UI_PASSWORD
 require_env GH_PAT
+require_env LLM_API_KEY
 
 MYAPP_DB_URL="${MYAPP_DB_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/prediction_db}"
 AIRFLOW_CONN_POSTGRES_MYAPP="${AIRFLOW_CONN_POSTGRES_MYAPP:-${MYAPP_DB_URL}}"
-if [[ -z "${LLM_API_KEY:-}" ]]; then
-  LLM_API_KEY="sk-or-REDACTED"
-  echo "WARN: LLM_API_KEY is empty, using fallback value for chatbot-credentials"
-fi
 
 kubectl -n myapp create secret docker-registry ghcr-secret \
   --docker-server=ghcr.io \
@@ -233,7 +230,8 @@ create_or_update_secret rabbitmq-credentials \
   --from-literal=RABBITMQ_ADDRESSES="${RABBITMQ_ADDRESSES}"
 
 create_or_update_secret chatbot-credentials \
-  --from-literal=LLM_API_KEY="${LLM_API_KEY}"
+  --from-literal=LLM_API_KEY="${LLM_API_KEY}" \
+  --from-literal=CRM_API_KEY="${CRM_API_KEY:-}"
 
 create_or_update_secret auth-credentials \
   --from-literal=JWT_SECRET="${JWT_SECRET}"
@@ -292,6 +290,20 @@ if [[ -n "${BINANCE_API_KEY:-}" && -n "${BINANCE_SECRET_KEY:-}" ]]; then
     --from-literal=BINANCE_SECRET_KEY="${BINANCE_SECRET_KEY}"
 fi
 
+# Interactive Brokers TWS credentials (optional — only provisioned when set)
+if [[ -n "${TWS_CLIENT_ID:-}" || -n "${TWS_ACCOUNT_CODE:-}" ]]; then
+  create_or_update_secret execution-engine-tws-credentials \
+    --from-literal=TWS_CLIENT_ID="${TWS_CLIENT_ID:-}" \
+    --from-literal=TWS_ACCOUNT_CODE="${TWS_ACCOUNT_CODE:-}"
+fi
+
+# Airflow analytical pipeline tokens (optional — only provisioned when set)
+if [[ -n "${HF_API_TOKEN:-}" || -n "${AUM_REFERENCE:-}" ]]; then
+  create_or_update_secret metamodel-airflow-pipeline-credentials \
+    --from-literal=HF_API_TOKEN="${HF_API_TOKEN:-}" \
+    --from-literal=AUM_REFERENCE="${AUM_REFERENCE:-}"
+fi
+
 if [[ -n "${WORLDMONITOR_BASE_URL:-}" || -n "${WORLDMONITOR_TOKEN:-}" ]]; then
   create_or_update_secret worldmonitor-credentials \
     --from-literal=WORLDMONITOR_BASE_URL="${WORLDMONITOR_BASE_URL:-}" \
@@ -306,12 +318,16 @@ MOBILE_API_BASE_URL="${MOBILE_API_BASE_URL:-https://dev.example.com/api/auth}"
 MOBILE_GOOGLE_OAUTH_ANDROID_CLIENT_ID="${MOBILE_GOOGLE_OAUTH_ANDROID_CLIENT_ID:-}"
 MOBILE_GOOGLE_OAUTH_ANDROID_SERVER_CLIENT_ID="${MOBILE_GOOGLE_OAUTH_ANDROID_SERVER_CLIENT_ID:-}"
 MOBILE_GOOGLE_OAUTH_WEB_CLIENT_ID="${MOBILE_GOOGLE_OAUTH_WEB_CLIENT_ID:-}"
+MOBILE_GOOGLE_OAUTH_IOS_CLIENT_ID="${MOBILE_GOOGLE_OAUTH_IOS_CLIENT_ID:-}"
+MOBILE_GOOGLE_OAUTH_IOS_SERVER_CLIENT_ID="${MOBILE_GOOGLE_OAUTH_IOS_SERVER_CLIENT_ID:-}"
 create_or_update_secret mobile-web-env \
   --from-literal=API_HOST="${MOBILE_API_HOST}" \
   --from-literal=API_BASE_URL="${MOBILE_API_BASE_URL}" \
   --from-literal=GOOGLE_OAUTH_ANDROID_CLIENT_ID="${MOBILE_GOOGLE_OAUTH_ANDROID_CLIENT_ID}" \
   --from-literal=GOOGLE_OAUTH_ANDROID_SERVER_CLIENT_ID="${MOBILE_GOOGLE_OAUTH_ANDROID_SERVER_CLIENT_ID}" \
   --from-literal=GOOGLE_OAUTH_WEB_CLIENT_ID="${MOBILE_GOOGLE_OAUTH_WEB_CLIENT_ID}" \
+  --from-literal=GOOGLE_OAUTH_IOS_CLIENT_ID="${MOBILE_GOOGLE_OAUTH_IOS_CLIENT_ID}" \
+  --from-literal=GOOGLE_OAUTH_IOS_SERVER_CLIENT_ID="${MOBILE_GOOGLE_OAUTH_IOS_SERVER_CLIENT_ID}" \
   --from-literal=APP_NAME="MyApp" \
   --from-literal=APP_DEBUG="false"
 
