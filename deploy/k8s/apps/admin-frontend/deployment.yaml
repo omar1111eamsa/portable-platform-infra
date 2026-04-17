@@ -30,7 +30,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: admin-frontend
-          image: ghcr.io/myapp/admin-frontend:844576b
+          image: ghcr.io/myapp/admin-frontend:824bab2
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
