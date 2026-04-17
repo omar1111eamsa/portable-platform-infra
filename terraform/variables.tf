@@ -83,7 +83,7 @@ variable "backend_vm_disk_size_gb" {
 variable "frontend_vm_disk_size_gb" {
   description = "Boot disk size for frontend-vm."
   type        = number
-  default     = 10
+  default     = 20
 }
 
 variable "backend2_disk_size_gb" {
