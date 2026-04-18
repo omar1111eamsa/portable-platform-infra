@@ -40,6 +40,8 @@ spec:
               value: production
             - name: NEXT_PUBLIC_API_URL
               value: "/api"
+            - name: NEXT_PUBLIC_FINNHUB_WS_URL
+              value: "wss://ws.finnhub.io?token=d778d89r01qp6afkkg8gd778d89r01qp6afkkg90"
           resources:
             requests:
               memory: "256Mi"
