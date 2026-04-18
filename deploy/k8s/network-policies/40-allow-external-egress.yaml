@@ -15,6 +15,7 @@ spec:
           - metamodel-scheduler
           - metamodel-dag-processor
           - execution-engine
+          - prompttocode
   policyTypes:
     - Egress
   egress:
@@ -30,4 +31,3 @@ spec:
           port: 465
         - protocol: TCP
           port: 587
-
