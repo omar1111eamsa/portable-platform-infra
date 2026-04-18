@@ -47,7 +47,10 @@ spec:
             - name: APP_NAME
               value: Trading AI Assistant Backend
             - name: OPENROUTER_API_KEY
-              value: "sk-or-REDACTED"
+              valueFrom:
+                secretKeyRef:
+                  name: prompttocode-credentials
+                  key: OPENROUTER_API_KEY
             - name: OPENROUTER_MODEL
               value: google/gemini-2.0-flash-001
             - name: OPENROUTER_BASE_URL
@@ -59,11 +62,20 @@ spec:
             - name: OPENROUTER_X_TITLE
               value: Trading AI Assistant Backend
             - name: FINNHUB_API_KEY
-              value: d78nospr01qp0fl5to80d78nospr01qp0fl5to8g
+              valueFrom:
+                secretKeyRef:
+                  name: prompttocode-credentials
+                  key: FINNHUB_API_KEY
             - name: ALPHAVANTAGE_API_KEY
-              value: I01E1AQL00FVEKU8
+              valueFrom:
+                secretKeyRef:
+                  name: prompttocode-credentials
+                  key: ALPHAVANTAGE_API_KEY
             - name: TWELVEDATA_API_KEY
-              value: 95c3bea5a2d246469bd2d8edfda8cc87
+              valueFrom:
+                secretKeyRef:
+                  name: prompttocode-credentials
+                  key: TWELVEDATA_API_KEY
             - name: MARKET_DATA_TIMEOUT_SECONDS
               value: "5.0"
             - name: POD_NAME

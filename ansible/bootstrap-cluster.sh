@@ -205,6 +205,10 @@ require_env GITHUB_TOKEN
 require_env CONSUL_UI_PASSWORD
 require_env GH_PAT
 require_env LLM_API_KEY
+require_env OPENROUTER_API_KEY
+require_env FINNHUB_API_KEY
+require_env ALPHAVANTAGE_API_KEY
+require_env TWELVEDATA_API_KEY
 
 MYAPP_DB_URL="${MYAPP_DB_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/prediction_db}"
 AIRFLOW_CONN_POSTGRES_MYAPP="${AIRFLOW_CONN_POSTGRES_MYAPP:-${MYAPP_DB_URL}}"
@@ -232,6 +236,12 @@ create_or_update_secret rabbitmq-credentials \
 create_or_update_secret chatbot-credentials \
   --from-literal=LLM_API_KEY="${LLM_API_KEY}" \
   --from-literal=CRM_API_KEY="${CRM_API_KEY:-}"
+
+create_or_update_secret prompttocode-credentials \
+  --from-literal=OPENROUTER_API_KEY="${OPENROUTER_API_KEY}" \
+  --from-literal=FINNHUB_API_KEY="${FINNHUB_API_KEY}" \
+  --from-literal=ALPHAVANTAGE_API_KEY="${ALPHAVANTAGE_API_KEY}" \
+  --from-literal=TWELVEDATA_API_KEY="${TWELVEDATA_API_KEY}"
 
 create_or_update_secret auth-credentials \
   --from-literal=JWT_SECRET="${JWT_SECRET}"
