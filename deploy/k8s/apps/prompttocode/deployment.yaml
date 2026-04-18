@@ -41,9 +41,31 @@ spec:
             - containerPort: 8000
           env:
             - name: APP_ENV
-              value: production
+              value: development
             - name: APP_LOG_LEVEL
               value: INFO
+            - name: APP_NAME
+              value: Trading AI Assistant Backend
+            - name: OPENROUTER_API_KEY
+              value: "sk-or-REDACTED"
+            - name: OPENROUTER_MODEL
+              value: google/gemini-2.0-flash-001
+            - name: OPENROUTER_BASE_URL
+              value: https://openrouter.ai/api/v1
+            - name: OPENROUTER_FALLBACK_MODEL
+              value: google/gemini-2.0-flash-001
+            - name: OPENROUTER_HTTP_REFERER
+              value: http://localhost/
+            - name: OPENROUTER_X_TITLE
+              value: Trading AI Assistant Backend
+            - name: FINNHUB_API_KEY
+              value: d78nospr01qp0fl5to80d78nospr01qp0fl5to8g
+            - name: ALPHAVANTAGE_API_KEY
+              value: I01E1AQL00FVEKU8
+            - name: TWELVEDATA_API_KEY
+              value: 95c3bea5a2d246469bd2d8edfda8cc87
+            - name: MARKET_DATA_TIMEOUT_SECONDS
+              value: "5.0"
             - name: POD_NAME
               valueFrom:
                 fieldRef:
@@ -70,11 +92,6 @@ spec:
               value: http
             - name: CONSUL_HEALTH_CHECK_PATH
               value: /health
-            - name: OPENROUTER_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: chatbot-credentials
-                  key: LLM_API_KEY
           resources:
             requests:
               memory: "128Mi"
