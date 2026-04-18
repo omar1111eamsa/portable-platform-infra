@@ -35,7 +35,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: prompttocode
-          image: ghcr.io/myapp/backend-prompttocode:723da6476f9f1b0c72a2dc4bea3859d6a0e399e5
+          image: ghcr.io/myapp/backend-prompttocode:9bc5043
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
