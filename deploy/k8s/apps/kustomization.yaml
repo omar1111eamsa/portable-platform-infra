@@ -47,6 +47,8 @@ resources:
   - pgadmin/ingress.yaml
   - predictions-intake/deployment.yaml
   - predictions-intake/service.yaml
+  - prompttocode/deployment.yaml
+  - prompttocode/service.yaml
   - user-management/deployment.yaml
   - user-management/service.yaml
   - user-management/user-service.yaml
