@@ -106,7 +106,7 @@ spec:
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_INSTANCE_ID
               value: "$(POD_NAME)"
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_HEALTH_CHECK_PATH
-              value: /actuator/health
+              value: /actuator/health/readiness
             - name: SPRING_CLOUD_CONSUL_DISCOVERY_HEALTH_CHECK_CRITICAL_TIMEOUT
               value: 1m
           ports:
