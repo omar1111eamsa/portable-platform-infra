@@ -27,6 +27,11 @@ spec:
               value: "postgres"
             - name: DB_NAME
               value: "prediction_db"
+            - name: MYAPP_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: metamodel-db-credentials
+                  key: MYAPP_DB_URL
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
@@ -49,6 +54,31 @@ spec:
                 secretKeyRef:
                   name: rabbitmq-credentials
                   key: RABBITMQ_DEFAULT_PASS
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_USERNAME
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_PASSWORD
+            - name: RABBITMQ_VHOST
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_VHOST
+            - name: TWS_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: execution-engine-tws-credentials
+                  key: TWS_CLIENT_ID
+            - name: TWS_ACCOUNT_CODE
+              valueFrom:
+                secretKeyRef:
+                  name: execution-engine-tws-credentials
+                  key: TWS_ACCOUNT_CODE
           resources:
             requests:
               cpu: "500m"

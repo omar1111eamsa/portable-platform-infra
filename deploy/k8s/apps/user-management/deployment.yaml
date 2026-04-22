@@ -57,6 +57,41 @@ spec:
                 secretKeyRef:
                   name: google-oauth-credentials
                   key: GOOGLE_CLIENT_SECRET
+            - name: GOOGLE_REDIRECT_URI
+              valueFrom:
+                secretKeyRef:
+                  name: google-oauth-credentials
+                  key: GOOGLE_REDIRECT_URI
+            - name: FRONTEND_URL
+              valueFrom:
+                secretKeyRef:
+                  name: google-oauth-credentials
+                  key: FRONTEND_URL
+            - name: SPRING_MAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mail-credentials
+                  key: SPRING_MAIL_USERNAME
+            - name: SPRING_MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mail-credentials
+                  key: SPRING_MAIL_PASSWORD
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_USERNAME
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_PASSWORD
+            - name: RABBITMQ_ADDRESSES
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_ADDRESSES
           resources:
             requests:
               cpu: "200m"

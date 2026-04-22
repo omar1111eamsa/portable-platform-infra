@@ -31,6 +31,11 @@ spec:
                 secretKeyRef:
                   name: chatbot-credentials
                   key: LLM_API_KEY
+            - name: CRM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: chatbot-credentials
+                  key: CRM_API_KEY
           resources:
             requests:
               cpu: "200m"

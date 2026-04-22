@@ -38,11 +38,16 @@ spec:
                 secretKeyRef:
                   name: postgres-credentials
                   key: POSTGRES_PASSWORD
+            - name: STRIPE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: payment-credentials
+                  key: STRIPE_API_KEY
             - name: STRIPE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: payment-credentials
-                  key: STRIPE_SECRET_KEY
+                  key: STRIPE_API_KEY
             - name: STRIPE_WEBHOOK_SECRET
               valueFrom:
                 secretKeyRef:
@@ -52,6 +57,26 @@ spec:
               value: "consul"
             - name: SPRING_CLOUD_CONSUL_PORT
               value: "8500"
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_USERNAME
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_PASSWORD
+            - name: RABBITMQ_VHOST
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_VHOST
+            - name: RABBITMQ_ADDRESSES
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_ADDRESSES
           resources:
             requests:
               cpu: "200m"

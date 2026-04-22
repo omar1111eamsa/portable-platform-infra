@@ -4,3 +4,9 @@ terraform/.terraform.lock.hcl
 terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
 ansible/inventory/generate.sh
+deploy/k8s/secrets.env
+deploy/k8s/**/secret.yaml
+deploy/k8s/**/*-secret.yaml
+deploy/k8s/**/external-secrets.yaml
+deploy/k8s/**/grafana-secret.yaml
+deploy/argocd/repository-secret.yaml

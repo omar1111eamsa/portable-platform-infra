@@ -95,6 +95,16 @@ spec:
                 secretKeyRef:
                   name: metamodel-db-credentials
                   key: AIRFLOW__CORE__FERNET_KEY
+            - name: MYAPP_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: metamodel-db-credentials
+                  key: MYAPP_DB_URL
+            - name: AIRFLOW_CONN_POSTGRES_MYAPP
+              valueFrom:
+                secretKeyRef:
+                  name: metamodel-db-credentials
+                  key: AIRFLOW_CONN_POSTGRES_MYAPP
             - name: AIRFLOW__WEBSERVER__SECRET_KEY
               valueFrom:
                 secretKeyRef:
@@ -106,6 +116,52 @@ spec:
               value: "s3://airflow-logs"
             - name: AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID
               value: "aws_default"
+            - name: AIRFLOW_CONN_AWS_DEFAULT
+              valueFrom:
+                secretKeyRef:
+                  name: metamodel-airflow-s3-logging
+                  key: AIRFLOW_CONN_AWS_DEFAULT
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-token
+                  key: token
+            - name: HF_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: metamodel-airflow-pipeline-credentials
+                  key: HF_API_TOKEN
+                  optional: true
+            - name: AUM_REFERENCE
+              valueFrom:
+                secretKeyRef:
+                  name: metamodel-airflow-pipeline-credentials
+                  key: AUM_REFERENCE
+                  optional: true
+            - name: WORLDMONITOR_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: worldmonitor-credentials
+                  key: WORLDMONITOR_BASE_URL
+                  optional: true
+            - name: WORLDMONITOR_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: worldmonitor-credentials
+                  key: WORLDMONITOR_TOKEN
+                  optional: true
+            - name: WORLDMONITOR_ENDPOINT_SIGNALS
+              valueFrom:
+                secretKeyRef:
+                  name: worldmonitor-credentials
+                  key: WORLDMONITOR_ENDPOINT_SIGNALS
+                  optional: true
+            - name: WORLDMONITOR_TIMEOUT_SECONDS
+              valueFrom:
+                secretKeyRef:
+                  name: worldmonitor-credentials
+                  key: WORLDMONITOR_TIMEOUT_SECONDS
+                  optional: true
           resources:
             requests:
               cpu: "200m"

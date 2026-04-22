@@ -46,6 +46,36 @@ spec:
                 secretKeyRef:
                   name: metamodel-db-credentials
                   key: AIRFLOW__CORE__FERNET_KEY
+            - name: MYAPP_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: metamodel-db-credentials
+                  key: MYAPP_DB_URL
+            - name: AIRFLOW_CONN_POSTGRES_MYAPP
+              valueFrom:
+                secretKeyRef:
+                  name: metamodel-db-credentials
+                  key: AIRFLOW_CONN_POSTGRES_MYAPP
+            - name: AIRFLOW_CONN_AWS_DEFAULT
+              valueFrom:
+                secretKeyRef:
+                  name: metamodel-airflow-s3-logging
+                  key: AIRFLOW_CONN_AWS_DEFAULT
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_USERNAME
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_PASSWORD
+            - name: RABBITMQ_VHOST
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-credentials
+                  key: RABBITMQ_VHOST
           resources:
             requests:
               cpu: "500m"
