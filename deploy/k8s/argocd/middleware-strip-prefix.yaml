@@ -1,0 +1,15 @@
+# deploy/k8s/argocd/middleware-strip-prefix.yaml
+#
+# Strips /argocd prefix before forwarding to ArgoCD server
+# ArgoCD expects requests at / not at /argocd
+# Traefik middleware handles the rewrite
+
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: argocd-strip-prefix
+  namespace: argocd
+spec:
+  stripPrefix:
+    prefixes:
+      - /argocd

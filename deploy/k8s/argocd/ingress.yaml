@@ -1,0 +1,33 @@
+# deploy/k8s/argocd/ingress.yaml
+#
+# Exposes ArgoCD UI at https://dev.example.com/argocd
+# Traefik handles TLS termination
+# ArgoCD runs in insecure mode behind Traefik
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-ingress
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-ingress
+    app.kubernetes.io/component: argocd
+  annotations:
+    # Use Traefik as ingress controller
+    kubernetes.io/ingress.class: traefik
+    # Strip the /argocd prefix before forwarding to ArgoCD
+    traefik.ingress.kubernetes.io/router.middlewares: argocd-strip-prefix@kubernetescrd
+    # Force HTTPS redirect
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  rules:
+    - host: dev.example.com
+      http:
+        paths:
+          - path: /argocd
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  name: http

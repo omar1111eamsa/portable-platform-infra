@@ -1,0 +1,127 @@
+# ansible/playbook.yml
+#
+# Main playbook — provisions a full RKE2 cluster
+#
+# Usage:
+#   ansible-playbook playbook.yml
+#   ansible-playbook playbook.yml --tags preflight
+#   ansible-playbook playbook.yml --tags rke2-server
+#   ansible-playbook playbook.yml --tags rke2-agent
+#
+# Prerequisites:
+#   - inventory/generate.sh must have been run
+#   - SSH access to all nodes must be working
+
+---
+
+# ── Play 1: Preflight ─────────────────────────────────────
+# Runs on ALL nodes in parallel before anything else
+# Validates OS, memory, disk, kernel settings
+# If any node fails preflight the entire playbook stops
+- name: "Preflight checks on all nodes"
+  hosts: rke2_cluster
+  gather_facts: true
+  become: false
+  tags:
+    - preflight
+    - always
+
+  roles:
+    - role: preflight
+
+# ── Play 2: RKE2 Server ───────────────────────────────────
+# Runs ONLY on control-plane node
+# Installs RKE2 server, initializes cluster
+# Waits until API is ready before play ends
+# serial: 1 ensures only one server is configured at a time
+# (important when we move to multi-server HA architecture)
+- name: "Install and configure RKE2 server"
+  hosts: rke2_servers
+  gather_facts: true
+  become: false
+  serial: 1
+  tags:
+    - rke2-server
+
+  roles:
+    - role: rke2-server
+
+# ── Play 3: RKE2 Agents ───────────────────────────────────
+# Runs on ALL worker nodes AFTER server play completes
+# Workers join the cluster using token from server play
+# Both workers can join in parallel — no serial needed
+- name: "Install and configure RKE2 agents"
+  hosts: rke2_agents
+  gather_facts: true
+  become: false
+  tags:
+    - rke2-agent
+
+  # Token set as fact during server play
+  # Must be passed to agents via hostvars
+  vars:
+    rke2_token: >-
+      {{ hostvars[groups['rke2_servers'][0]]['rke2_token'] }}
+
+  roles:
+    - role: rke2-agent
+
+# ── Play 4: Verify cluster ────────────────────────────────
+# Runs on control-plane after all agents have joined
+# Confirms all nodes are visible and Ready
+# Prints cluster summary at the end
+- name: "Verify cluster is healthy"
+  hosts: rke2_servers
+  gather_facts: false
+  become: true
+  tags:
+    - verify
+
+  tasks:
+    - name: "Verify | Get all cluster nodes"
+      ansible.builtin.command: >
+        /var/lib/rancher/rke2/bin/kubectl
+        --kubeconfig {{ rke2_kubeconfig_path }}
+        get nodes
+        -o wide
+      register: cluster_nodes
+      changed_when: false
+
+    - name: "Verify | Confirm all 3 nodes are Ready"
+      ansible.builtin.assert:
+        that:
+          - cluster_nodes.stdout_lines | length >= 4
+          - "'NotReady' not in cluster_nodes.stdout"
+        fail_msg: >-
+          Not all nodes are Ready.
+          Current state:
+          {{ cluster_nodes.stdout }}
+        success_msg: "All nodes are Ready"
+
+    - name: "Verify | Get all kube-system pods"
+      ansible.builtin.command: >
+        /var/lib/rancher/rke2/bin/kubectl
+        --kubeconfig {{ rke2_kubeconfig_path }}
+        get pods
+        --namespace kube-system
+        -o wide
+      register: system_pods
+      changed_when: false
+
+    - name: "Verify | Print cluster summary"
+      ansible.builtin.debug:
+        msg: |
+          ╔══════════════════════════════════════════╗
+          ║       RKE2 Cluster Ready                 ║
+          ╚══════════════════════════════════════════╝
+
+          NODES:
+          {{ cluster_nodes.stdout }}
+
+          SYSTEM PODS:
+          {{ system_pods.stdout }}
+
+          KUBECONFIG:
+          Local path : /tmp/myapp-rke2.yaml
+          Copy with  : cp /tmp/myapp-rke2.yaml ~/.kube/myapp-rke2.yaml
+          Use with   : export KUBECONFIG=~/.kube/myapp-rke2.yaml

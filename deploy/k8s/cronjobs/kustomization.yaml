@@ -1,0 +1,12 @@
+# deploy/k8s/cronjobs/kustomization.yaml
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # RBAC must come first — all cronjobs depend on it
+  - maintenance-rbac.yaml
+  - clean-evicted-pods.yaml
+  - clean-disk.yaml
+  - etcd-backup.yaml
+  - metamodel-health-check.yaml

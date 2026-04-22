@@ -1,0 +1,125 @@
+# deploy/k8s/cronjobs/etcd-backup.yaml
+#
+# Backs up RKE2 etcd snapshots to MinIO every 6 hours
+# etcd holds the entire cluster state
+# Without backups a failed control-plane means total cluster loss
+# Schedule: every 6 hours
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: etcd-backup
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: etcd-backup
+    app.kubernetes.io/component: maintenance
+spec:
+  # Every 6 hours
+  schedule: "0 */6 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 600
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: etcd-backup
+            app.kubernetes.io/component: maintenance
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: maintenance-sa
+          # Must run on control-plane node
+          # etcd snapshots only exist there
+          nodeSelector:
+            kubernetes.io/hostname: myapp-cp-01
+          containers:
+            - name: etcd-backup
+              image: minio/mc:latest
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+
+                  TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+                  SNAPSHOT_DIR="/snapshots"
+                  BACKUP_NAME="etcd-snapshot-${TIMESTAMP}.db"
+
+                  echo "=== etcd Backup ==="
+                  echo "Time: $(date -u)"
+                  echo "Backup name: $BACKUP_NAME"
+                  echo ""
+
+                  # Find latest RKE2 etcd snapshot
+                  LATEST=$(ls -t $SNAPSHOT_DIR/etcd-snapshot-*.db \
+                    2>/dev/null | head -1)
+
+                  if [ -z "$LATEST" ]; then
+                    echo "ERROR: No etcd snapshot found in $SNAPSHOT_DIR"
+                    echo "Make sure etcd snapshots are enabled in RKE2 config"
+                    exit 1
+                  fi
+
+                  echo "Found snapshot: $LATEST"
+                  echo "Size: $(du -sh $LATEST | cut -f1)"
+                  echo ""
+
+                  # Configure MinIO client
+                  mc alias set myapp \
+                    http://minio:9000 \
+                    $MINIO_ROOT_USER \
+                    $MINIO_ROOT_PASSWORD
+
+                  # Create backup bucket if not exists
+                  mc mb --ignore-existing myapp/etcd-backups
+
+                  # Upload snapshot to MinIO
+                  echo "Uploading to MinIO..."
+                  mc cp $LATEST myapp/etcd-backups/$BACKUP_NAME
+                  echo "Upload complete: etcd-backups/$BACKUP_NAME"
+
+                  # Remove backups older than 7 days
+                  echo "Removing backups older than 7 days..."
+                  mc rm \
+                    --recursive \
+                    --force \
+                    --older-than 7d \
+                    myapp/etcd-backups/ || true
+
+                  # List remaining backups
+                  echo ""
+                  echo "Current backups in MinIO:"
+                  mc ls myapp/etcd-backups/
+
+                  echo ""
+                  echo "etcd backup complete"
+
+              env:
+                - name: MINIO_ROOT_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: minio-credentials
+                      key: MINIO_ROOT_USER
+                - name: MINIO_ROOT_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: minio-credentials
+                      key: MINIO_ROOT_PASSWORD
+              resources:
+                requests:
+                  cpu: "50m"
+                  memory: "64Mi"
+                limits:
+                  cpu: "200m"
+                  memory: "256Mi"
+              volumeMounts:
+                - name: etcd-snapshots
+                  mountPath: /snapshots
+                  readOnly: true
+          volumes:
+            - name: etcd-snapshots
+              hostPath:
+                # RKE2 default etcd snapshot path
+                path: /var/lib/rancher/rke2/server/db/snapshots

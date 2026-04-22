@@ -1,0 +1,33 @@
+# Allow specific services to make outbound connections to postgres
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backends-egress-postgres
+  namespace: myapp
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values:
+          - user-management
+          - predictions-intake
+          - payment-service
+          - kpi-dashboard
+          - crm-client
+          - metamodel-orchestration
+          - metamodel-scheduler
+          - metamodel-worker
+          - execution-engine
+          - scoring-engine
+          - portfolio-builder
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgres
+      ports:
+        - port: 5432
+          protocol: TCP

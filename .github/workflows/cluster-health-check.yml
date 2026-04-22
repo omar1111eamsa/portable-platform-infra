@@ -1,0 +1,347 @@
+# .github/workflows/cluster-health-check.yml
+#
+# Runs every hour to verify the cluster is healthy
+# Checks:
+#   1. All deployments have expected replicas running
+#   2. No pods are in CrashLoopBackOff or Error state
+#   3. Critical infrastructure services are responding
+#   4. ArgoCD sync status is healthy
+#
+# Also triggered manually via workflow_dispatch
+# so you can run it on demand
+
+name: Cluster Health Check
+
+on:
+  # Run every hour
+  schedule:
+    - cron: "0 * * * *"
+  # Allow manual trigger from GitHub UI
+  workflow_dispatch:
+    inputs:
+      verbose:
+        description: "Enable verbose output"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+jobs:
+  health-check:
+    name: Cluster Health Check
+    runs-on: ubuntu-latest
+    # Maximum time before we consider the check hung
+    timeout-minutes: 15
+
+    steps:
+      # ── Checkout ───────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Setup kubectl ──────────────────────────────────
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.29.3'
+
+      # ── Setup SSH tunnel ───────────────────────────────
+      # kubectl needs to reach the cluster API
+      # We tunnel through the bastion node
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.MYAPP_SSH_KEY }}" > ~/.ssh/myapp_vms
+          chmod 600 ~/.ssh/myapp_vms
+
+          # Add bastion to known hosts to avoid interactive prompt
+          ssh-keyscan -H ${{ secrets.BASTION_PUBLIC_IP }} \
+            >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Start SSH tunnel to cluster API
+        run: |
+          echo "Starting SSH tunnel..."
+
+          # Forward local port 16443 to cluster API port 6443
+          # via the bastion host
+          ssh -fN \
+            -i ~/.ssh/myapp_vms \
+            -L 16443:${{ secrets.CP_01_INTERNAL_IP }}:6443 \
+            -o StrictHostKeyChecking=no \
+            -o ServerAliveInterval=30 \
+            -o ExitOnForwardFailure=yes \
+            myapp@${{ secrets.BASTION_PUBLIC_IP }}
+
+          # Wait for tunnel to be ready
+          echo "Waiting for tunnel..."
+          RETRIES=0
+          until nc -z localhost 16443 2>/dev/null; do
+            RETRIES=$((RETRIES + 1))
+            if [ $RETRIES -ge 10 ]; then
+              echo "ERROR: SSH tunnel failed to start after 10 retries"
+              exit 1
+            fi
+            echo "Retry $RETRIES/10..."
+            sleep 3
+          done
+
+          echo "SSH tunnel ready on port 16443"
+
+      # ── Setup kubeconfig ───────────────────────────────
+      - name: Setup kubeconfig
+        run: |
+          mkdir -p ~/.kube
+
+          # Write kubeconfig from secret
+          echo "${{ secrets.MYAPP_KUBECONFIG }}" \
+            > ~/.kube/myapp-rke2.yaml
+          chmod 600 ~/.kube/myapp-rke2.yaml
+
+          export KUBECONFIG=~/.kube/myapp-rke2.yaml
+
+          # Verify connection
+          echo "Testing cluster connection..."
+          kubectl cluster-info --request-timeout=10s
+
+      # ── Check nodes ────────────────────────────────────
+      - name: Check cluster nodes
+        run: |
+          export KUBECONFIG=~/.kube/myapp-rke2.yaml
+
+          echo "=== Cluster Nodes ==="
+          kubectl get nodes -o wide
+
+          echo ""
+          echo "Checking all nodes are Ready..."
+
+          NOT_READY=$(kubectl get nodes \
+            --no-headers \
+            | grep -v "Ready" \
+            | grep -v "STATUS" \
+            | wc -l)
+
+          if [ "$NOT_READY" -gt 0 ]; then
+            echo "ERROR: $NOT_READY nodes are not Ready"
+            kubectl get nodes
+            exit 1
+          fi
+
+          NODE_COUNT=$(kubectl get nodes --no-headers | wc -l)
+          echo "All $NODE_COUNT nodes are Ready"
+
+      # ── Check deployments ──────────────────────────────
+      - name: Check deployments
+        run: |
+          export KUBECONFIG=~/.kube/myapp-rke2.yaml
+
+          echo "=== Deployments in myapp namespace ==="
+          kubectl get deployments -n myapp -o wide
+
+          echo ""
+          echo "Checking all deployments are available..."
+
+          # Find deployments where available replicas
+          # do not match desired replicas
+          UNAVAILABLE=$(kubectl get deployments \
+            -n myapp \
+            --no-headers \
+            -o custom-columns=\
+          "NAME:.metadata.name,\
+          DESIRED:.spec.replicas,\
+          AVAILABLE:.status.availableReplicas" \
+            | awk '$2 != $3 {print $1}')
+
+          if [ -n "$UNAVAILABLE" ]; then
+            echo "ERROR: These deployments are not fully available:"
+            echo "$UNAVAILABLE"
+            echo ""
+            echo "Pod details:"
+            for DEP in $UNAVAILABLE; do
+              echo "--- $DEP ---"
+              kubectl describe deployment "$DEP" -n myapp \
+                | tail -20
+            done
+            exit 1
+          fi
+
+          DEPLOY_COUNT=$(kubectl get deployments \
+            -n myapp --no-headers | wc -l)
+          echo "All $DEPLOY_COUNT deployments are available"
+
+      # ── Check for problem pods ─────────────────────────
+      - name: Check for problem pods
+        run: |
+          export KUBECONFIG=~/.kube/myapp-rke2.yaml
+
+          echo "=== Pod Status ==="
+          kubectl get pods -n myapp -o wide
+
+          echo ""
+          echo "Checking for problem pods..."
+
+          # Find pods in bad states
+          PROBLEM_PODS=$(kubectl get pods \
+            -n myapp \
+            --no-headers \
+            | grep -E \
+            "CrashLoopBackOff|Error|OOMKilled|Evicted|Pending|ImagePullBackOff" \
+            | awk '{print $1}') || true
+
+          if [ -n "$PROBLEM_PODS" ]; then
+            echo "ERROR: Found pods in problem state:"
+            echo "$PROBLEM_PODS"
+            echo ""
+
+            # Show logs for each problem pod
+            for POD in $PROBLEM_PODS; do
+              echo "--- Logs for $POD ---"
+              kubectl logs "$POD" \
+                -n myapp \
+                --tail=20 \
+                2>/dev/null || true
+              echo ""
+            done
+            exit 1
+          fi
+
+          POD_COUNT=$(kubectl get pods \
+            -n myapp --no-headers | wc -l)
+          echo "All $POD_COUNT pods are healthy"
+
+      # ── Check critical services ────────────────────────
+      - name: Check critical infrastructure services
+        run: |
+          export KUBECONFIG=~/.kube/myapp-rke2.yaml
+
+          echo "=== Critical Service Checks ==="
+
+          # Function to check a service endpoint
+          check_service() {
+            local name=$1
+            local namespace=$2
+            local command=$3
+
+            echo -n "Checking $name... "
+            if kubectl exec \
+              -n "$namespace" \
+              deploy/"$name" \
+              -- sh -c "$command" \
+              --request-timeout=10s \
+              > /dev/null 2>&1; then
+              echo "OK"
+            else
+              echo "FAILED"
+              return 1
+            fi
+          }
+
+          FAILURES=0
+
+          # Check PostgreSQL
+          check_service "postgres" "myapp" \
+            "pg_isready -U postgres" || FAILURES=$((FAILURES + 1))
+
+          # Check Redis
+          check_service "redis" "myapp" \
+            "redis-cli ping | grep PONG" || FAILURES=$((FAILURES + 1))
+
+          # Check RabbitMQ
+          check_service "rabbitmq" "myapp" \
+            "rabbitmq-diagnostics -q ping" || FAILURES=$((FAILURES + 1))
+
+          # Check MinIO
+          check_service "minio" "myapp" \
+            "curl -sf http://localhost:9000/minio/health/ready" \
+            || FAILURES=$((FAILURES + 1))
+
+          # Check Consul
+          check_service "consul" "myapp" \
+            "curl -sf http://localhost:8500/v1/status/leader" \
+            || FAILURES=$((FAILURES + 1))
+
+          if [ $FAILURES -gt 0 ]; then
+            echo ""
+            echo "ERROR: $FAILURES critical services are not healthy"
+            exit 1
+          fi
+
+          echo ""
+          echo "All critical services are healthy"
+
+      # ── Check ArgoCD sync status ───────────────────────
+      - name: Check ArgoCD sync status
+        run: |
+          export KUBECONFIG=~/.kube/myapp-rke2.yaml
+
+          echo "=== ArgoCD Sync Status ==="
+
+          SYNC_STATUS=$(kubectl get application myapp \
+            -n argocd \
+            -o jsonpath='{.status.sync.status}' \
+            2>/dev/null || echo "Unknown")
+
+          HEALTH_STATUS=$(kubectl get application myapp \
+            -n argocd \
+            -o jsonpath='{.status.health.status}' \
+            2>/dev/null || echo "Unknown")
+
+          REVISION=$(kubectl get application myapp \
+            -n argocd \
+            -o jsonpath='{.status.sync.revision}' \
+            2>/dev/null || echo "Unknown")
+
+          echo "Sync status   : $SYNC_STATUS"
+          echo "Health status : $HEALTH_STATUS"
+          echo "Revision      : $REVISION"
+
+          if [ "$SYNC_STATUS" != "Synced" ]; then
+            echo ""
+            echo "WARNING: ArgoCD is not in Synced state: $SYNC_STATUS"
+          fi
+
+          if [ "$HEALTH_STATUS" != "Healthy" ]; then
+            echo ""
+            echo "WARNING: ArgoCD health is not Healthy: $HEALTH_STATUS"
+          fi
+
+      # ── Summary ────────────────────────────────────────
+      - name: Health check summary
+        if: always()
+        run: |
+          export KUBECONFIG=~/.kube/myapp-rke2.yaml
+
+          echo ""
+          echo "╔══════════════════════════════════════╗"
+          echo "║      Cluster Health Check Summary    ║"
+          echo "╚══════════════════════════════════════╝"
+          echo ""
+          echo "Time        : $(date -u)"
+          echo "Cluster     : myapp"
+          echo "Triggered by: ${{ github.event_name }}"
+          echo ""
+
+          # Node summary
+          echo "Nodes:"
+          kubectl get nodes --no-headers \
+            | awk '{print "  " $1 " — " $2}' \
+            2>/dev/null || echo "  Could not fetch nodes"
+
+          echo ""
+
+          # Deployment summary
+          echo "Deployments:"
+          kubectl get deployments \
+            -n myapp \
+            --no-headers \
+            | awk '{print "  " $1 " — " $2 "/" $3 " ready"}' \
+            2>/dev/null || echo "  Could not fetch deployments"
+
+          echo ""
+
+      # ── Cleanup ────────────────────────────────────────
+      - name: Cleanup SSH key
+        if: always()
+        run: |
+          rm -f ~/.ssh/myapp_vms
+          echo "SSH key cleaned up"

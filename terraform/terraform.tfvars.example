@@ -1,0 +1,31 @@
+# terraform/terraform.tfvars.example
+#
+# Copy this file to terraform.tfvars and fill in your real values
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# NEVER commit terraform.tfvars to git — it contains sensitive data
+
+# ── Project ──────────────────────────────────────────────
+project_id = "your-gcp-project-id"
+region     = "europe-west1"
+zone       = "europe-west1-b"
+
+# ── Network ───────────────────────────────────────────────
+vpc_name    = "myapp-vpc"
+subnet_name = "myapp-subnet"
+subnet_cidr = "10.10.0.0/24"
+
+# List of IPs allowed to SSH into the cluster
+# Replace with your actual office/home IP
+admin_source_ranges = ["YOUR_IP/32"]
+
+# ── Compute ───────────────────────────────────────────────
+ssh_user       = "myapp"
+
+# Paste your public key content here
+# Generate one with: ssh-keygen -t ed25519 -C "myapp"
+ssh_public_key = "ssh-ed25519 AAAAC3... your-email@example.com"
+
+machine_type = "e2-custom-2-8192"
+disk_size_gb = 20
+os_image     = "ubuntu-os-cloud/ubuntu-2204-lts"

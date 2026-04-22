@@ -1,0 +1,16 @@
+# deploy/k8s/argocd/argocd-cmd-params-patch.yaml
+#
+# Configures ArgoCD server to run in insecure mode
+# TLS is terminated at Traefik ingress
+# ArgoCD does not need to handle TLS itself
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cmd-params-cm
+  namespace: argocd
+data:
+  # Run server without TLS — Traefik handles it
+  server.insecure: "true"
+  # Set the base URL for correct link generation
+  server.rootpath: "/argocd"

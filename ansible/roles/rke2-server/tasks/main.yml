@@ -1,0 +1,142 @@
+# ansible/roles/rke2-server/tasks/main.yml
+
+# ── Check if RKE2 is already installed ───────────────────
+# Idempotency — skip installation if already present
+- name: "RKE2 Server | Check if RKE2 is already installed"
+  ansible.builtin.stat:
+    path: "{{ rke2_install_dir }}/rke2"
+  register: rke2_binary
+
+- name: "RKE2 Server | Check installed RKE2 version"
+  ansible.builtin.command: rke2 --version
+  register: rke2_installed_version
+  changed_when: false
+  failed_when: false
+  when: rke2_binary.stat.exists
+
+# ── Download RKE2 installer ───────────────────────────────
+- name: "RKE2 Server | Download RKE2 install script"
+  ansible.builtin.get_url:
+    url: "https://get.rke2.io"
+    dest: "/tmp/rke2-install.sh"
+    mode: "0700"
+    force: true
+  when: >
+    not rke2_binary.stat.exists or
+    rke2_version not in (rke2_installed_version.stdout | default(''))
+
+# ── Install RKE2 ──────────────────────────────────────────
+- name: "RKE2 Server | Install RKE2 server"
+  ansible.builtin.command: /tmp/rke2-install.sh
+  environment:
+    INSTALL_RKE2_VERSION: "{{ rke2_version }}"
+    INSTALL_RKE2_TYPE: "server"
+  become: true
+  when: >
+    not rke2_binary.stat.exists or
+    rke2_version not in (rke2_installed_version.stdout | default(''))
+  notify: restart rke2-server
+
+# ── Create config directory ───────────────────────────────
+- name: "RKE2 Server | Create RKE2 config directory"
+  ansible.builtin.file:
+    path: "{{ rke2_config_dir }}"
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+  become: true
+
+# ── Write RKE2 server config ──────────────────────────────
+- name: "RKE2 Server | Write RKE2 server configuration"
+  ansible.builtin.template:
+    src: rke2-server.yaml.j2
+    dest: "{{ rke2_server_config }}"
+    mode: "0640"
+    owner: root
+    group: root
+  become: true
+  notify: restart rke2-server
+
+# ── Enable and start RKE2 ─────────────────────────────────
+- name: "RKE2 Server | Enable RKE2 server service"
+  ansible.builtin.systemd:
+    name: "{{ rke2_server_service }}"
+    enabled: true
+    daemon_reload: true
+  become: true
+
+- name: "RKE2 Server | Start RKE2 server service"
+  ansible.builtin.systemd:
+    name: "{{ rke2_server_service }}"
+    state: started
+  become: true
+
+# ── Wait for API server ───────────────────────────────────
+# Do not continue until the Kubernetes API is actually responding
+# Original k3s setup had no wait — agents would try to join
+# before the server was ready and fail
+- name: "RKE2 Server | Wait for Kubernetes API to be ready"
+  ansible.builtin.wait_for:
+    host: "{{ ansible_host }}"
+    port: 6443
+    timeout: "{{ rke2_api_ready_timeout }}"
+    msg: "Kubernetes API did not become ready within {{ rke2_api_ready_timeout }} seconds"
+
+# ── Wait for core pods ────────────────────────────────────
+- name: "RKE2 Server | Wait for core system pods to be running"
+  ansible.builtin.command: >
+    /var/lib/rancher/rke2/bin/kubectl
+    --kubeconfig {{ rke2_kubeconfig_path }}
+    get pods
+    --namespace kube-system
+    --field-selector=status.phase=Running
+    --no-headers
+  register: core_pods
+  retries: 30
+  delay: 10
+  until: core_pods.stdout_lines | length >= 5
+  become: true
+  changed_when: false
+
+# ── Install kubectl symlink ───────────────────────────────
+- name: "RKE2 Server | Create kubectl symlink"
+  ansible.builtin.file:
+    src: "/var/lib/rancher/rke2/bin/kubectl"
+    dest: "/usr/local/bin/kubectl"
+    state: link
+  become: true
+  when: install_kubectl_symlink
+
+# ── Read node token ───────────────────────────────────────
+# Token is needed by agent nodes to join the cluster
+- name: "RKE2 Server | Read node join token"
+  ansible.builtin.slurp:
+    src: "{{ rke2_token_path }}"
+  register: rke2_node_token
+  become: true
+
+- name: "RKE2 Server | Store token as fact for agent nodes"
+  ansible.builtin.set_fact:
+    rke2_token: "{{ rke2_node_token.content | b64decode | trim }}"
+
+# ── Fetch kubeconfig ──────────────────────────────────────
+- name: "RKE2 Server | Fetch kubeconfig to local machine"
+  ansible.builtin.fetch:
+    src: "{{ rke2_kubeconfig_path }}"
+    dest: "/tmp/myapp-rke2.yaml"
+    flat: true
+  become: true
+
+- name: "RKE2 Server | Fix kubeconfig server address"
+  ansible.builtin.replace:
+    path: "/tmp/myapp-rke2.yaml"
+    regexp: 'server: https://127.0.0.1:6443'
+    replace: "server: https://{{ ansible_host }}:6443"
+  delegate_to: localhost
+
+- name: "RKE2 Server | Set kubeconfig permissions"
+  ansible.builtin.file:
+    path: "/tmp/myapp-rke2.yaml"
+    mode: "0600"
+  delegate_to: localhost

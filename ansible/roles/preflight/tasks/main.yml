@@ -1,0 +1,150 @@
+# ansible/roles/preflight/tasks/main.yml
+#
+# Runs on every node before any installation begins
+# Fails fast with clear messages if prerequisites are not met
+
+# ── OS validation ─────────────────────────────────────────
+- name: "Preflight | Verify OS is Ubuntu 22.04"
+  ansible.builtin.assert:
+    that:
+      - ansible_distribution == "Ubuntu"
+      - ansible_distribution_version == "22.04"
+    fail_msg: >-
+      This playbook requires Ubuntu 22.04.
+      Found: {{ ansible_distribution }} {{ ansible_distribution_version }}
+    success_msg: "OS check passed: Ubuntu 22.04"
+
+# ── Architecture validation ───────────────────────────────
+- name: "Preflight | Verify architecture is x86_64"
+  ansible.builtin.assert:
+    that:
+      - ansible_architecture == "x86_64"
+    fail_msg: >-
+      This playbook requires x86_64 architecture.
+      Found: {{ ansible_architecture }}
+    success_msg: "Architecture check passed: x86_64"
+
+# ── Memory validation ─────────────────────────────────────
+- name: "Preflight | Verify minimum RAM (4GB)"
+  ansible.builtin.assert:
+    that:
+      - ansible_memtotal_mb >= 4096
+    fail_msg: >-
+      Minimum 4GB RAM required.
+      Found: {{ ansible_memtotal_mb }}MB
+    success_msg: "RAM check passed: {{ ansible_memtotal_mb }}MB available"
+
+# ── Disk space validation ─────────────────────────────────
+- name: "Preflight | Check available disk space on /"
+  ansible.builtin.assert:
+    that:
+      - item.mount == "/"
+      - (item.size_available / item.size_total) > 0.20
+    fail_msg: >-
+      Less than 20% disk space available on /.
+      Please free up disk space before continuing.
+    success_msg: "Disk space check passed on /"
+  loop: "{{ ansible_mounts }}"
+  when: item.mount == "/"
+
+# ── Hostname validation ───────────────────────────────────
+- name: "Preflight | Verify hostname is set correctly"
+  ansible.builtin.assert:
+    that:
+      - ansible_hostname != "localhost"
+      - ansible_hostname != ""
+    fail_msg: >-
+      Hostname is not set correctly.
+      Found: {{ ansible_hostname }}
+    success_msg: "Hostname check passed: {{ ansible_hostname }}"
+
+# ── Required ports validation ─────────────────────────────
+- name: "Preflight | Verify required system packages are available"
+  ansible.builtin.package:
+    name:
+      - curl
+      - tar
+      - iptables
+    state: present
+  become: true
+
+# ── Swap validation ───────────────────────────────────────
+# Kubernetes requires swap to be disabled
+- name: "Preflight | Check if swap is enabled"
+  ansible.builtin.command: swapon --show
+  register: swap_status
+  changed_when: false
+  failed_when: false
+
+- name: "Preflight | Disable swap if enabled"
+  ansible.builtin.command: swapoff -a
+  become: true
+  when: swap_status.stdout != ""
+
+- name: "Preflight | Remove swap from /etc/fstab permanently"
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^([^#].*\s+swap\s+.*)$'
+    replace: '# \1'
+  become: true
+  when: swap_status.stdout != ""
+
+# ── Kernel modules ────────────────────────────────────────
+# RKE2 requires these kernel modules to be loaded
+- name: "Preflight | Load required kernel modules"
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  become: true
+  loop:
+    - br_netfilter
+    - overlay
+    - ip_conntrack
+
+- name: "Preflight | Persist kernel modules across reboots"
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/rke2.conf
+    content: |
+      br_netfilter
+      overlay
+      ip_conntrack
+    mode: "0644"
+  become: true
+
+# ── Kernel parameters ─────────────────────────────────────
+# Required for Kubernetes networking to work correctly
+- name: "Preflight | Set required kernel parameters"
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: true
+  become: true
+  loop:
+    - { name: "net.bridge.bridge-nf-call-iptables",  value: "1" }
+    - { name: "net.bridge.bridge-nf-call-ip6tables", value: "1" }
+    - { name: "net.ipv4.ip_forward",                 value: "1" }
+
+# ── Timezone ──────────────────────────────────────────────
+- name: "Preflight | Set timezone to UTC"
+  community.general.timezone:
+    name: "{{ timezone }}"
+  become: true
+
+# ── Sudo without tty ──────────────────────────────────────
+# Required for Ansible pipelining to work
+- name: "Preflight | Allow sudo without tty for Ansible pipelining"
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    line: "{{ ansible_user }} ALL=(ALL) NOPASSWD: ALL"
+    validate: "visudo -cf %s"
+  become: true
+
+# ── Preflight summary ─────────────────────────────────────
+- name: "Preflight | All checks passed"
+  ansible.builtin.debug:
+    msg: >-
+      Preflight checks passed on {{ ansible_hostname }}.
+      OS: {{ ansible_distribution }} {{ ansible_distribution_version }},
+      RAM: {{ ansible_memtotal_mb }}MB,
+      Arch: {{ ansible_architecture }}

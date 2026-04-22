@@ -1,0 +1,21 @@
+# deploy/k8s/infra/minio/service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/component: object-storage
+spec:
+  selector:
+    app.kubernetes.io/name: minio
+  ports:
+    - name: api
+      port: 9000
+      targetPort: api
+    - name: console
+      port: 9001
+      targetPort: console
+  type: ClusterIP

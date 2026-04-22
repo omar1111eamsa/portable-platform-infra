@@ -1,0 +1,50 @@
+# ansible/roles/rke2-server/templates/rke2-server.yaml.j2
+#
+# RKE2 server configuration
+# Rendered by Ansible — do not edit manually on the node
+# Source: ansible/roles/rke2-server/templates/rke2-server.yaml.j2
+
+# ── Cluster init ──────────────────────────────────────────
+# cluster-init tells RKE2 to initialize a new etcd cluster
+# Only set on the first server node
+{% if is_first_server %}
+cluster-init: true
+{% endif %}
+
+# ── Network ───────────────────────────────────────────────
+# Node IP — use the internal IP of this node
+node-ip: "{{ ansible_host }}"
+
+# Cluster DNS and networking
+cluster-cidr: "{{ pod_cidr }}"
+service-cidr: "{{ service_cidr }}"
+cluster-dns: "10.43.0.10"
+
+# ── CNI ───────────────────────────────────────────────────
+cni: "{{ cni_plugin }}"
+
+# ── TLS SANs ──────────────────────────────────────────────
+# Additional IPs/hostnames the API server certificate is valid for
+# Required so kubectl from outside the cluster works correctly
+tls-san:
+  - "{{ ansible_host }}"
+  - "127.0.0.1"
+  - "myapp-cp-01"
+
+# ── etcd snapshots ────────────────────────────────────────
+{% if etcd_snapshot_enabled %}
+etcd-snapshot-schedule-cron: "{{ etcd_snapshot_schedule }}"
+etcd-snapshot-retention: {{ etcd_snapshot_retention }}
+{% endif %}
+
+# ── Security ──────────────────────────────────────────────
+# Protect the kubeconfig file
+write-kubeconfig-mode: "0640"
+
+# Disable unused components to reduce attack surface
+disable:
+  - rke2-ingress-nginx    # we use Traefik instead
+
+# ── Logging ───────────────────────────────────────────────
+# Log level: 0=info, 1=debug, 2=trace
+debug: false

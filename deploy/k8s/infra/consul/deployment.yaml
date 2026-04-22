@@ -1,0 +1,104 @@
+# deploy/k8s/infra/consul/deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consul
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: consul
+    app.kubernetes.io/component: service-discovery
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: consul
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: consul
+        app.kubernetes.io/component: service-discovery
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: myapp-worker-01
+
+      securityContext:
+        runAsUser: 100
+        runAsGroup: 1000
+        fsGroup: 1000
+
+      containers:
+        - name: consul
+          image: consul:1.15
+          command:
+            - consul
+            - agent
+            - -config-file=/consul/config/consul.json
+          ports:
+            - containerPort: 8500
+              name: http
+            - containerPort: 8600
+              name: dns
+              protocol: UDP
+
+          # ── Environment ───────────────────────────────
+          env:
+            - name: CONSUL_UI_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: consul-credentials
+                  key: CONSUL_UI_USERNAME
+            - name: CONSUL_UI_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: consul-credentials
+                  key: CONSUL_UI_PASSWORD
+
+          # ── Resources ─────────────────────────────────
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+          # ── Probes ────────────────────────────────────
+          # Readiness — is Consul ready to serve requests?
+          readinessProbe:
+            httpGet:
+              path: /v1/status/leader
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+
+          # Liveness — is Consul still alive?
+          livenessProbe:
+            httpGet:
+              path: /v1/status/leader
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 5
+
+          # Startup probe — Consul can take time
+          # to elect a leader on first boot
+          startupProbe:
+            httpGet:
+              path: /v1/status/leader
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 20
+
+          volumeMounts:
+            - name: consul-config
+              mountPath: /consul/config
+
+      volumes:
+        - name: consul-config
+          configMap:
+            name: consul-config

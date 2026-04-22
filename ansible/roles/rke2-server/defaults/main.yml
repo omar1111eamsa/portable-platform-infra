@@ -1,0 +1,16 @@
+# ansible/roles/rke2-server/defaults/main.yml
+
+# RKE2 server service name
+rke2_server_service: "rke2-server"
+
+# Where RKE2 stores the node join token
+rke2_token_path: "/var/lib/rancher/rke2/server/node-token"
+
+# How long to wait for RKE2 API to become ready (seconds)
+rke2_api_ready_timeout: 300
+
+# How long to wait for core pods to be ready (seconds)
+rke2_pods_ready_timeout: 300
+
+# RKE2 server config file path
+rke2_server_config: "/etc/rancher/rke2/config.yaml"

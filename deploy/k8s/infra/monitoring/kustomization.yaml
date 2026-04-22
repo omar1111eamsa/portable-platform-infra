@@ -1,0 +1,12 @@
+# deploy/k8s/infra/monitoring/kustomization.yaml
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - prometheus-configmap.yaml
+  - prometheus-deployment.yaml
+  - prometheus-service.yaml
+  - grafana-datasources-configmap.yaml
+  - grafana-deployment.yaml
+  - grafana-service.yaml

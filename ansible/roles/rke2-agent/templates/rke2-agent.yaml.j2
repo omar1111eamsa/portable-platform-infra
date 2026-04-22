@@ -1,0 +1,27 @@
+# ansible/roles/rke2-agent/templates/rke2-agent.yaml.j2
+#
+# RKE2 agent configuration
+# Rendered by Ansible — do not edit manually on the node
+# Source: ansible/roles/rke2-agent/templates/rke2-agent.yaml.j2
+
+# ── Server connection ─────────────────────────────────────
+# Address of the RKE2 server to join
+# Port 9345 is the RKE2 supervisor API — used by agents to join
+server: "https://{{ hostvars[groups['rke2_servers'][0]]['ansible_host'] }}:9345"
+
+# ── Authentication ────────────────────────────────────────
+# Token from the server node — set as fact by rke2-server role
+token: "{{ rke2_token }}"
+
+# ── Network ───────────────────────────────────────────────
+# Use the internal IP of this node
+node-ip: "{{ ansible_host }}"
+
+# ── Node labels ───────────────────────────────────────────
+# Labels help the scheduler place workloads correctly
+node-label:
+  - "node-role={{ rke2_role }}"
+  - "node-name={{ inventory_hostname }}"
+{% if is_bastion %}
+  - "myapp/ingress=true"
+{% endif %}

@@ -1,0 +1,10 @@
+# ansible/roles/rke2-agent/defaults/main.yml
+
+# RKE2 agent service name
+rke2_agent_service: "rke2-agent"
+
+# RKE2 agent config file path
+rke2_agent_config: "/etc/rancher/rke2/config.yaml"
+
+# How long to wait for agent to join cluster (seconds)
+rke2_agent_join_timeout: 120

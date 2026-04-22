@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+commonLabels:
+  app.kubernetes.io/managed-by: argocd
+  environment: dev
+  team: myapp
+
+commonAnnotations:
+  example.com/managed-by: "argocd"
+  example.com/repo: "Backend-managment-service"
+  example.com/baranch: "test-argocd"
+
+
+resources:
+  - base/
+
+  - infra/
+
+  - apps/
+
+  - network-policies/
+
+  - cronjobs/
+
+  - argocd/

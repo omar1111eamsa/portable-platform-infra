@@ -1,0 +1,125 @@
+# deploy/k8s/infra/redis/deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: cache
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  strategy:
+    # Recreate — Redis does not support multiple writers
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: redis
+        app.kubernetes.io/component: cache
+    spec:
+      # Run on worker-02 alongside Airflow components
+      nodeSelector:
+        kubernetes.io/hostname: myapp-worker-02
+
+      securityContext:
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+
+      # Init container replaces the password placeholder
+      # in redis.conf with the real password from secret
+      # This is needed because Redis config file cannot
+      # reference environment variables natively
+      initContainers:
+        - name: init-redis-config
+          image: redis:7
+          command:
+            - sh
+            - -c
+            - |
+              sed "s/REDIS_PASSWORD_PLACEHOLDER/$REDIS_PASSWORD/g" \
+                /config-template/redis.conf > /config/redis.conf
+              echo "Redis config prepared"
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-credentials
+                  key: REDIS_PASSWORD
+          volumeMounts:
+            - name: config-template
+              mountPath: /config-template
+            - name: config
+              mountPath: /config
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
+
+      containers:
+        - name: redis
+          image: redis:7
+          command:
+            - redis-server
+            - /config/redis.conf
+          ports:
+            - containerPort: 6379
+              name: redis
+
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-credentials
+                  key: REDIS_PASSWORD
+
+          # ── Resources ─────────────────────────────────
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "600Mi"
+
+          # ── Probes ────────────────────────────────────
+          # Readiness — can Redis accept commands?
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli -a $REDIS_PASSWORD ping | grep PONG
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+
+          # Liveness — is Redis still responding?
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli -a $REDIS_PASSWORD ping | grep PONG
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 5
+
+          volumeMounts:
+            - name: config
+              mountPath: /config
+
+      volumes:
+        - name: config-template
+          configMap:
+            name: redis-config
+        - name: config
+          emptyDir: {}

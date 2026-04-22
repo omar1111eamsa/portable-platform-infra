@@ -1,0 +1,49 @@
+# deploy/k8s/infra/redis/configmap.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: cache
+data:
+  redis.conf: |
+    # ── Memory ────────────────────────────────────────────
+    # Hard memory limit — Redis will not grow beyond this
+    # Without this Redis consumes all available node memory
+    maxmemory 512mb
+
+    # What to do when maxmemory is reached
+    # allkeys-lru — evict least recently used keys
+    # Good for Celery broker — old task results get evicted first
+    maxmemory-policy allkeys-lru
+
+    # ── Persistence ───────────────────────────────────────
+    # Redis is used only as Celery broker — no persistence needed
+    # Disabling saves disk I/O and speeds up Redis
+    save ""
+    appendonly no
+
+    # ── Security ──────────────────────────────────────────
+    # Require password authentication
+    # Value injected at runtime from secret
+    requirepass REDIS_PASSWORD_PLACEHOLDER
+
+    # Disable dangerous commands
+    rename-command FLUSHALL ""
+    rename-command FLUSHDB  ""
+    rename-command DEBUG    ""
+    rename-command CONFIG   ""
+
+    # ── Connections ───────────────────────────────────────
+    # Maximum number of connected clients
+    maxclients 100
+
+    # Close idle connections after 5 minutes
+    timeout 300
+
+    # ── Logging ───────────────────────────────────────────
+    loglevel notice
+    logfile ""

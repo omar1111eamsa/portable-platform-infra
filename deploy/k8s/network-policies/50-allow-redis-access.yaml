@@ -1,0 +1,28 @@
+# Allow only Airflow components to reach Redis
+# Redis is used exclusively as Celery broker for Airflow
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-redis-access
+  namespace: myapp
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - metamodel-orchestration
+                  - metamodel-scheduler
+                  - metamodel-worker
+                  - metamodel-triggerer
+                  - metamodel-dag-processor
+      ports:
+        - port: 6379
+          protocol: TCP

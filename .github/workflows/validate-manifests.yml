@@ -1,0 +1,173 @@
+# .github/workflows/validate-manifests.yml
+#
+# Validates all Kubernetes manifests on every push
+# and pull request to test-argocd branch
+#
+# Checks:
+#   1. Kustomize can build the full stack without errors
+#   2. All YAML files are syntactically valid
+#   3. All referenced resources exist
+
+name: Validate Manifests
+
+on:
+  push:
+    branches:
+      - test-argocd
+    paths:
+      # Only run when manifest files change
+      - 'deploy/k8s/**'
+      - 'deploy/argocd/**'
+  pull_request:
+    branches:
+      - test-argocd
+    paths:
+      - 'deploy/k8s/**'
+      - 'deploy/argocd/**'
+
+jobs:
+  validate:
+    name: Validate Kubernetes Manifests
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── Checkout ───────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Setup kubectl ──────────────────────────────────
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.29.3'
+
+      # ── Setup Kustomize ────────────────────────────────
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v2
+        with:
+          kustomize-version: 'v5.3.0'
+
+      # ── Validate YAML syntax ───────────────────────────
+      # Catches basic YAML syntax errors before anything else
+      - name: Validate YAML syntax
+        run: |
+          echo "Validating YAML syntax..."
+
+          # Find all yaml files and check syntax
+          ERRORS=0
+          while IFS= read -r -d '' file; do
+            if ! python3 -c "
+          import yaml, sys
+          try:
+              list(yaml.safe_load_all(open('$file')))
+              print(f'  OK: $file')
+          except yaml.YAMLError as e:
+              print(f'  ERROR: $file')
+              print(f'    {e}')
+              sys.exit(1)
+          "; then
+              ERRORS=$((ERRORS + 1))
+            fi
+          done < <(find deploy/ -name "*.yaml" -o -name "*.yml" -print0)
+
+          if [ $ERRORS -gt 0 ]; then
+            echo ""
+            echo "Found $ERRORS YAML syntax errors"
+            exit 1
+          fi
+
+          echo ""
+          echo "All YAML files are syntactically valid"
+
+      # ── Kustomize build ────────────────────────────────
+      # Verifies Kustomize can resolve all references
+      # and build the complete manifest set
+      - name: Build Kustomize stack
+        run: |
+          echo "Building full Kustomize stack..."
+
+          kustomize build deploy/k8s \
+            --enable-helm=false \
+            --load-restrictor=LoadRestrictionsNone \
+            > /tmp/full-stack.yaml
+
+          echo "Kustomize build successful"
+
+          # Count resources
+          RESOURCE_COUNT=$(grep -c "^apiVersion:" /tmp/full-stack.yaml || true)
+          echo "Total resources: $RESOURCE_COUNT"
+
+      # ── Validate with kubectl ──────────────────────────
+      # dry-run=client validates resource structure
+      # without connecting to a real cluster
+      - name: Validate resources with kubectl
+        run: |
+          echo "Validating resources with kubectl dry-run..."
+
+          kubectl apply \
+            --dry-run=client \
+            --validate=true \
+            -f /tmp/full-stack.yaml \
+            2>&1 | tail -20
+
+          echo "kubectl validation passed"
+
+      # ── Check for latest image tags ────────────────────
+      # Using latest tag in production is bad practice
+      # This catches accidental latest tags in manifests
+      - name: Check for latest image tags
+        run: |
+          echo "Checking for latest image tags..."
+
+          LATEST_COUNT=$(grep -r "image:.*:latest" deploy/k8s/apps/ \
+            --include="*.yaml" | wc -l || true)
+
+          if [ "$LATEST_COUNT" -gt 0 ]; then
+            echo "WARNING: Found $LATEST_COUNT deployments using :latest tag"
+            grep -r "image:.*:latest" deploy/k8s/apps/ --include="*.yaml"
+            echo ""
+            echo "Consider pinning image tags to specific versions"
+            echo "latest tags make deployments unpredictable"
+            # Warning only — not blocking
+            # CI from app repos will update tags to commit SHA
+          else
+            echo "No latest tags found"
+          fi
+
+      # ── Check for missing resource limits ─────────────
+      # Every deployment should have resource limits
+      - name: Check for missing resource limits
+        run: |
+          echo "Checking for missing resource limits..."
+
+          MISSING=0
+          while IFS= read -r -d '' file; do
+            # Check if deployment has resources defined
+            if ! grep -q "resources:" "$file"; then
+              echo "  WARNING: No resource limits in $file"
+              MISSING=$((MISSING + 1))
+            fi
+          done < <(find deploy/k8s/apps -name "deployment.yaml" -print0)
+
+          if [ $MISSING -gt 0 ]; then
+            echo ""
+            echo "WARNING: $MISSING deployments missing resource limits"
+            echo "LimitRange will apply defaults but explicit limits are better"
+          else
+            echo "All deployments have resource limits defined"
+          fi
+
+      # ── Summary ────────────────────────────────────────
+      - name: Validation summary
+        if: always()
+        run: |
+          echo ""
+          echo "╔══════════════════════════════════════╗"
+          echo "║     Manifest Validation Summary      ║"
+          echo "╚══════════════════════════════════════╝"
+          echo ""
+          echo "Repository  : ${{ github.repository }}"
+          echo "Branch      : ${{ github.ref_name }}"
+          echo "Commit      : ${{ github.sha }}"
+          echo "Triggered by: ${{ github.actor }}"
+          echo ""

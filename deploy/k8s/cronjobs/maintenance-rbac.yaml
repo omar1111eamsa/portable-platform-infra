@@ -1,0 +1,73 @@
+# deploy/k8s/cronjobs/maintenance-rbac.yaml
+#
+# Service account and permissions for all maintenance cronjobs
+# Principle of least privilege — only permissions actually needed
+# Nothing more
+
+# ── Service Account ───────────────────────────────────────
+# Identity used by all maintenance cronjob pods
+# Instead of using the default service account which has
+# broad permissions, we create a dedicated one with
+# only what maintenance jobs need
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: maintenance-sa
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: maintenance-sa
+    app.kubernetes.io/component: maintenance
+
+---
+# ── Role ──────────────────────────────────────────────────
+# Defines exactly what permissions maintenance jobs have
+# Rule of thumb — if a job does not need a permission
+# it should not have it
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: maintenance-role
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: maintenance-role
+    app.kubernetes.io/component: maintenance
+rules:
+  # Allow listing and deleting pods
+  # Needed by clean-evicted-pods job
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+
+  # Allow reading nodes
+  # Needed by disk check job to identify nodes
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list"]
+
+  # Allow reading deployments
+  # Needed by health check job to verify services are running
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list"]
+
+---
+# ── RoleBinding ───────────────────────────────────────────
+# Links the service account to the role
+# Without this the service account has zero permissions
+# even if the role exists
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: maintenance-rolebinding
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: maintenance-rolebinding
+    app.kubernetes.io/component: maintenance
+subjects:
+  - kind: ServiceAccount
+    name: maintenance-sa
+    namespace: myapp
+roleRef:
+  kind: Role
+  name: maintenance-role
+  apiGroup: rbac.authorization.k8s.io

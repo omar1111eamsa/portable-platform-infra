@@ -1,0 +1,101 @@
+# deploy/k8s/infra/monitoring/prometheus-configmap.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/component: monitoring
+data:
+  prometheus.yml: |
+    global:
+      # How often Prometheus scrapes metrics
+      scrape_interval:     15s
+      # How often Prometheus evaluates alert rules
+      evaluation_interval: 15s
+      # Timeout for each scrape
+      scrape_timeout:      10s
+
+    scrape_configs:
+
+      # ── Prometheus self monitoring ─────────────────────
+      - job_name: prometheus
+        static_configs:
+          - targets: ['localhost:9090']
+
+      # ── Infrastructure services ────────────────────────
+      - job_name: postgres
+        static_configs:
+          - targets: ['postgres-exporter:9187']
+        metrics_path: /metrics
+
+      - job_name: redis
+        static_configs:
+          - targets: ['redis:6379']
+        metrics_path: /metrics
+
+      - job_name: rabbitmq
+        static_configs:
+          - targets: ['rabbitmq:15692']
+        metrics_path: /metrics
+
+      - job_name: minio
+        static_configs:
+          - targets: ['minio:9000']
+        metrics_path: /minio/v2/metrics/cluster
+
+      - job_name: consul
+        static_configs:
+          - targets: ['consul:8500']
+        metrics_path: /v1/agent/metrics
+        params:
+          format: ['prometheus']
+
+      # ── Application services ───────────────────────────
+      # Spring Boot actuator exposes metrics at /actuator/prometheus
+      - job_name: api-gateway
+        static_configs:
+          - targets: ['api-gateway:8888']
+        metrics_path: /actuator/prometheus
+
+      - job_name: user-management
+        static_configs:
+          - targets: ['user-management:8081']
+        metrics_path: /actuator/prometheus
+
+      - job_name: payment-service
+        static_configs:
+          - targets: ['payment-service:8082']
+        metrics_path: /actuator/prometheus
+
+      - job_name: predictions-intake
+        static_configs:
+          - targets: ['predictions-intake:8082']
+        metrics_path: /actuator/prometheus
+
+      - job_name: kpi-dashboard
+        static_configs:
+          - targets: ['kpi-dashboard:8084']
+        metrics_path: /actuator/prometheus
+
+      - job_name: crm-client
+        static_configs:
+          - targets: ['crm-client:8083']
+        metrics_path: /actuator/prometheus
+
+      # ── Airflow ───────────────────────────────────────
+      - job_name: airflow
+        static_configs:
+          - targets: ['metamodel-orchestration:8080']
+        metrics_path: /api/v1/metrics
+
+      # ── Kubernetes nodes ──────────────────────────────
+      # Scrapes RKE2 built-in node metrics
+      - job_name: kubernetes-nodes
+        kubernetes_sd_configs:
+          - role: node
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)

@@ -1,0 +1,13 @@
+# deploy/k8s/infra/kustomization.yaml
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # Order matters — postgres first since others depend on it
+  - postgres/
+  - redis/
+  - rabbitmq/
+  - minio/
+  - consul/
+  - monitoring/

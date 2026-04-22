@@ -1,0 +1,125 @@
+# deploy/k8s/infra/rabbitmq/configmap.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-config
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: rabbitmq
+    app.kubernetes.io/component: message-broker
+data:
+  # ── RabbitMQ main configuration ───────────────────────
+  rabbitmq.conf: |
+    # ── Networking ────────────────────────────────────────
+    listeners.tcp.default = 5672
+    management.tcp.port   = 15672
+
+    # ── Memory ────────────────────────────────────────────
+    # RabbitMQ starts blocking publishers when memory
+    # usage exceeds this fraction of available RAM
+    # 0.4 = block at 40% of total node memory
+    vm_memory_high_watermark.relative = 0.4
+
+    # ── Disk ──────────────────────────────────────────────
+    # Block publishers when free disk space drops below this
+    disk_free_limit.absolute = 1GB
+
+    # ── Logging ───────────────────────────────────────────
+    log.console            = true
+    log.console.level      = info
+    log.file               = false
+
+    # ── Heartbeat ─────────────────────────────────────────
+    # Detect dead connections after 60 seconds
+    heartbeat = 60
+
+    # ── Queue defaults ────────────────────────────────────
+    # Maximum number of messages per queue
+    # Prevents runaway queues from consuming all memory
+    max_message_size = 131072
+
+  # ── Exchange and queue definitions ────────────────────
+  # Pre-creates exchanges and queues on first boot
+  # So services do not need to create them at runtime
+  definitions.json: |
+    {
+      "vhosts": [
+        { "name": "/" }
+      ],
+      "exchanges": [
+        {
+          "name": "pipeline.events",
+          "vhost": "/",
+          "type": "topic",
+          "durable": true,
+          "auto_delete": false
+        },
+        {
+          "name": "execution.events",
+          "vhost": "/",
+          "type": "topic",
+          "durable": true,
+          "auto_delete": false
+        }
+      ],
+      "queues": [
+        {
+          "name": "trade.signals",
+          "vhost": "/",
+          "durable": true,
+          "auto_delete": false,
+          "arguments": {
+            "x-message-ttl": 86400000,
+            "x-max-length": 10000
+          }
+        },
+        {
+          "name": "execution.results",
+          "vhost": "/",
+          "durable": true,
+          "auto_delete": false,
+          "arguments": {
+            "x-message-ttl": 86400000,
+            "x-max-length": 10000
+          }
+        },
+        {
+          "name": "user.events",
+          "vhost": "/",
+          "durable": true,
+          "auto_delete": false,
+          "arguments": {
+            "x-message-ttl": 86400000,
+            "x-max-length": 10000
+          }
+        }
+      ],
+      "bindings": [
+        {
+          "source": "pipeline.events",
+          "vhost": "/",
+          "destination": "trade.signals",
+          "destination_type": "queue",
+          "routing_key": "trade.signal.#"
+        },
+        {
+          "source": "execution.events",
+          "vhost": "/",
+          "destination": "execution.results",
+          "destination_type": "queue",
+          "routing_key": "execution.result.#"
+        },
+        {
+          "source": "pipeline.events",
+          "vhost": "/",
+          "destination": "user.events",
+          "destination_type": "queue",
+          "routing_key": "user.event.#"
+        }
+      ]
+    }
+
+  # ── Enabled plugins ───────────────────────────────────
+  enabled_plugins: |
+    [rabbitmq_management,rabbitmq_prometheus].

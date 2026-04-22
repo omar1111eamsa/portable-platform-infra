@@ -1,0 +1,20 @@
+# deploy/k8s/infra/postgres/service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+spec:
+  selector:
+    app.kubernetes.io/name: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+  # ClusterIP — only accessible within the cluster
+  # No external access to the database
+  type: ClusterIP

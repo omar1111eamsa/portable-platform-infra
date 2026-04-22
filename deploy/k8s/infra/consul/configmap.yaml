@@ -1,0 +1,49 @@
+# deploy/k8s/infra/consul/configmap.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: consul-config
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: consul
+    app.kubernetes.io/component: service-discovery
+data:
+  consul.json: |
+    {
+      "datacenter": "myapp-dc1",
+      "data_dir": "/consul/data",
+      "log_level": "INFO",
+      "server": true,
+
+      "bootstrap_expect": 1,
+
+      "ui_config": {
+        "enabled": true
+      },
+
+      "client_addr": "0.0.0.0",
+      "bind_addr": "0.0.0.0",
+
+      "ports": {
+        "http": 8500,
+        "dns":  8600
+      },
+
+      "connect": {
+        "enabled": false
+      },
+
+      "performance": {
+        "raft_multiplier": 1
+      },
+
+      "limits": {
+        "http_max_conns_per_client": 200
+      },
+
+      "telemetry": {
+        "prometheus_retention_time": "60s",
+        "disable_hostname": true
+      }
+    }

@@ -1,0 +1,84 @@
+# deploy/argocd/application-myapp.yaml
+#
+# Defines the ArgoCD Application that watches this repository
+# and syncs the myapp namespace
+#
+# Apply this manually once after ArgoCD is installed:
+#   kubectl apply -f deploy/argocd/application-myapp.yaml
+#
+# After this ArgoCD manages itself and everything else
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: myapp
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: myapp
+    app.kubernetes.io/managed-by: argocd
+  # Finalizer ensures ArgoCD cleans up resources
+  # when the Application is deleted
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  # ── Project ─────────────────────────────────────────────
+  project: default
+
+  # ── Source ──────────────────────────────────────────────
+  source:
+    repoURL: https://github.com/MyApp/portable-platform-infra
+    # Branch ArgoCD watches for changes
+    targetRevision: test-argocd
+    # Path within the repo to apply
+    path: deploy/k8s
+    # Use Kustomize to process manifests
+    kustomize: {}
+
+  # ── Destination ─────────────────────────────────────────
+  destination:
+    # Deploy to the same cluster ArgoCD runs in
+    server: https://kubernetes.default.svc
+    namespace: myapp
+
+  # ── Sync policy ─────────────────────────────────────────
+  syncPolicy:
+    automated:
+      # Automatically sync when repo changes
+      prune: true
+      # Re-apply if someone manually changes resources
+      selfHeal: true
+      # Do not allow empty commits to trigger sync
+      allowEmpty: false
+
+    syncOptions:
+      # Create namespace if it does not exist
+      - CreateNamespace=true
+      # Use server-side apply — better for large resources
+      - ServerSideApply=true
+      # Respect the order resources are applied
+      - RespectIgnoreDifferences=true
+      # Do not fail sync if a resource is not ready
+      - FailOnSharedResource=false
+
+    # Retry failed syncs automatically
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # ── Ignore differences ──────────────────────────────────
+  # Some fields are managed by controllers and change constantly
+  # Ignoring them prevents ArgoCD from syncing unnecessarily
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        # Image tag is updated by CI — ArgoCD should not revert it
+        - /spec/template/spec/containers/0/image
+    - group: ""
+      kind: Secret
+      jsonPointers:
+        # Secrets are managed externally — ArgoCD should not touch them
+        - /data

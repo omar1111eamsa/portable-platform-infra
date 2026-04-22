@@ -1,0 +1,25 @@
+# Allow backend services to reach Consul for service discovery
+# api-gateway and Spring Boot services need Consul to resolve lb:// addresses
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-consul-access
+  namespace: myapp
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: consul
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/component
+                operator: In
+                values:
+                  - backend
+                  - gateway
+      ports:
+        - port: 8500
+          protocol: TCP

@@ -1,0 +1,13 @@
+# deploy/k8s/argocd/namespace.yaml
+#
+# ArgoCD runs in its own namespace separate from myapp
+# This is standard practice — ArgoCD manages other namespaces
+# but should not live inside them
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+  labels:
+    app.kubernetes.io/managed-by: argocd
+    kubernetes.io/metadata.name: argocd

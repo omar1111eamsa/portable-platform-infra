@@ -1,0 +1,68 @@
+# ansible/group_vars/all.yml
+#
+# Variables shared across ALL nodes in the cluster
+# Override per-group in group_vars/rke2_servers.yml
+# or per-host in host_vars/<hostname>.yml
+
+# ── RKE2 ──────────────────────────────────────────────────
+# Pin exact version — never use 'latest' in production
+# Check releases at: https://github.com/rancher/rke2/releases
+rke2_version: "v1.29.3+rke2r1"
+
+# RKE2 installation directory
+rke2_install_dir: "/usr/local/bin"
+
+# RKE2 config directory
+rke2_config_dir: "/etc/rancher/rke2"
+
+# RKE2 data directory — where cluster data is stored
+rke2_data_dir: "/var/lib/rancher/rke2"
+
+# ── Kubernetes ────────────────────────────────────────────
+# Cluster name — used in kubeconfig context name
+cluster_name: "myapp"
+
+# Namespace where all myapp workloads live
+myapp_namespace: "myapp"
+
+# Pod CIDR — IP range for pods
+# Must not overlap with subnet CIDR (10.10.0.0/24)
+pod_cidr: "10.42.0.0/16"
+
+# Service CIDR — IP range for kubernetes services
+# Must not overlap with pod CIDR or subnet CIDR
+service_cidr: "10.43.0.0/16"
+
+# ── CNI ───────────────────────────────────────────────────
+# Canal is RKE2 default — combines Flannel + Calico
+# Flannel handles pod networking, Calico handles network policies
+cni_plugin: "canal"
+
+# ── System ────────────────────────────────────────────────
+# SSH user — must match Terraform ssh_user variable
+ansible_user: "myapp"
+
+# Timezone for all nodes
+timezone: "UTC"
+
+# ── Paths ─────────────────────────────────────────────────
+# Where kubeconfig will be saved on the control-plane node
+rke2_kubeconfig_path: "/etc/rancher/rke2/rke2.yaml"
+
+# Where we copy kubeconfig locally after cluster is ready
+local_kubeconfig_path: "~/.kube/myapp-rke2.yaml"
+
+# ── Feature flags ─────────────────────────────────────────
+# Whether to install kubectl symlink on all nodes
+install_kubectl_symlink: true
+
+# Whether to enable etcd snapshots
+# Critical for production — backs up cluster state automatically
+etcd_snapshot_enabled: true
+
+# How often to take etcd snapshots (cron format)
+# Every 6 hours
+etcd_snapshot_schedule: "0 */6 * * *"
+
+# How many etcd snapshots to keep
+etcd_snapshot_retention: 5

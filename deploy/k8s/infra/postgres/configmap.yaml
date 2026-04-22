@@ -1,0 +1,77 @@
+# deploy/k8s/infra/postgres/configmap.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+data:
+  # PostgreSQL configuration tuned for 2GB memory allocation
+  postgresql.conf: |
+    # ── Connections ───────────────────────────────────────
+    # Limit connections — each connection uses ~5MB memory
+    max_connections = 100
+
+    # ── Memory ────────────────────────────────────────────
+    # shared_buffers — PostgreSQL's own cache
+    # Rule of thumb: 25% of available RAM
+    shared_buffers = 512MB
+
+    # effective_cache_size — hint to query planner
+    # about total memory available for caching
+    # Rule of thumb: 75% of available RAM
+    effective_cache_size = 1536MB
+
+    # work_mem — memory per sort/hash operation
+    # Lower value = more disk spills but safer
+    work_mem = 16MB
+
+    # maintenance_work_mem — memory for VACUUM, CREATE INDEX
+    maintenance_work_mem = 128MB
+
+    # ── WAL ───────────────────────────────────────────────
+    # Write-ahead log settings for durability
+    wal_level = replica
+    max_wal_size = 1GB
+    min_wal_size = 80MB
+
+    # ── Logging ───────────────────────────────────────────
+    # Log slow queries for performance debugging
+    log_min_duration_statement = 1000
+    log_connections = off
+    log_disconnections = off
+    log_timezone = 'UTC'
+
+    # ── Timezone ──────────────────────────────────────────
+    timezone = 'UTC'
+
+  # List of databases to create on first boot
+  # Read by init-databases-job
+  init-databases.sh: |
+    #!/bin/bash
+    set -e
+
+    databases=(
+      "prediction_db"
+      "user_db"
+      "payment_db"
+      "crm_db"
+      "kpi_db"
+      "airflow_db"
+    )
+
+    for db in "${databases[@]}"; do
+      echo "Creating database: $db"
+      psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
+        SELECT 'CREATE DATABASE $db'
+        WHERE NOT EXISTS (
+          SELECT FROM pg_database WHERE datname = '$db'
+        )\gexec
+      EOSQL
+      echo "Database $db ready"
+    done
+
+    echo "All databases initialized"

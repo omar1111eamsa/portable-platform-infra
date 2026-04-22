@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kpi-dashboard
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: kpi-dashboard
+    app.kubernetes.io/component: backend
+spec:
+  selector:
+    app.kubernetes.io/name: kpi-dashboard
+  ports:
+    - name: http
+      port: 8086
+      targetPort: http
+  type: ClusterIP

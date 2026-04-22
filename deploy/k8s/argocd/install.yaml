@@ -1,0 +1,17 @@
+# deploy/k8s/argocd/install.yaml
+#
+# ArgoCD installation manifest
+# Pinned to a specific version — never use latest
+# Check releases at: https://github.com/argoproj/argo-cd/releases
+#
+# Download with:
+#   curl -fsSL \
+#     https://raw.githubusercontent.com/argoproj/argo-cd/v2.10.0/manifests/install.yaml \
+#     -o deploy/k8s/argocd/install.yaml
+#
+# We reference the upstream manifest directly via a remote resource
+# in kustomization.yaml — this keeps our repo clean and makes
+# version upgrades a one-line change
+
+# This file is intentionally left empty
+# The actual install manifest is fetched remotely in kustomization.yaml

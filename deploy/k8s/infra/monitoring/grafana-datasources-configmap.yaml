@@ -1,0 +1,29 @@
+# deploy/k8s/infra/monitoring/grafana-datasources-configmap.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: monitoring
+data:
+  # Grafana reads all files in this directory on startup
+  # and automatically provisions datasources
+  datasources.yaml: |
+    apiVersion: 1
+
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        # Mark as default datasource
+        isDefault: true
+        url: http://prometheus:9090/prometheus
+        access: proxy
+        editable: false
+        jsonData:
+          # How often Grafana queries Prometheus
+          timeInterval: "15s"
+          # Use GET instead of POST for queries
+          httpMethod: GET

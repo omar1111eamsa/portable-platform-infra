@@ -1,0 +1,83 @@
+# deploy/k8s/argocd/kustomization.yaml
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # ArgoCD namespace first
+  - namespace.yaml
+  # Official ArgoCD install manifest — pinned to v2.10.0
+  - https://raw.githubusercontent.com/argoproj/argo-cd/v2.10.0/manifests/install.yaml
+  # Our configuration patches
+  - argocd-cmd-params-patch.yaml
+  - ingress.yaml
+  - middleware-strip-prefix.yaml
+
+# Patch ArgoCD server deployment to add resource limits
+# ArgoCD original manifest has no limits
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: argocd-server
+        namespace: argocd
+      spec:
+        template:
+          spec:
+            containers:
+              - name: argocd-server
+                resources:
+                  requests:
+                    cpu: "100m"
+                    memory: "128Mi"
+                  limits:
+                    cpu: "500m"
+                    memory: "512Mi"
+    target:
+      kind: Deployment
+      name: argocd-server
+
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: argocd-repo-server
+        namespace: argocd
+      spec:
+        template:
+          spec:
+            containers:
+              - name: argocd-repo-server
+                resources:
+                  requests:
+                    cpu: "100m"
+                    memory: "256Mi"
+                  limits:
+                    cpu: "1"
+                    memory: "1Gi"
+    target:
+      kind: Deployment
+      name: argocd-repo-server
+
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: argocd-application-controller
+        namespace: argocd
+      spec:
+        template:
+          spec:
+            containers:
+              - name: argocd-application-controller
+                resources:
+                  requests:
+                    cpu: "100m"
+                    memory: "256Mi"
+                  limits:
+                    cpu: "1"
+                    memory: "1Gi"
+    target:
+      kind: Deployment
+      name: argocd-application-controller

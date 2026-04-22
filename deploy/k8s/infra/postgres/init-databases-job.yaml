@@ -1,0 +1,82 @@
+# deploy/k8s/infra/postgres/init-databases-job.yaml
+#
+# Runs once after PostgreSQL starts
+# Creates all application databases if they do not exist
+# Safe to run multiple times — uses IF NOT EXISTS
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-init-databases
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database-init
+  annotations:
+    # ArgoCD hook — runs after all resources are synced
+    argocd.argoproj.io/hook: PostSync
+    # Delete job after it completes successfully
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  # Only try once — if it fails we want to know
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+
+      # Wait for PostgreSQL to be ready before running
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:15
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h postgres -p 5432 -U $POSTGRES_USER; do
+                echo "Waiting for PostgreSQL to be ready..."
+                sleep 3
+              done
+              echo "PostgreSQL is ready"
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: POSTGRES_USER
+
+      containers:
+        - name: init-databases
+          image: postgres:15
+          command:
+            - sh
+            - -c
+            - /scripts/init-databases.sh
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: POSTGRES_USER
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: POSTGRES_PASSWORD
+            - name: PGHOST
+              value: postgres
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+          volumeMounts:
+            - name: init-scripts
+              mountPath: /scripts
+
+      volumes:
+        - name: init-scripts
+          configMap:
+            name: postgres-config
+            defaultMode: 0755

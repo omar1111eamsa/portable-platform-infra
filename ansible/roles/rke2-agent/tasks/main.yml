@@ -1,0 +1,122 @@
+# ansible/roles/rke2-agent/tasks/main.yml
+
+# ── Verify token is available ─────────────────────────────
+# Token must have been set by rke2-server role
+# If it is missing something went wrong on the server
+- name: "RKE2 Agent | Verify join token is available"
+  ansible.builtin.assert:
+    that:
+      - rke2_token is defined
+      - rke2_token | length > 0
+    fail_msg: >-
+      rke2_token is not set. 
+      Make sure the rke2-server role ran successfully before this role.
+    success_msg: "Join token is available"
+
+# ── Check if RKE2 is already installed ───────────────────
+- name: "RKE2 Agent | Check if RKE2 is already installed"
+  ansible.builtin.stat:
+    path: "{{ rke2_install_dir }}/rke2"
+  register: rke2_binary
+
+- name: "RKE2 Agent | Check installed RKE2 version"
+  ansible.builtin.command: rke2 --version
+  register: rke2_installed_version
+  changed_when: false
+  failed_when: false
+  when: rke2_binary.stat.exists
+
+# ── Download RKE2 installer ───────────────────────────────
+- name: "RKE2 Agent | Download RKE2 install script"
+  ansible.builtin.get_url:
+    url: "https://get.rke2.io"
+    dest: "/tmp/rke2-install.sh"
+    mode: "0700"
+    force: true
+  when: >
+    not rke2_binary.stat.exists or
+    rke2_version not in (rke2_installed_version.stdout | default(''))
+
+# ── Install RKE2 agent ────────────────────────────────────
+- name: "RKE2 Agent | Install RKE2 agent"
+  ansible.builtin.command: /tmp/rke2-install.sh
+  environment:
+    INSTALL_RKE2_VERSION: "{{ rke2_version }}"
+    INSTALL_RKE2_TYPE: "agent"
+  become: true
+  when: >
+    not rke2_binary.stat.exists or
+    rke2_version not in (rke2_installed_version.stdout | default(''))
+  notify: restart rke2-agent
+
+# ── Create config directory ───────────────────────────────
+- name: "RKE2 Agent | Create RKE2 config directory"
+  ansible.builtin.file:
+    path: "{{ rke2_config_dir }}"
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+  become: true
+
+# ── Write RKE2 agent config ───────────────────────────────
+- name: "RKE2 Agent | Write RKE2 agent configuration"
+  ansible.builtin.template:
+    src: rke2-agent.yaml.j2
+    dest: "{{ rke2_agent_config }}"
+    mode: "0640"
+    owner: root
+    group: root
+  become: true
+  notify: restart rke2-agent
+
+# ── Verify server is reachable ────────────────────────────
+# Before trying to join, confirm the server API is reachable
+# Fails fast instead of hanging on a connection timeout
+- name: "RKE2 Agent | Verify RKE2 server is reachable on port 9345"
+  ansible.builtin.wait_for:
+    host: "{{ hostvars[groups['rke2_servers'][0]]['ansible_host'] }}"
+    port: 9345
+    timeout: 30
+    msg: >-
+      RKE2 server is not reachable on port 9345.
+      Make sure the rke2-server role completed successfully.
+
+# ── Enable and start RKE2 agent ───────────────────────────
+- name: "RKE2 Agent | Enable RKE2 agent service"
+  ansible.builtin.systemd:
+    name: "{{ rke2_agent_service }}"
+    enabled: true
+    daemon_reload: true
+  become: true
+
+- name: "RKE2 Agent | Start RKE2 agent service"
+  ansible.builtin.systemd:
+    name: "{{ rke2_agent_service }}"
+    state: started
+  become: true
+
+# ── Wait for node to join cluster ─────────────────────────
+# Verify the node actually appeared in the cluster
+# We check from the server node using kubectl
+- name: "RKE2 Agent | Wait for node to appear in cluster"
+  ansible.builtin.command: >
+    /var/lib/rancher/rke2/bin/kubectl
+    --kubeconfig {{ rke2_kubeconfig_path }}
+    get node {{ inventory_hostname }}
+    --no-headers
+  register: node_status
+  retries: 12
+  delay: 10
+  until: >
+    node_status.rc == 0 and
+    'NotReady' not in node_status.stdout
+  become: true
+  delegate_to: "{{ groups['rke2_servers'][0] }}"
+  changed_when: false
+
+- name: "RKE2 Agent | Confirm node is Ready"
+  ansible.builtin.debug:
+    msg: >-
+      Node {{ inventory_hostname }} successfully joined the cluster
+      and is in Ready state.

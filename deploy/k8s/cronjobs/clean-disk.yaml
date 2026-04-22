@@ -1,0 +1,99 @@
+# deploy/k8s/cronjobs/clean-disk.yaml
+#
+# Cleans unused container images from nodes
+# RKE2 uses containerd — old images accumulate on disk
+# without automatic cleanup
+# Schedule: every night at 2am
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: clean-disk
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: clean-disk
+    app.kubernetes.io/component: maintenance
+spec:
+  # 2am every night
+  schedule: "0 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 600
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: clean-disk
+            app.kubernetes.io/component: maintenance
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: maintenance-sa
+          # hostPID allows the container to see host processes
+          # needed to interact with the node container runtime
+          hostPID: true
+          # Run on every node using tolerations
+          tolerations:
+            - operator: Exists
+          containers:
+            - name: clean-disk
+              image: ubuntu:22.04
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+
+                  echo "=== Clean Disk ==="
+                  echo "Node: $(hostname)"
+                  echo "Time: $(date -u)"
+                  echo ""
+
+                  # Disk usage before cleanup
+                  echo "Disk usage before:"
+                  df -h /host/var/lib/rancher
+                  echo ""
+
+                  # Clean unused container images via crictl
+                  # crictl is the containerd CLI tool
+                  # --prune removes all unused images
+                  if [ -f /host/usr/local/bin/crictl ]; then
+                    echo "Cleaning unused container images..."
+                    chroot /host crictl rmi --prune || true
+                    echo "Image cleanup done"
+                  else
+                    echo "crictl not found — skipping image cleanup"
+                  fi
+
+                  # Clean containerd content store
+                  # Removes unreferenced layers and blobs
+                  echo "Cleaning containerd content store..."
+                  find /host/var/lib/rancher/rke2/agent/containerd \
+                    -name "*.lock" \
+                    -mtime +7 \
+                    -delete 2>/dev/null || true
+
+                  # Disk usage after cleanup
+                  echo ""
+                  echo "Disk usage after:"
+                  df -h /host/var/lib/rancher
+                  echo ""
+                  echo "Disk cleanup complete"
+
+              securityContext:
+                privileged: true
+              resources:
+                requests:
+                  cpu: "100m"
+                  memory: "128Mi"
+                limits:
+                  cpu: "500m"
+                  memory: "256Mi"
+              volumeMounts:
+                - name: host-root
+                  mountPath: /host
+          volumes:
+            - name: host-root
+              hostPath:
+                path: /

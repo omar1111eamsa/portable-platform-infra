@@ -1,0 +1,83 @@
+# deploy/k8s/infra/monitoring/prometheus-deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/component: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: prometheus
+        app.kubernetes.io/component: monitoring
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: myapp-worker-01
+
+      securityContext:
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+
+      containers:
+        - name: prometheus
+          image: prom/prometheus:latest
+          args:
+            - --config.file=/etc/prometheus/prometheus.yml
+            # How long to keep metrics data
+            - --storage.tsdb.retention.time=15d
+            # Maximum storage size for metrics
+            - --storage.tsdb.retention.size=5GB
+            # Enable hot reload of config
+            - --web.enable-lifecycle
+            # Set external URL for correct link generation
+            - --web.external-url=/prometheus
+            - --web.route-prefix=/prometheus
+          ports:
+            - containerPort: 9090
+              name: http
+
+          # ── Resources ─────────────────────────────────
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "2Gi"
+
+          # ── Probes ────────────────────────────────────
+          readinessProbe:
+            httpGet:
+              path: /prometheus/-/ready
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /prometheus/-/healthy
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 5
+
+          volumeMounts:
+            - name: prometheus-config
+              mountPath: /etc/prometheus
+
+      volumes:
+        - name: prometheus-config
+          configMap:
+            name: prometheus-config

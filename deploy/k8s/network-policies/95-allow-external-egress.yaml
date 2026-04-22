@@ -1,0 +1,26 @@
+# Allow specific services to make outbound calls to internet
+# chatbot needs to reach OpenRouter API
+# payment-service needs to reach Stripe API
+# user-management needs to reach Google OAuth
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-external-egress
+  namespace: myapp
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values:
+          - chatbot
+          - payment-service
+          - user-management
+  policyTypes:
+    - Egress
+  egress:
+    - ports:
+        - port: 443
+          protocol: TCP
+        - port: 80
+          protocol: TCP

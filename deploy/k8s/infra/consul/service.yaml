@@ -1,0 +1,22 @@
+# deploy/k8s/infra/consul/service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: consul
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: consul
+    app.kubernetes.io/component: service-discovery
+spec:
+  selector:
+    app.kubernetes.io/name: consul
+  ports:
+    - name: http
+      port: 8500
+      targetPort: http
+    - name: dns
+      port: 8600
+      targetPort: dns
+      protocol: UDP
+  type: ClusterIP

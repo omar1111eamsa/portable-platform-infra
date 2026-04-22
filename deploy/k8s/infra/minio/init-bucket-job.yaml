@@ -1,0 +1,101 @@
+# deploy/k8s/infra/minio/init-bucket-job.yaml
+#
+# Creates required MinIO buckets after MinIO starts
+# Uses mc (MinIO client) to create buckets
+# Safe to run multiple times — checks if bucket exists first
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-init-buckets
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/component: object-storage-init
+  annotations:
+    # ArgoCD hook — runs after all resources are synced
+    argocd.argoproj.io/hook: PostSync
+    # Delete job after it completes successfully
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+
+      # Wait for MinIO to be ready before creating buckets
+      initContainers:
+        - name: wait-for-minio
+          image: curlimages/curl:latest
+          command:
+            - sh
+            - -c
+            - |
+              until curl -sf http://minio:9000/minio/health/ready; do
+                echo "Waiting for MinIO to be ready..."
+                sleep 5
+              done
+              echo "MinIO is ready"
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
+
+      containers:
+        - name: init-buckets
+          image: minio/mc:latest
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+
+              # Configure mc client
+              mc alias set myapp \
+                http://minio:9000 \
+                $MINIO_ROOT_USER \
+                $MINIO_ROOT_PASSWORD
+
+              # Create buckets if they do not exist
+              buckets=(
+                "airflow-logs"
+                "myapp-data"
+              )
+
+              for bucket in "${buckets[@]}"; do
+                if mc ls myapp/$bucket > /dev/null 2>&1; then
+                  echo "Bucket $bucket already exists — skipping"
+                else
+                  mc mb myapp/$bucket
+                  echo "Bucket $bucket created"
+                fi
+              done
+
+              # Set lifecycle policy on airflow-logs
+              # Automatically delete logs older than 30 days
+              mc ilm add \
+                --expiry-days 30 \
+                myapp/airflow-logs
+
+              echo "All buckets initialized"
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: MINIO_ROOT_USER
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: MINIO_ROOT_PASSWORD
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"

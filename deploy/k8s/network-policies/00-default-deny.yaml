@@ -1,0 +1,13 @@
+# Deny ALL ingress and egress for every pod in namespace
+# Every allowed communication must be explicitly defined below
+# This is the most important policy — everything else builds on it
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: myapp
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress

@@ -1,0 +1,94 @@
+# deploy/k8s/cronjobs/metamodel-health-check.yaml
+#
+# Verifies Airflow is healthy every 5 minutes
+# Catches scheduler failures and unresponsive API
+# before they affect the trading pipeline
+# Schedule: every 5 minutes
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: metamodel-health-check
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: metamodel-health-check
+    app.kubernetes.io/component: maintenance
+spec:
+  # Every 5 minutes
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 300
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: metamodel-health-check
+            app.kubernetes.io/component: maintenance
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: maintenance-sa
+          containers:
+            - name: health-check
+              image: curlimages/curl:latest
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+
+                  AIRFLOW_URL="http://metamodel-orchestration:8080"
+
+                  echo "=== Metamodel Health Check ==="
+                  echo "Time: $(date -u)"
+                  echo ""
+
+                  # Check Airflow API is responding
+                  echo "Checking Airflow API..."
+                  HEALTH=$(curl -sf \
+                    --max-time 10 \
+                    $AIRFLOW_URL/api/v2/monitor/health) || {
+                    echo "ERROR: Airflow API is not responding at $AIRFLOW_URL"
+                    exit 1
+                  }
+
+                  echo "Health response: $HEALTH"
+                  echo ""
+
+                  # Check metadatabase is healthy
+                  if echo "$HEALTH" | grep -q '"metadatabase":{"status":"healthy"}'; then
+                    echo "Metadatabase: healthy"
+                  else
+                    echo "ERROR: Airflow metadatabase is not healthy"
+                    echo "Response was: $HEALTH"
+                    exit 1
+                  fi
+
+                  # Check scheduler is healthy
+                  if echo "$HEALTH" | grep -q '"scheduler":{"status":"healthy"}'; then
+                    echo "Scheduler: healthy"
+                  else
+                    echo "ERROR: Airflow scheduler is not healthy"
+                    echo "Response was: $HEALTH"
+                    exit 1
+                  fi
+
+                  # Check triggerer is healthy
+                  if echo "$HEALTH" | grep -q '"triggerer":{"status":"healthy"}'; then
+                    echo "Triggerer: healthy"
+                  else
+                    echo "WARNING: Airflow triggerer is not healthy"
+                  fi
+
+                  echo ""
+                  echo "All Airflow health checks passed"
+
+              resources:
+                requests:
+                  cpu: "50m"
+                  memory: "32Mi"
+                limits:
+                  cpu: "100m"
+                  memory: "64Mi"

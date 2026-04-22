@@ -1,0 +1,85 @@
+# deploy/k8s/cronjobs/clean-evicted-pods.yaml
+#
+# Removes evicted pods from the myapp namespace
+# Evicted pods are in Failed state with reason Evicted
+# They serve no purpose after eviction and should be cleaned up
+# Schedule: every 30 minutes
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: clean-evicted-pods
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: clean-evicted-pods
+    app.kubernetes.io/component: maintenance
+spec:
+  # Every 30 minutes
+  schedule: "*/30 * * * *"
+
+  # If previous run is still running skip this run
+  # Prevents two cleanup jobs running simultaneously
+  concurrencyPolicy: Forbid
+
+  # Keep last 3 successful job records for debugging
+  successfulJobsHistoryLimit: 3
+
+  # Keep last 1 failed job record for debugging
+  failedJobsHistoryLimit: 1
+
+  jobTemplate:
+    spec:
+      # Automatically delete the job pod 10 minutes after completion
+      # Prevents completed job pods accumulating in the namespace
+      ttlSecondsAfterFinished: 600
+
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: clean-evicted-pods
+            app.kubernetes.io/component: maintenance
+        spec:
+          # Use our dedicated maintenance service account
+          # Not the default service account
+          serviceAccountName: maintenance-sa
+
+          # Never restart — if it fails we want to see the failure
+          # OnFailure would hide errors by restarting silently
+          restartPolicy: OnFailure
+
+          containers:
+            - name: clean-evicted-pods
+              image: bitnami/kubectl:latest
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+
+                  echo "=== Clean Evicted Pods ==="
+                  echo "Namespace: myapp"
+                  echo "Time: $(date -u)"
+                  echo ""
+
+                  # Find all evicted pods in namespace
+                  # --field-selector filters by phase=Failed
+                  # jsonpath extracts only names of pods
+                  # where reason is Evicted
+                  EVICTED=$(kubectl get pods \
+                    -n myapp \
+                    --field-selector=status.phase=Failed \
+                    -o jsonpath='{.items[?(@.status.reason=="Evicted")].metadata.name}')
+
+                  if [ -z "$EVICTED" ]; then
+                    echo "No evicted pods found — nothing to clean"
+                    exit 0
+                  fi
+
+                  echo "Found evicted pods:"
+                  echo "$EVICTED" | tr ' ' '\n'
+                  echo ""
+
+                  # Delete each evicted pod
+                  COUNT=0
+                  for POD in $EVICTED; do
+                    if kubectl delete pod "$POD" -n myapp; then
