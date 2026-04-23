@@ -21,7 +21,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: mobile-web
-          image: ghcr.io/myapp/mobile-app-ios-android:a222544
+          image: ghcr.io/myapp/mobile-app-ios-android:bd0a70d
           ports:
             - containerPort: 80
           resources:
