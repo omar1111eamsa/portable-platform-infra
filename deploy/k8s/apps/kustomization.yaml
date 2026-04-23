@@ -49,6 +49,7 @@ resources:
   - predictions-intake/service.yaml
   - prompttocode/deployment.yaml
   - prompttocode/service.yaml
+  - user-management/avatar-pvc.yaml
   - user-management/deployment.yaml
   - user-management/service.yaml
   - user-management/user-service.yaml

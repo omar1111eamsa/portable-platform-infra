@@ -153,6 +153,11 @@ spec:
               value: "false"
             - name: SPRING_MAIN_LAZY_INITIALIZATION
               value: "false"
+            - name: AVATAR_STORAGE_PATH
+              value: /data/avatars
+          volumeMounts:
+            - name: avatar-storage
+              mountPath: /data/avatars
           resources:
             requests:
               memory: "384Mi"
@@ -185,3 +190,7 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
+      volumes:
+        - name: avatar-storage
+          persistentVolumeClaim:
+            claimName: user-management-avatar-pvc
