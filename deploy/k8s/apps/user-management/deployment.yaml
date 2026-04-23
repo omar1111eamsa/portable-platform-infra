@@ -30,7 +30,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: user-management
-          image: ghcr.io/myapp/backend-user-management-and-subscripption:2c54109
+          image: ghcr.io/myapp/backend-user-management-and-subscripption:2707572
           imagePullPolicy: Always
           ports:
             - containerPort: 8081
