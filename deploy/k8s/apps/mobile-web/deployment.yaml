@@ -21,7 +21,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: mobile-web
-          image: ghcr.io/myapp/mobile-app-ios-android:5c4e4c7
+          image: ghcr.io/myapp/mobile-app-ios-android:c624368
           envFrom:
             - configMapRef:
                 name: mobile-web-config
