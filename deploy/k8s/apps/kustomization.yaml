@@ -54,6 +54,7 @@ resources:
   - user-management/service.yaml
   - user-management/user-service.yaml
   # mail-credentials: créer manuellement (voir DEPLOYMENT.md)
+  - mobile-web/configmap.yaml
   - mobile-web/deployment.yaml
   - mobile-web/service.yaml
   # Mobile/desktop routing via IngressRoute CRDs (User-Agent header detection)

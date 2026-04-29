@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mobile-web-config
+  namespace: myapp
+  labels:
+    app: mobile-web
+data:
+  API_HOST: "https://dev.example.com"
+  API_BASE_URL: "https://dev.example.com/api/auth"
+  GOOGLE_OAUTH_ANDROID_CLIENT_ID: "451054635022-tjgc3frioelmud84lvdvlkupl7b400c4.apps.googleusercontent.com"
+  GOOGLE_OAUTH_ANDROID_SERVER_CLIENT_ID: "451054635022-3thr2grdm6cf3k8kgpgj9ssvv59lnr13.apps.googleusercontent.com"
+  GOOGLE_OAUTH_IOS_CLIENT_ID: ""
+  GOOGLE_OAUTH_IOS_SERVER_CLIENT_ID: ""
+  GOOGLE_OAUTH_WEB_CLIENT_ID: "110746733933-3lhme537ppdavmeu1m7hdch4p87o8sjv.apps.googleusercontent.com"
+  APP_NAME: "MyApp"
+  APP_DEBUG: "false"
