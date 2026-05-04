@@ -11,10 +11,10 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - airflow.dev.example.com
-      secretName: dev-myapp-io-tls
+        - airflow.example.com
+      secretName: myapp-io-tls
   rules:
-    - host: "airflow.dev.example.com"
+    - host: "airflow.example.com"
       http:
         paths:
           - path: /
