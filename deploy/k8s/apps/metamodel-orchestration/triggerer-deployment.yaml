@@ -42,7 +42,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: metamodel-triggerer
-          image: ghcr.io/myapp/metamodel-orschestation-airflow:fb77e1c
+          image: ghcr.io/myapp/metamodel-orschestation-airflow:29da4db
           imagePullPolicy: Always
           command: ["python", "-m", "airflow", "triggerer"]
           env:
