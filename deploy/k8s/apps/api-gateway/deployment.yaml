@@ -30,7 +30,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: api-gateway
-          image: ghcr.io/myapp/backend-api-gateway:a2947fb
+          image: ghcr.io/myapp/backend-api-gateway:155b6ff
           imagePullPolicy: Always
           ports:
             - containerPort: 8888
