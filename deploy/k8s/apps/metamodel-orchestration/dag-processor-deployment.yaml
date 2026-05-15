@@ -42,7 +42,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: metamodel-dag-processor
-          image: ghcr.io/myapp/metamodel-orschestation-airflow:de23b4e
+          image: ghcr.io/myapp/metamodel-orschestation-airflow:00e89e1
           imagePullPolicy: Always
           command: ["python", "-m", "airflow", "dag-processor"]
           env:
