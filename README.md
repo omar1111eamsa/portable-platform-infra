@@ -34,6 +34,38 @@ Because every layer is code, the entire platform can be torn down and rebuilt fr
 different provider with no change to the application services themselves — that is the portability
 the brief asked for.
 
+## Challenges I faced (and how I solved them)
+
+Integrating ~25 services on a self-managed cluster was where the real work was — almost none of it
+worked first try. Each of these is a problem I actually hit (traceable in the commit history) and
+how I resolved it:
+
+- **Airflow behind an ingress was a fight.** The UI base path was wrong, static assets 404'd, and
+  the API path was being **duplicated to `/api/v2/api/v2`**. I worked through it: corrected the UI
+  base path and static routes, added a middleware to dedupe the API prefix, copied the simple-auth
+  file into a **writable** volume, and removed a `chown` from init (the pod runs `runAsNonRoot`, so
+  it had no permission). Airflow finally served correctly under its subdomain.
+- **Stateful pods that couldn't move.** Postgres and the chatbot use `ReadWriteOnce` PVCs, so a pod
+  can only run on the node holding its volume. Pinned those workloads to the correct node via node
+  affinity, kept Postgres at a single replica (RWO can't be shared), and only scaled the
+  truly-stateless infra (Redis/RabbitMQ/Consul) to 2.
+- **Services couldn't find each other.** The API gateway resolved `user-service` inconsistently
+  between Kubernetes DNS and Consul load-balancing. Standardised on the in-cluster DNS name with a
+  fallback, and stabilised Consul's single-node service registration.
+- **Locking the namespace down broke things — then I fixed them properly.** Added baseline network
+  policies and disabled service-account token automount for hardening, then surgically re-allowed
+  exactly what was needed: RabbitMQ management UI traffic, and pod-watch permission for the
+  health-check service account.
+- **ArgoCD stuck in permanent "OutOfSync".** A startup probe and manually scaled-down replicas kept
+  showing as drift, so ArgoCD fought my changes. Added targeted `ignoreDifferences` (and
+  `RespectIgnoreDifferences`) so it ignores fields I intentionally manage by hand.
+- **`ImagePullBackOff` from bad image references.** A wrong/short image SHA and a missing tag stalled
+  the frontend rollout. Pinned the correct tags and corrected the public API URL so the frontend
+  came up.
+- **Operational papercuts** — Stripe webhooks needed an explicit ingress path; cert-manager's ACME
+  challenge had to be allowed on the Airflow subdomain; admin UIs (Consul, RabbitMQ) were put behind
+  Traefik basic auth instead of being exposed.
+
 ## The integrated platform (~25 services)
 
 All services run in namespace `myapp` on a 3-node k3s cluster, deployed and kept in sync by ArgoCD.
