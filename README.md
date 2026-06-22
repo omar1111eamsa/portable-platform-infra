@@ -123,7 +123,6 @@ Namespace `myapp` · Ingress via Traefik · GitOps via ArgoCD.
 | [deploy/docs/SERVICE-MATRIX.md](deploy/docs/SERVICE-MATRIX.md) | All services, images, ports, dependencies |
 | [deploy/SETUP.md](deploy/SETUP.md) | Cluster bootstrap from scratch |
 | [deploy/k8s/DEPLOYMENT.md](deploy/k8s/DEPLOYMENT.md) | Deployment prerequisites and apply order |
-| [deploy/k8s/OAUTH2-FIX.md](deploy/k8s/OAUTH2-FIX.md) | Google OAuth2 fix applied to the API Gateway |
 | [deploy/argocd/ARGOCD-AUTODEPLOY.md](deploy/argocd/ARGOCD-AUTODEPLOY.md) | ArgoCD setup and auto-deploy configuration |
 | [ansible/README.md](ansible/README.md) | Ansible usage and inventory |
 | [terraform/README.md](terraform/README.md) | Terraform infrastructure |

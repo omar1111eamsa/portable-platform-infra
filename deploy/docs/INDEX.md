@@ -8,4 +8,3 @@
 | [../argocd/ARGOCD-AUTODEPLOY.md](../argocd/ARGOCD-AUTODEPLOY.md) | ArgoCD configuration and auto-deploy flow |
 | [../k8s/DEPLOYMENT.md](../k8s/DEPLOYMENT.md) | Deployment prerequisites and apply order |
 | [../k8s/CHECKLIST.md](../k8s/CHECKLIST.md) | Configuration backlog before production |
-| [../k8s/OAUTH2-FIX.md](../k8s/OAUTH2-FIX.md) | Google OAuth2 fix applied to the API Gateway |
