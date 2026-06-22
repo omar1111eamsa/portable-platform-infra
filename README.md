@@ -84,21 +84,6 @@ services; the orchestration pipeline is backed by Postgres, Redis, RabbitMQ and 
 to Prometheus/Grafana. Full dependency map in
 [`deploy/docs/SERVICE-MATRIX.md`](deploy/docs/SERVICE-MATRIX.md).
 
-## Seeing the result
-
-Once deployed, the integrated environment is reachable through a single domain — the proof that the
-services actually run together as one platform:
-
-| URL | Surface |
-|-----|---------|
-| `https://dev.example.com` | Frontend |
-| `https://dev.example.com/api` | API Gateway |
-| `https://dashboard.example.com` | Admin frontend |
-| `https://airflow.dev.example.com` | Airflow UI |
-| `https://dev.example.com/argocd` | ArgoCD (deployment state) |
-| `https://dev.example.com/grafana` · `/prometheus` | Observability |
-| `https://dev.example.com/rabbitmq` · `/consul` · `/pgadmin` | Ops UIs |
-
 ## CI/CD — GitOps
 
 Each service repo has a `test-ci` branch. On every push:
