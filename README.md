@@ -101,9 +101,8 @@ Each service repo has a `test-ci` branch. On every push:
 └── deploy/
     ├── argocd/       ArgoCD application definitions (GitOps)
     ├── k8s/          Kubernetes manifests — apps, infra, network policies
-    ├── docs/         Architecture, end-to-end flow, service & DB matrices
-    ├── SETUP.md      Full cluster bootstrap guide
-    └── TESTERS-GUIDE.md  API and endpoint reference
+    ├── docs/         Kubernetes architecture & service matrix
+    └── SETUP.md      Full cluster bootstrap guide
 ```
 
 ## Cluster overview
@@ -121,13 +120,10 @@ Namespace `myapp` · Ingress via Traefik · GitOps via ArgoCD.
 | Document | Purpose |
 |----------|---------|
 | [deploy/docs/ARCHITECTURE-K8S.md](deploy/docs/ARCHITECTURE-K8S.md) | Kubernetes architecture, node layout, workload placement |
-| [deploy/docs/FLOW-END-TO-END.md](deploy/docs/FLOW-END-TO-END.md) | Full pipeline flow, stages and database writes |
 | [deploy/docs/SERVICE-MATRIX.md](deploy/docs/SERVICE-MATRIX.md) | All services, images, ports, dependencies |
-| [deploy/docs/DB-ARCHITECTURE.md](deploy/docs/DB-ARCHITECTURE.md) | Database schema, tables, relationships |
-| [deploy/docs/METAMODEL-FONCTIONNEMENT.md](deploy/docs/METAMODEL-FONCTIONNEMENT.md) | Airflow DAG pipeline internals |
-| [deploy/docs/ENDPOINTS-CATALOG.md](deploy/docs/ENDPOINTS-CATALOG.md) | All API endpoints |
 | [deploy/SETUP.md](deploy/SETUP.md) | Cluster bootstrap from scratch |
-| [deploy/TESTERS-GUIDE.md](deploy/TESTERS-GUIDE.md) | Tester reference: URLs, auth, API usage |
+| [deploy/k8s/DEPLOYMENT.md](deploy/k8s/DEPLOYMENT.md) | Deployment prerequisites and apply order |
+| [deploy/k8s/OAUTH2-FIX.md](deploy/k8s/OAUTH2-FIX.md) | Google OAuth2 fix applied to the API Gateway |
 | [deploy/argocd/ARGOCD-AUTODEPLOY.md](deploy/argocd/ARGOCD-AUTODEPLOY.md) | ArgoCD setup and auto-deploy configuration |
 | [ansible/README.md](ansible/README.md) | Ansible usage and inventory |
 | [terraform/README.md](terraform/README.md) | Terraform infrastructure |
